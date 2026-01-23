@@ -1,0 +1,811 @@
+{% extends 'admin/base/base.html' %}
+
+{% block title %}
+Requested Supplies
+{% endblock title %}
+
+{% block page_title %}
+Requested Supplies
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<style>
+    /* Custom tab styling - Active tabs green, inactive tabs black */
+    #request-tabs .nav-link {
+        color: #000000 !important;
+        background-color: transparent;
+        border-color: transparent;
+        font-weight: 500;
+    }
+    
+    #request-tabs .nav-link:hover {
+        color: #28a745 !important;
+        border-color: transparent;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    #request-tabs .nav-link.active {
+        color: #28a745 !important;
+        background-color: #ffffff;
+        border-color: #28a745 #28a745 #ffffff;
+        border-bottom-color: transparent;
+        font-weight: 600;
+    }
+    
+    #request-tabs .nav-link.active:hover {
+        color: #28a745 !important;
+        border-color: #28a745 #28a745 #ffffff;
+    }
+    
+    /* Ensure badge colors remain visible */
+    #request-tabs .nav-link .badge {
+        color: #ffffff !important;
+    }
+    
+    #request-tabs .nav-link.active .badge {
+        background-color: #28a745 !important;
+    }
+    
+    /* Card border color - green instead of blue */
+    .card.card-outline.card-success {
+        border-top: 3px solid #28a745 !important;
+    }
+    
+    .card.card-outline.card-success .card-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "warning" %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">Requested Supplies</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="row mb-3">
+            <div class="col-md-6 ml-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-requests" placeholder="Search .......">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Main Content Row -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Requested Supplies Table with Tabs -->
+                <div class="card card-outline card-success mt-3">
+                    <div class="card-header p-0">
+                        <ul class="nav nav-tabs" id="request-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">
+                                    <i class="fas fa-list mr-1"></i>List of Request Supplies
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="false">
+                                    <i class="fas fa-check-circle mr-1"></i>Approved
+                                    <span class="badge badge-success ml-1">{{ approved_count }}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="pending-tab" data-toggle="tab" href="#pending" role="tab" aria-controls="pending" aria-selected="false">
+                                    <i class="fas fa-clock mr-1"></i>Pending
+                                    <span class="badge badge-warning ml-1">{{ pending_count }}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="rejected-tab" data-toggle="tab" href="#rejected" role="tab" aria-controls="rejected" aria-selected="false">
+                                    <i class="fas fa-times-circle mr-1"></i>Rejected
+                                    <span class="badge badge-danger ml-1">{{ rejected_count }}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="outofstock-tab" data-toggle="tab" href="#outofstock" role="tab" aria-controls="outofstock" aria-selected="false">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Out of Stock
+                                    <span class="badge badge-danger ml-1">{{ out_of_stock_count }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                       
+                        
+                        <div class="tab-content" id="request-tab-content">
+                            <!-- All Requests Tab -->
+                            <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Requester</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th>Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if requests %}
+                                                {% for req in requests %}
+                                                    <tr>
+                                                        <td>{{ req.id }}</td>
+                                                        <td>{{ req.date|date:"m/d/Y" }}</td>
+                                                        <td>{{ req.transaction_no }}</td>
+                                                        <td>{{ req.requester_name }}</td>
+                                                        <td>{{ req.item_code }}</td>
+                                                        <td>{{ req.description }}</td>
+                                                        <td>{% if req.main_category %}{{ req.main_category.name }}{% else %}-{% endif %}</td>
+                                                        <td>{{ req.sub_category|default:"-" }}</td>
+                                                        <td>{{ req.unit }}</td>
+                                                        <td>{{ req.quantity }}</td>
+                                                        <td>
+                                                            <div>
+                                                                {% if req.status == 'approved' %}
+                                                                    <span class="badge badge-success">{{ req.get_status_display }}</span>
+                                                                {% elif req.status == 'rejected' %}
+                                                                    <span class="badge badge-danger">{{ req.get_status_display }}</span>
+                                                                {% elif req.status == 'Out of Stocks' %}
+                                                                    <span class="badge badge-danger">{{ req.get_status_display }}</span>
+                                                                {% else %}
+                                                                    <span class="badge badge-warning">{{ req.get_status_display }}</span>
+                                                                {% endif %}
+                                                                {% if req.conforme_by or req.status != 'pending' %}
+                                                                    <br>
+                                                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                                                        {{ req.updated_at|date:"m/d/Y h:i A" }}
+                                                                    </small>
+                                                                {% endif %}
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ req.conforme_by|default:"-" }}</td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                                        data-toggle="dropdown" 
+                                                                        aria-haspopup="true" 
+                                                                        aria-expanded="false"
+                                                                        data-request-id="{{ req.id }}"
+                                                                        data-conforme-by="{{ req.conforme_by|default:'' }}">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <div class="dropdown-menu dropdown-menu-right">
+                                                                    <a class="dropdown-item status-option" href="#" data-status="pending">
+                                                                        <span class="badge badge-warning mr-2">Pending</span>
+                                                                    </a>
+                                                                    <a class="dropdown-item status-option" href="#" data-status="approved">
+                                                                        <span class="badge badge-success mr-2">Approved</span>
+                                                                    </a>
+                                                                    <a class="dropdown-item status-option" href="#" data-status="rejected">
+                                                                        <span class="badge badge-danger mr-2">Rejected</span>
+                                                                    </a>
+                                                                    <a class="dropdown-item status-option" href="#" data-status="Out of Stocks">
+                                                                        <span class="badge badge-danger mr-2">Out of Stock</span>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        No requested supplies found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Approved Tab -->
+                            <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Requester</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if approved_count > 0 %}
+                                                {% for req in requests %}
+                                                    {% if req.status == 'approved' %}
+                                                        <tr>
+                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ req.date|date:"m/d/Y" }}</td>
+                                                            <td>{{ req.transaction_no }}</td>
+                                                            <td>{{ req.requester_name }}</td>
+                                                            <td>{{ req.item_code }}</td>
+                                                            <td>{{ req.description }}</td>
+                                                            <td>{% if req.main_category %}{{ req.main_category.name }}{% else %}-{% endif %}</td>
+                                                            <td>{{ req.sub_category|default:"-" }}</td>
+                                                            <td>{{ req.unit }}</td>
+                                                            <td>{{ req.quantity }}</td>
+                                                            <td>
+                                                                <div>
+                                                                    <span class="badge badge-success">{{ req.get_status_display }}</span>
+                                                                    {% if req.conforme_by or req.status != 'pending' %}
+                                                                        <br>
+                                                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                                                            {{ req.updated_at|date:"m/d/Y h:i A" }}
+                                                                        </small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                            <td>{{ req.conforme_by|default:"-" }}</td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                                            data-toggle="dropdown" 
+                                                                            aria-haspopup="true" 
+                                                                            aria-expanded="false"
+                                                                            data-request-id="{{ req.id }}"
+                                                                            data-conforme-by="{{ req.conforme_by|default:'' }}">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                                        <a class="dropdown-item status-option" href="#" data-status="pending">
+                                                                            <span class="badge badge-warning mr-2">Pending</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="approved">
+                                                                            <span class="badge badge-success mr-2">Approved</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="rejected">
+                                                                            <span class="badge badge-danger mr-2">Rejected</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="Out of Stocks">
+                                                                            <span class="badge badge-danger mr-2">Out of Stock</span> 
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        No approved requests found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Pending Tab -->
+                            <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Requester</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if pending_count > 0 %}
+                                                {% for req in requests %}
+                                                    {% if req.status == 'pending' %}
+                                                        <tr>
+                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ req.date|date:"m/d/Y" }}</td>
+                                                            <td>{{ req.transaction_no }}</td>
+                                                            <td>{{ req.requester_name }}</td>
+                                                            <td>{{ req.item_code }}</td>
+                                                            <td>{{ req.description }}</td>
+                                                            <td>{% if req.main_category %}{{ req.main_category.name }}{% else %}-{% endif %}</td>
+                                                            <td>{{ req.sub_category|default:"-" }}</td>
+                                                            <td>{{ req.unit }}</td>
+                                                            <td>{{ req.quantity }}</td>
+                                                            <td>
+                                                                <div>
+                                                                    <span class="badge badge-warning">{{ req.get_status_display }}</span>
+                                                                    {% if req.conforme_by or req.status != 'pending' %}
+                                                                        <br>
+                                                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                                                            {{ req.updated_at|date:"m/d/Y h:i A" }}
+                                                                        </small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                            <td>{{ req.conforme_by|default:"-" }}</td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                                            data-toggle="dropdown" 
+                                                                            aria-haspopup="true" 
+                                                                            aria-expanded="false"
+                                                                            data-request-id="{{ req.id }}"
+                                                                            data-conforme-by="{{ req.conforme_by|default:'' }}">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                                        <a class="dropdown-item status-option" href="#" data-status="pending">
+                                                                            <span class="badge badge-warning mr-2">Pending</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="approved">
+                                                                            <span class="badge badge-success mr-2">Approved</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="rejected">
+                                                                            <span class="badge badge-danger mr-2">Rejected</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="Out of Stocks">
+                                                                            <span class="badge badge-danger mr-2">Out of Stock</span> 
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        No pending requests found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Rejected Tab -->
+                            <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Requester</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if rejected_count > 0 %}
+                                                {% for req in requests %}
+                                                    {% if req.status == 'rejected' %}
+                                                        <tr>
+                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ req.date|date:"m/d/Y" }}</td>
+                                                            <td>{{ req.transaction_no }}</td>
+                                                            <td>{{ req.requester_name }}</td>
+                                                            <td>{{ req.item_code }}</td>
+                                                            <td>{{ req.description }}</td>
+                                                            <td>{% if req.main_category %}{{ req.main_category.name }}{% else %}-{% endif %}</td>
+                                                            <td>{{ req.sub_category|default:"-" }}</td>
+                                                            <td>{{ req.unit }}</td>
+                                                            <td>{{ req.quantity }}</td>
+                                                            <td>
+                                                                <div>
+                                                                    <span class="badge badge-danger">{{ req.get_status_display }}</span>
+                                                                    {% if req.conforme_by or req.status != 'pending' %}
+                                                                        <br>
+                                                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                                                            {{ req.updated_at|date:"m/d/Y h:i A" }}
+                                                                        </small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                            <td>{{ req.conforme_by|default:"-" }}</td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                                            data-toggle="dropdown" 
+                                                                            aria-haspopup="true" 
+                                                                            aria-expanded="false"
+                                                                            data-request-id="{{ req.id }}"
+                                                                            data-conforme-by="{{ req.conforme_by|default:'' }}">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                                        <a class="dropdown-item status-option" href="#" data-status="pending">
+                                                                            <span class="badge badge-warning mr-2">Pending</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="approved">
+                                                                            <span class="badge badge-success mr-2">Approved</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="rejected">
+                                                                            <span class="badge badge-danger mr-2">Rejected</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="Out of Stocks">
+                                                                            <span class="badge badge-danger mr-2">Out of Stock</span>
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        No rejected requests found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Out of Stock Tab -->
+                            <div class="tab-pane fade" id="outofstock" role="tabpanel" aria-labelledby="outofstock-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Requester</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if out_of_stock_count > 0 %}
+                                                {% for req in requests %}
+                                                    {% if req.status == 'Out of Stocks' %}
+                                                        <tr>
+                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ req.date|date:"m/d/Y" }}</td>
+                                                            <td>{{ req.transaction_no }}</td>
+                                                            <td>{{ req.requester_name }}</td>
+                                                            <td>{{ req.item_code }}</td>
+                                                            <td>{{ req.description }}</td>
+                                                            <td>{% if req.main_category %}{{ req.main_category.name }}{% else %}-{% endif %}</td>
+                                                            <td>{{ req.sub_category|default:"-" }}</td>
+                                                            <td>{{ req.unit }}</td>
+                                                            <td>{{ req.quantity }}</td>
+                                                            <td>
+                                                                <div>
+                                                                    <span class="badge badge-danger">{{ req.get_status_display }}</span>
+                                                                    {% if req.conforme_by or req.status != 'pending' %}
+                                                                        <br>
+                                                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                                                            {{ req.updated_at|date:"m/d/Y h:i A" }}
+                                                                        </small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                            <td>{{ req.conforme_by|default:"-" }}</td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                                            data-toggle="dropdown" 
+                                                                            aria-haspopup="true" 
+                                                                            aria-expanded="false"
+                                                                            data-request-id="{{ req.id }}"
+                                                                            data-conforme-by="{{ req.conforme_by|default:'' }}">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                                        <a class="dropdown-item status-option" href="#" data-status="pending">
+                                                                            <span class="badge badge-warning mr-2">Pending</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="approved">
+                                                                            <span class="badge badge-success mr-2">Approved</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="rejected">
+                                                                            <span class="badge badge-danger mr-2">Rejected</span>
+                                                                        </a>
+                                                                        <a class="dropdown-item status-option" href="#" data-status="Out of Stocks">
+                                                                            <span class="badge badge-danger mr-2">Out of Stock</span>
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        No out of stock requests found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- SweetAlert2 JS -->
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script>
+    // Display current date
+    $(document).ready(function() {
+        var today = new Date();
+        var options = { year: 'numeric', month: 'long', day: 'numeric' };
+        var dateElement = document.getElementById('current-date');
+        if (dateElement) {
+            dateElement.textContent = today.toLocaleDateString('en-US', options);
+        }
+    });
+
+    // Search functionality - Filter table rows
+    $('#search-requests').on('keyup', function() {
+        var searchTerm = $(this).val().toLowerCase();
+        var activeTab = $('.tab-pane.active');
+        var table = activeTab.find('table tbody');
+        
+        // Remove any existing "no results" row
+        table.find('.no-results-row').remove();
+        
+        // Filter rows in the active tab (exclude empty state rows)
+        var hasVisibleDataRows = false;
+        table.find('tr').each(function() {
+            var row = $(this);
+            
+            // Skip empty state rows (colspan rows)
+            if (row.find('td[colspan]').length > 0) {
+                // Hide empty state rows when searching
+                if (searchTerm) {
+                    row.hide();
+                } else {
+                    row.show();
+                }
+                return;
+            }
+            
+            var rowText = '';
+            
+            // Get text from all columns except Actions column
+            row.find('td').not(':last-child').each(function() {
+                rowText += $(this).text().toLowerCase() + ' ';
+            });
+            
+            // Show/hide row based on search term
+            if (!searchTerm || rowText.indexOf(searchTerm) > -1) {
+                row.show();
+                hasVisibleDataRows = true;
+            } else {
+                row.hide();
+            }
+        });
+        
+        // Show "No results" message if searching and no rows are visible
+        if (searchTerm && !hasVisibleDataRows) {
+            var colspan = activeTab.find('table thead th').length;
+            table.append('<tr class="no-results-row"><td colspan="' + colspan + '" class="text-center text-muted">No matching results found.</td></tr>');
+        }
+    });
+
+    // Clear search when switching tabs
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+        $('#search-requests').val('').trigger('keyup');
+    });
+
+    // Update Status Dropdown Handler - Automatic update on click
+    $(document).on('click', '.status-option', function(e) {
+        e.preventDefault();
+        
+        var status = $(this).data('status');
+        var dropdownBtn = $(this).closest('.btn-group').find('.dropdown-toggle');
+        var requestId = dropdownBtn.data('request-id');
+        var conformeBy = dropdownBtn.data('conforme-by') || '';
+        
+        // Show loading state on button
+        var originalHtml = dropdownBtn.html();
+        dropdownBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        // Close dropdown menu
+        $(this).closest('.dropdown-menu').removeClass('show');
+        
+        // Send AJAX request to update database
+        $.ajax({
+            url: '/api/request-supplies/' + requestId + '/update-status/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() || getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                'status': status,
+                'conforme_by': conformeBy
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // Show success alert for approved status
+                    if (status === 'approved') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Successfully Approved!',
+                            // text: 'Request has been approved and Real-Time Balance has been deducted.',
+                            timer: 3000,
+                            showConfirmButton: false
+                        }).then(function() {
+                            // Reload page to show updated data from database
+                            location.reload();
+                        });
+                    } else {
+                        // For other statuses, just reload
+                        location.reload();
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: response.error || 'Failed to update status.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                    dropdownBtn.prop('disabled', false).html(originalHtml);
+                }
+            },
+            error: function(xhr) {
+                var errorMsg = 'Failed to update status.';
+                var insufficientBalance = false;
+                
+                if (xhr.responseJSON) {
+                    errorMsg = xhr.responseJSON.error || errorMsg;
+                    insufficientBalance = xhr.responseJSON.insufficient_balance || false;
+                    
+                    // Show warning for insufficient balance
+                    if (insufficientBalance && status === 'approved') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'No Supply Available!',
+                            // text: errorMsg + '\n\nCannot approve request due to insufficient balance.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMsg,
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
+                dropdownBtn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+
+    // Helper function to get CSRF token from cookie
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock custom_js %}
+

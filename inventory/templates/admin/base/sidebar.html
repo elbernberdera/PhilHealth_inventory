@@ -1,0 +1,146 @@
+{% load static %}
+
+<style>
+  /* Custom hover effect for sidebar nav items */
+  .sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15)!important;
+    transition: all 0.3s ease;
+  }
+</style>
+
+<aside class="main-sidebar sidebar-dark-success elevation-4" style="
+  background: 
+    linear-gradient(to right, rgba(34, 139, 34, 0.9), rgba(0, 128, 0, 0.9)),
+    url('{% static "image/bg11.png" %}')!important;
+  background-size: cover!important;
+  background-position: center!important;
+  background-repeat: no-repeat!important;
+">
+      <!-- Brand Logo -->
+      <a href="{% url 'admin_dashboard' %}" class="brand-link" style="padding: 15px 0;">
+        <img src="{% static 'image/logo1.png' %}" alt="Brand Logo" style="width: 190px; height: 120px; object-fit: contain; display: block; margin: 0 auto;">
+      </a>
+
+      <!-- Sidebar -->
+      <div class="sidebar" style="color: #000!important;">
+        <!-- Sidebar user panel (optional) -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+          <div class="image">
+           
+          </div>
+        <div class="info">
+            <a href="#" class="d-block" style="color: #f0eeee!important;">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+          </div>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <li class="nav-item">
+              <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'admin_dashboard' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-home" style="color: #fbf8f8!important;"></i>
+                <p>Home</p>
+              </a>
+            </li>
+            <!-- Request Supply Module -->
+            <!-- <li class="nav-item">
+              <a href="{% url 'request_supply_module' %}" class="nav-link {% if request.resolver_match.url_name == 'request_supply_module' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'request_supply_module' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-clipboard-list" style="color: #fbf8f8!important;"></i>
+                <p>Request Supply Module</p>
+              </a>
+            </li> -->
+
+            <!-- Replenish/Add New Item -->
+            <li class="nav-item">
+              <a href="{% url 'replenish_item' %}" class="nav-link {% if request.resolver_match.url_name == 'replenish_item' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'replenish_item' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-plus-circle" style="color: #fbf8f8!important;"></i>
+                <p>Replenish</p>
+              </a>
+            </li>
+
+            <!-- List of Requested Supplies -->
+            <li class="nav-item">
+              <a href="{% url 'requested_supplies' %}" class="nav-link {% if request.resolver_match.url_name == 'requested_supplies' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-list" style="color: #fbf8f8!important;"></i>
+                <p>Requested Supplies</p>
+              </a>
+            </li>
+
+            <!-- Master Inventory -->
+            <!-- <li class="nav-item">
+              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <i class="nav-icon fas fa-boxes" style="color: #fbf8f8!important;"></i>
+                <p>Master Inventory</p>
+              </a>
+            </li> -->
+
+            <!-- Print Summary of Supply Request -->
+            <!-- <li class="nav-item">
+              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <i class="nav-icon fas fa-print" style="color: #fbf8f8!important;"></i>
+                <p>Print Summary of Supply Request</p>
+              </a>
+            </li> -->
+
+            <!-- Request Issuance Slip (RIS) -->
+            <!-- <li class="nav-item">
+              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <i class="nav-icon fas fa-file-invoice" style="color: #fbf8f8!important;"></i>
+                <p>Request Issuance Slip (RIS)</p>
+              </a>
+            </li> -->
+
+            <!-- Bin Card -->
+            <li class="nav-item">
+              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <i class="nav-icon fas fa-id-card" style="color: #fbf8f8!important;"></i>
+                <p>Bin Card</p>
+              </a>
+            </li>
+            <!-- history -->
+            <li class="nav-item has-treeview">
+              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <i class="nav-icon fas fa-history" style="color: #fbf8f8!important;"></i>
+                <p>
+                  History
+                  <i class="fas fa-angle-left right"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview" style="padding-left: 15px;">
+                <li class="nav-item">
+                  <a href="#" class="nav-link" style="color: #fdfafa!important;" id="pdf-history-link">
+                    <i class="far fa-file-pdf nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>PDF Downloads</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link" style="color: #fdfafa!important;" id="print-history-link">
+                    <i class="fas fa-print nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>Print History</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link" style="color: #fdfafa!important;" id="activity-log-link">
+                    <i class="fas fa-clipboard-list nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>Activity Log</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li class="nav-item">
+              <a href="{% url 'users' %}" class="nav-link {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' %}text-dark{% endif %}" style="color: #fcfbfb!important; {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-users" style="color: #fffafa!important;"></i>
+                <p>Users</p>
+              </a>
+            </li>
+
+            
+            
+            <!-- Add more nav-items here as needed -->
+          </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+      </div>
+      <!-- /.sidebar -->
+    </aside>

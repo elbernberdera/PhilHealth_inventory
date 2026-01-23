@@ -1,0 +1,634 @@
+{% extends 'admin/base/base.html' %}
+
+{% block title %}
+Request Supply Module
+{% endblock title %}
+
+{% block page_title %}
+Request Supply Module
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "warning" %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">REQUEST SUPPLY</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row">
+            <div class="col-12">
+                <!-- LIST OF REQUESTED ITEMS Section -->
+                <div class="card card-outline mt-3">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h4 class="card-title mb-0" style="color: red; font-weight: bold;">
+                                    LIST OF  ITEMS
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search and Action Buttons -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search-requested" placeholder="Search...">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-default" type="button">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                
+                                <button type="button" class="btn btn-success btn-sm mr-2" id="add-item-btn">
+                                    <i class="fas fa-plus mr-1"></i>Add Item
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm mr-2" id="edit-btn">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </button>
+                                
+                                <button class="btn btn-info btn-sm mr-2" id="show-btn">Show</button>
+                                <button class="btn btn-primary btn-sm mr-2" id="print-btn">Print</button>
+                                <button class="btn btn-danger btn-sm mr-2" id="delete-btn">Delete</button>
+                                <button class="btn btn-success btn-sm" id="approved-btn">Approved</button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all"></th>
+                                        <th>No</th>
+                                        <th>Date</th>
+                                        <th>Transaction No.</th>
+                                        <th>Name of Requester</th>
+                                        <th>Item Code</th>
+                                        <th>Description</th>
+                                        <th>Main Category</th>
+                                        <th>Sub-Category</th>
+                                        <th>Unit</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="requested-items-table">
+                                    <!-- Data rows will be populated from database -->
+                                    <tr>
+                                        <td colspan="12" class="text-center text-muted">
+                                            Loading requests...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="addItemModalLabel">
+                    <i class="fas fa-plus-circle mr-2"></i>Add New Item Request
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="add-item-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Date -->
+                            <div class="form-group">
+                                <label for="item-date">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="item-date" name="item_date" required>
+                            </div>
+
+                            <!-- Transaction No. -->
+                            <div class="form-group">
+                                <label for="transaction-no">Transaction No. <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="transaction-no" name="transaction_no" 
+                                       placeholder="Enter transaction number" required>
+                            </div>
+
+                            <!-- Name of Requester -->
+                            <div class="form-group">
+                                <label for="requester-name">Name of Requester <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="requester-name" name="requester_name" 
+                                       value="{{ request.user.first_name }} {{ request.user.last_name }}" required>
+                            </div>
+
+                            <!-- Item Code -->
+                            <div class="form-group">
+                                <label for="item-code">Item Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="item-code" name="item_code" 
+                                       placeholder="Enter item code" required>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="form-group">
+                                <label for="item-description">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="item-description" name="item_description" 
+                                          rows="3" placeholder="Enter item description" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <!-- Main Category -->
+                            <div class="form-group">
+                                <label for="main-category">Main Category <span class="text-danger">*</span></label>
+                                <select class="form-control" id="main-category" name="main_category" required>
+                                    <option value="">Select main category</option>
+                                    <option value="Medical Supplies">Medical Supplies</option>
+                                    <option value="Office Supplies">Office Supplies</option>
+                                    <option value="Equipment">Equipment</option>
+                                    <option value="Consumables">Consumables</option>
+                                </select>
+                            </div>
+
+                            <!-- Sub-Category -->
+                            <div class="form-group">
+                                <label for="sub-category">Sub-Category <span class="text-danger">*</span></label>
+                                <select class="form-control" id="sub-category" name="sub_category" required>
+                                    <option value="">Select sub-category</option>
+                                </select>
+                            </div>
+
+                            <!-- Unit -->
+                            <div class="form-group">
+                                <label for="item-unit">Unit <span class="text-danger">*</span></label>
+                                <select class="form-control" id="item-unit" name="item_unit" required>
+                                    <option value="">Select unit</option>
+                                    <option value="Piece">Piece</option>
+                                    <option value="Box">Box</option>
+                                    <option value="Pack">Pack</option>
+                                    <option value="Bottle">Bottle</option>
+                                    <option value="Set">Set</option>
+                                    <option value="Roll">Roll</option>
+                                    <option value="Ream">Ream</option>
+                                    <option value="Unit">Unit</option>
+                                </select>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="form-group">
+                                <label for="item-quantity">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="item-quantity" name="item_quantity" 
+                                       placeholder="Enter quantity" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save mr-1"></i>Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- SweetAlert2 JS -->
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script>
+    var allRequests = []; // Store all requests data
+    
+    // Function to load requests from database
+    function loadRequests() {
+        $.ajax({
+            url: '{% url "request_supply_list" %}',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    allRequests = response.requests;
+                    renderTable();
+                } else {
+                    console.error('Error loading requests:', response.error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error loading requests. Please refresh the page.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading requests:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error loading requests. Please refresh the page.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+    
+    // Function to render table
+    function renderTable() {
+        var tableBody = $('#requested-items-table');
+        tableBody.empty();
+        
+        if (allRequests.length === 0) {
+            tableBody.append(
+                '<tr><td colspan="12" class="text-center text-muted">No requested items found.</td></tr>'
+            );
+            return;
+        }
+        
+        $.each(allRequests, function(index, req) {
+            var row = '<tr data-request-id="' + req.id + '">' +
+                '<td><input type="checkbox" class="request-checkbox" value="' + req.id + '"></td>' +
+                '<td>' + (index + 1) + '</td>' +
+                '<td>' + (req.date || '') + '</td>' +
+                '<td>' + (req.transaction_no || '') + '</td>' +
+                '<td>' + (req.requester_name || '') + '</td>' +
+                '<td>' + (req.item_code || '') + '</td>' +
+                '<td>' + (req.description || '') + '</td>' +
+                '<td>' + (req.main_category || '') + '</td>' +
+                '<td>' + (req.sub_category || '') + '</td>' +
+                '<td>' + (req.unit || '') + '</td>' +
+                '<td>' + (req.quantity || '0') + '</td>' +
+                '<td><span class="badge badge-' + (req.status_value === 'approved' ? 'success' : req.status_value === 'rejected' ? 'danger' : 'warning') + '">' + (req.status || 'Pending') + '</span></td>' +
+                '</tr>';
+            tableBody.append(row);
+        });
+    }
+    
+    // Helper function to get CSRF token from cookie
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Auto-dismiss alerts after 5 seconds
+    $(document).ready(function() {
+        setTimeout(function() {
+            $('.alert').fadeOut('slow', function() {
+                $(this).remove();
+            });
+        }, 5000);
+
+        // Display current date
+        var today = new Date();
+        var options = { year: 'numeric', month: 'long', day: 'numeric' };
+        $('#current-date').text(today.toLocaleDateString('en-US', options));
+        
+        // Load requests from database
+        loadRequests();
+
+        // Clear button functionality
+        $('#clear-btn').on('click', function() {
+            $('#search_item, #unit, #quantity, #user_name, #balance, #item_code').val('');
+            $('#transaction_type').val('stock_out');
+        });
+
+        // Add button
+        $('#add-btn').on('click', function() {
+            // TODO: Add new item functionality
+            // This can be used to add a new item to the form or list
+            alert('Add functionality will be implemented');
+        });
+
+        // Add Item button - Open Modal
+        $('#add-item-btn').on('click', function() {
+            // Set today's date as default
+            var today = new Date().toISOString().split('T')[0];
+            $('#item-date').val(today);
+            
+            // Clear form
+            $('#add-item-form')[0].reset();
+            $('#item-date').val(today);
+            $('#requester-name').val('{{ request.user.first_name }} {{ request.user.last_name }}');
+            
+            // Show modal
+            $('#addItemModal').modal('show');
+        });
+
+        // Handle Add Item Form Submission
+        $('#add-item-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            var date = $('#item-date').val();
+            var transactionNo = $('#transaction-no').val();
+            var requesterName = $('#requester-name').val();
+            var itemCode = $('#item-code').val();
+            var description = $('#item-description').val();
+            var mainCategory = $('#main-category').val();
+            var subCategory = $('#sub-category').val();
+            var unit = $('#item-unit').val();
+            var quantity = $('#item-quantity').val();
+            
+            // Validate form
+            if (!date || !transactionNo || !requesterName || !itemCode || !description || 
+                !mainCategory || !subCategory || !unit || !quantity) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            // Check if table has placeholder row
+            var tableBody = $('#requested-items-table');
+            if (tableBody.find('tr').length === 1 && tableBody.find('td[colspan]').length > 0) {
+                tableBody.empty();
+            }
+            
+            // Get row number
+            var rowNumber = tableBody.find('tr').length + 1;
+            
+            // Format date for display
+            var dateObj = new Date(date);
+            var formattedDate = dateObj.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            // Add row to table
+            var newRow = '<tr>' +
+                '<td>' + rowNumber + '</td>' +
+                '<td>' + formattedDate + '</td>' +
+                '<td>' + transactionNo + '</td>' +
+                '<td>' + requesterName + '</td>' +
+                '<td>' + itemCode + '</td>' +
+                '<td>' + description + '</td>' +
+                '<td>' + mainCategory + '</td>' +
+                '<td>' + subCategory + '</td>' +
+                '<td>' + unit + '</td>' +
+                '<td>' + quantity + '</td>' +
+                '</tr>';
+            
+            tableBody.append(newRow);
+            
+            // Close modal
+            $('#addItemModal').modal('hide');
+            
+            // Show success message
+            alert('Item added successfully!');
+        });
+
+        // Edit button
+        $('#edit-btn').on('click', function() {
+            // TODO: Edit selected item from table
+            alert('Edit functionality will be implemented');
+        });
+
+        // Search item functionality
+        $('#search_item').on('input', function() {
+            var searchTerm = $(this).val();
+            // TODO: Implement autocomplete/search functionality
+            // This will search for items and populate other fields
+        });
+
+        // Table row click handler
+        $('#requested-items-table tr').on('click', function() {
+            $(this).siblings().removeClass('table-primary');
+            $(this).addClass('table-primary');
+        });
+
+        // Main Category change handler - Populate Sub-Categories
+        $('#main-category').on('change', function() {
+            var mainCategory = $(this).val();
+            var subCategorySelect = $('#sub-category');
+            subCategorySelect.empty();
+            subCategorySelect.append('<option value="">Select sub-category</option>');
+            
+            // Define sub-categories based on main category
+            var subCategories = {
+                'Medical Supplies': ['Medications', 'Surgical Instruments', 'Disinfectants', 'Bandages', 'Syringes', 'Gloves'],
+                'Office Supplies': ['Paper', 'Pens', 'Folders', 'Envelopes', 'Staples', 'Toner'],
+                'Equipment': ['Medical Equipment', 'Office Equipment', 'IT Equipment', 'Maintenance Tools'],
+                'Consumables': ['Cleaning Supplies', 'Food Items', 'Beverages', 'Personal Care']
+            };
+            
+            if (subCategories[mainCategory]) {
+                $.each(subCategories[mainCategory], function(index, value) {
+                    subCategorySelect.append('<option value="' + value + '">' + value + '</option>');
+                });
+            }
+        });
+
+        // Clear form when modal is closed
+        $('#addItemModal').on('hidden.bs.modal', function() {
+            $('#add-item-form')[0].reset();
+            $('#sub-category').empty().append('<option value="">Select sub-category</option>');
+        });
+        
+        // Select All checkbox
+        $('#select-all').on('change', function() {
+            $('.request-checkbox').prop('checked', $(this).prop('checked'));
+        });
+        
+        // Approved button handler
+        $('#approved-btn').on('click', function() {
+            var selectedRequests = $('.request-checkbox:checked');
+            
+            if (selectedRequests.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Selection',
+                    text: 'Please select at least one request to approve.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You are about to approve ' + selectedRequests.length + ' request(s). This will deduct stock from inventory.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, approve!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    approveRequests(selectedRequests);
+                }
+            });
+        });
+        
+        // Function to approve multiple requests
+        function approveRequests(selectedCheckboxes) {
+            var requestIds = [];
+            selectedCheckboxes.each(function() {
+                requestIds.push($(this).val());
+            });
+            
+            var csrftoken = getCookie('csrftoken');
+            var approvedCount = 0;
+            var failedCount = 0;
+            var totalRequests = requestIds.length;
+            var processedCount = 0;
+            
+            // Process each request
+            requestIds.forEach(function(requestId) {
+                $.ajax({
+                    url: '/api/request-supplies/' + requestId + '/update-status/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        'status': 'approved'
+                    }),
+                    success: function(response) {
+                        processedCount++;
+                        if (response.success) {
+                            approvedCount++;
+                        } else {
+                            failedCount++;
+                        }
+                        
+                        // When all requests are processed
+                        if (processedCount === totalRequests) {
+                            // Reload requests to show updated status
+                            loadRequests();
+                            
+                            // Show success message
+                            if (approvedCount > 0) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Approved!',
+                                    text: approvedCount + ' request(s) approved successfully. Real-time balance has been updated.',
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                }).then(function() {
+                                    // Refresh the page to show updated balances in Replenish page
+                                    // You can also make an AJAX call to refresh supply data if needed
+                                    location.reload();
+                                });
+                            }
+                            
+                            if (failedCount > 0) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Partial Success',
+                                    text: approvedCount + ' approved, ' + failedCount + ' failed.',
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        processedCount++;
+                        failedCount++;
+                        
+                        if (processedCount === totalRequests) {
+                            loadRequests();
+                            
+                            var errorMsg = 'Failed to approve some requests.';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            
+                            if (approvedCount > 0) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Partial Success',
+                                    text: approvedCount + ' approved, ' + failedCount + ' failed. ' + errorMsg,
+                                    timer: 4000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: errorMsg,
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock custom_js %}
+

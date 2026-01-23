@@ -1,0 +1,399 @@
+{% extends 'staff/base/base.html' %}
+
+{% block title %}
+PhilHealth Inventory - Staff Dashboard
+{% endblock title %}
+
+{% block page_title %}
+PhilHealth Inventory Management - Staff Dashboard
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "warning" %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Welcome Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary card-outline">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h3 class="mb-1">
+                                    <i class="fas fa-user-tie mr-2"></i>
+                                    Welcome, {{ request.user.first_name }} {{ request.user.last_name }}!
+                                </h3>
+                                <p class="text-muted mb-0">Staff Dashboard - Manage inventory operations efficiently</p>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <p class="mb-0"><strong>Role:</strong> <span class="badge badge-success">Staff</span></p>
+                                <p class="mb-0 text-muted"><small>Last login: {{ request.user.last_login|date:"M d, Y H:i"|default:"First time login" }}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards Row -->
+        <div class="row">
+            <!-- Total Items -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_items|default:0 }}</h3>
+                        <p>Total Items</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        View Items <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Low Stock Items -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{{ low_stock_items|default:0 }}</h3>
+                        <p>Low Stock Items</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        View Alerts <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Total Categories -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ total_categories|default:0 }}</h3>
+                        <p>Total Categories</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        View Categories <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Total Inventory Value -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3>₱{{ total_value|default:0|floatformat:2 }}</h3>
+                        <p>Total Inventory Value</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-peso-sign"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        View Details <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row">
+            <!-- Low Stock Alerts -->
+            <div class="col-lg-6">
+                <div class="card card-warning card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Low Stock Alerts
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if low_stock_list %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Current Stock</th>
+                                        <th>Min. Threshold</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in low_stock_list %}
+                                    <tr>
+                                        <td>{{ item.name }}</td>
+                                        <td><span class="badge badge-warning">{{ item.quantity }}</span></td>
+                                        <td>{{ item.min_threshold }}</td>
+                                        <td><span class="badge badge-danger">Low Stock</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <p>No low stock items. All items are well stocked!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="col-lg-6">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-exchange-alt mr-1"></i>
+                            Recent Transactions
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Item</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>{{ transaction.date|date:"M d, Y" }}</td>
+                                        <td>{{ transaction.item_name }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'IN' %}
+                                                <span class="badge badge-success">Stock In</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Stock Out</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.quantity }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>No recent transactions</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions and Recent Items Row -->
+        <div class="row">
+            <!-- Quick Actions -->
+            <div class="col-lg-6">
+                <div class="card card-success card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-bolt mr-1"></i>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a href="#" class="btn btn-block btn-primary btn-lg">
+                                    <i class="fas fa-search mr-2"></i>
+                                    Search Items
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="#" class="btn btn-block btn-success btn-lg">
+                                    <i class="fas fa-arrow-down mr-2"></i>
+                                    Stock In
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="#" class="btn btn-block btn-warning btn-lg">
+                                    <i class="fas fa-arrow-up mr-2"></i>
+                                    Stock Out
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="#" class="btn btn-block btn-info btn-lg">
+                                    <i class="fas fa-list mr-2"></i>
+                                    View Inventory
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="#" class="btn btn-block btn-secondary btn-lg">
+                                    <i class="fas fa-file-export mr-2"></i>
+                                    Generate Report
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'staff_update_profile' %}" class="btn btn-block btn-dark btn-lg">
+                                    <i class="fas fa-user-edit mr-2"></i>
+                                    Update Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Items Added -->
+            <div class="col-lg-6">
+                <div class="card card-info card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-clock mr-1"></i>
+                            Recently Added Items
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if recent_items %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Category</th>
+                                        <th>Quantity</th>
+                                        <th>Date Added</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in recent_items %}
+                                    <tr>
+                                        <td>{{ item.name }}</td>
+                                        <td><span class="badge badge-info">{{ item.category }}</span></td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.date_added|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <i class="fas fa-box-open fa-2x mb-2"></i>
+                            <p>No items added recently</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Summary -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-bar mr-1"></i>
+                            Inventory Overview
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p class="text-center text-muted">
+                                    <i class="fas fa-chart-line fa-3x mb-3"></i><br>
+                                    Chart visualization will be available here once inventory data is available.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    $(document).ready(function() {
+        setTimeout(function() {
+            $('.alert').fadeOut('slow', function() {
+                $(this).remove();
+            });
+        }, 5000);
+    });
+</script>
+{% endblock custom_js %}

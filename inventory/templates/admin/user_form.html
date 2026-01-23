@@ -1,0 +1,308 @@
+{% extends 'admin/base/base.html' %}
+
+{% block title %}
+{% if form_type == 'create' %}Create User{% else %}Edit User{% endif %}
+{% endblock title %}
+
+{% block page_title %}
+{% if form_type == 'create' %}Create New User{% else %}Edit User: {{ user.username }}{% endif %}
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-user-{% if form_type == 'create' %}plus{% else %}edit{% endif %} mr-2"></i>
+                            {% if form_type == 'create' %}Create New User{% else %}Edit User{% endif %}
+                        </h3>
+                    </div>
+                    <form method="POST" action="{% if form_type == 'create' %}{% url 'user_create' %}{% else %}{% url 'user_edit' user.id %}{% endif %}">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Username (only for create) -->
+                            {% if form_type == 'create' %}
+                            <div class="form-group">
+                                <label for="username">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{% if form_data %}{{ form_data.username }}{% endif %}" required>
+                            </div>
+                            {% else %}
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                                <small class="form-text text-muted">Username cannot be changed.</small>
+                            </div>
+                            {% endif %}
+
+                            <!-- First Name -->
+                            <div class="form-group">
+                                <label for="first_name">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{% if form_type == 'edit' %}{{ user.first_name }}{% elif form_data %}{{ form_data.first_name }}{% endif %}">
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="form-group">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{% if form_type == 'edit' %}{{ user.last_name }}{% elif form_data %}{{ form_data.last_name }}{% endif %}">
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="email">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{% if form_type == 'edit' %}{{ user.email }}{% elif form_data %}{{ form_data.email }}{% endif %}" required>
+                            </div>
+
+                            <!-- Role Selection -->
+                            <div class="form-group">
+                                <label>Role <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="role_admin" value="admin" 
+                                           {% if current_role == 'admin' or form_type == 'create' and not form_data or form_data.role == 'admin' %}checked{% endif %}>
+                                    <label class="form-check-label" for="role_admin">
+                                        <span class="badge badge-warning">Admin</span> - Superuser (Full access)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="role_staff" value="staff" 
+                                           {% if current_role == 'staff' or form_data.role == 'staff' %}checked{% endif %}>
+                                    <label class="form-check-label" for="role_staff">
+                                        <span class="badge badge-info">Staff</span> - Staff user (Limited access)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="role_regular" value="regular" 
+                                           {% if current_role == 'regular' or form_data.role == 'regular' %}checked{% endif %}>
+                                    <label class="form-check-label" for="role_regular">
+                                        <span class="badge badge-secondary">Regular</span> - Regular user
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <strong>Note:</strong> Admin = Superuser (is_superuser=True), Staff = Staff user (is_staff=True, is_superuser=False)
+                                </small>
+                            </div>
+
+                            <!-- Active Status -->
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active" 
+                                           {% if form_type == 'edit' and user.is_active or form_type == 'create' and not form_data or form_data.is_active == 'on' %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        Active Account
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">Inactive users cannot log in.</small>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- Password Section -->
+                            <h5 class="mb-3">
+                                <i class="fas fa-lock mr-2"></i>
+                                {% if form_type == 'create' %}Set Password{% else %}Change Password (Optional){% endif %}
+                            </h5>
+                            {% if form_type == 'edit' %}
+                            <p class="text-muted">Leave blank if you don't want to change the password.</p>
+                            {% endif %}
+
+                            <!-- New Password -->
+                            <div class="form-group">
+                                <label for="password">Password {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}</label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Enter password" {% if form_type == 'create' %}required{% endif %}>
+                                
+                                <!-- Password Requirements Checklist -->
+                                <div class="mt-2" id="password-requirements" style="display: none;">
+                                    <small class="d-block mb-2"><strong>Password Requirements:</strong></small>
+                                    <ul class="list-unstyled mb-0" style="font-size: 0.875rem;">
+                                        <li id="req-length" class="text-muted">
+                                            <i class="fas fa-times text-danger mr-1"></i>
+                                            At least 8 characters
+                                        </li>
+                                        <li id="req-uppercase" class="text-muted">
+                                            <i class="fas fa-times text-danger mr-1"></i>
+                                            At least one uppercase letter (A-Z)
+                                        </li>
+                                        <li id="req-lowercase" class="text-muted">
+                                            <i class="fas fa-times text-danger mr-1"></i>
+                                            At least one lowercase letter (a-z)
+                                        </li>
+                                        <li id="req-number" class="text-muted">
+                                            <i class="fas fa-times text-danger mr-1"></i>
+                                            At least one number (0-9)
+                                        </li>
+                                        <li id="req-special" class="text-muted">
+                                            <i class="fas fa-times text-danger mr-1"></i>
+                                            At least one special character (!@#$%^&*)
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- Password Strength Indicator -->
+                                <div class="mt-2">
+                                    <div class="progress" style="height: 8px; display: none;" id="password-strength">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <small id="strength-text" class="form-text text-muted" style="display: none;"></small>
+                                </div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm Password {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                       placeholder="Confirm password" {% if form_type == 'create' %}required{% endif %}>
+                                <small id="confirm-feedback" class="form-text" style="display: none;"></small>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-2"></i>
+                                {% if form_type == 'create' %}Create User{% else %}Update User{% endif %}
+                            </button>
+                            <a href="{% url 'users' %}" class="btn btn-secondary">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    // Real-time password validation (same as update_profile.html)
+    $('#password').on('input', function() {
+        var password = $(this).val();
+        var requirementsDiv = $('#password-requirements');
+        var strengthBar = $('#password-strength');
+        var progressBar = strengthBar.find('.progress-bar');
+        var strengthText = $('#strength-text');
+        
+        if (password.length > 0) {
+            requirementsDiv.show();
+            strengthBar.show();
+            
+            var hasLength = password.length >= 8;
+            var hasUppercase = /[A-Z]/.test(password);
+            var hasLowercase = /[a-z]/.test(password);
+            var hasNumber = /[0-9]/.test(password);
+            var hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            
+            updateRequirement('req-length', hasLength);
+            updateRequirement('req-uppercase', hasUppercase);
+            updateRequirement('req-lowercase', hasLowercase);
+            updateRequirement('req-number', hasNumber);
+            updateRequirement('req-special', hasSpecial);
+            
+            var requirementsMet = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+            var strength = (requirementsMet / 5) * 100;
+            
+            progressBar.css('width', strength + '%');
+            
+            if (strength < 40) {
+                progressBar.removeClass('bg-success bg-warning').addClass('bg-danger');
+                strengthText.removeClass('text-success text-warning').addClass('text-danger').text('Weak Password').show();
+            } else if (strength < 80) {
+                progressBar.removeClass('bg-danger bg-success').addClass('bg-warning');
+                strengthText.removeClass('text-danger text-success').addClass('text-warning').text('Medium Password').show();
+            } else {
+                progressBar.removeClass('bg-danger bg-warning').addClass('bg-success');
+                strengthText.removeClass('text-danger text-warning').addClass('text-success').text('Strong Password').show();
+            }
+            
+            if (requirementsMet === 5) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+            }
+            
+            if ($('#confirm_password').val().length > 0) {
+                $('#confirm_password').trigger('input');
+            }
+        } else {
+            requirementsDiv.hide();
+            strengthBar.hide();
+            strengthText.hide();
+            $(this).removeClass('is-valid is-invalid');
+        }
+    });
+    
+    function updateRequirement(id, isValid) {
+        var element = $('#' + id);
+        var icon = element.find('i');
+        
+        if (isValid) {
+            icon.removeClass('fa-times text-danger').addClass('fa-check text-success');
+            element.removeClass('text-muted').addClass('text-success');
+        } else {
+            icon.removeClass('fa-check text-success').addClass('fa-times text-danger');
+            element.removeClass('text-success').addClass('text-muted');
+        }
+    }
+
+    $('#confirm_password').on('input', function() {
+        var password = $('#password').val();
+        var confirmPassword = $(this).val();
+        var feedback = $('#confirm-feedback');
+        
+        if (confirmPassword.length > 0) {
+            if (password.length === 0) {
+                $(this).removeClass('is-valid is-invalid');
+                feedback.hide();
+            } else if (password === confirmPassword) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                feedback.removeClass('text-danger').addClass('text-success').html('<i class="fas fa-check-circle mr-1"></i>Passwords match').show();
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+                feedback.removeClass('text-success').addClass('text-danger').html('<i class="fas fa-times-circle mr-1"></i>Passwords do not match').show();
+            }
+        } else {
+            $(this).removeClass('is-valid is-invalid');
+            feedback.hide();
+        }
+    });
+</script>
+{% endblock custom_js %}
+

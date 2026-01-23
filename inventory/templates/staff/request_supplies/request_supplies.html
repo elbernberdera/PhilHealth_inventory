@@ -1,0 +1,978 @@
+{% extends 'staff/base/base.html' %}
+
+{% block title %}Request Supplies{% endblock title %}
+{% block page_title %}Request Supplies{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<style>
+    /* Tab styling to match green theme (same as Replenish.html) */
+    #request-tabs .nav-link {
+        color: #000000 !important;
+        background-color: transparent;
+        border-color: transparent;
+        font-weight: 500;
+    }
+    
+    #request-tabs .nav-link:hover {
+        color: #28a745 !important;
+        border-color: transparent;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    #request-tabs .nav-link.active {
+        color: #28a745 !important;
+        background-color: #ffffff;
+        border-color: #28a745 #28a745 #ffffff;
+        border-bottom-color: transparent;
+        font-weight: 600;
+    }
+    
+    #request-tabs .nav-link.active:hover {
+        color: #28a745 !important;
+        border-color: #28a745 #28a745 #ffffff;
+    }
+    
+    /* Card border color - green instead of blue */
+    .card.card-outline.card-success {
+        border-top: 3px solid #28a745 !important;
+    }
+    
+    .card.card-outline.card-success .card-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    /* Search results dropdown styling under the search box */
+    #search-results-dropdown {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        background: #ffffff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+
+    #search-results-dropdown .list-group-item {
+        cursor: pointer;
+        border-left: none;
+        border-right: none;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    #search-results-dropdown .list-group-item:first-child {
+        border-top: none;
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
+    }
+
+    #search-results-dropdown .list-group-item:last-child {
+        border-bottom: none;
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    #search-results-dropdown .list-group-item:hover {
+        background-color: #f8f9fa;
+        color: #28a745;
+    }
+
+    /* Out of stock items styling */
+    #search-results-dropdown .list-group-item-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    #search-results-dropdown .list-group-item-danger:hover {
+        background-color: #f5c6cb;
+        color: #721c24;
+        cursor: not-allowed;
+    }
+
+    #search-results-dropdown .list-group-item strong {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    /* Layout for description text (left) and qty (right) in search results */
+    #search-results-dropdown .search-result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #search-results-dropdown .search-result-text {
+        flex: 1 1 auto;
+        margin-right: 0.5rem;
+    }
+
+    #search-results-dropdown .search-result-qty {
+        flex: 0 0 auto;
+        font-size: 0.8rem;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">Request Supplies</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" id="current-date" style="font-size: 1.1rem; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- Search bar at top right (outside card, matching Replenish style) -->
+        <div class="row mb-3">
+            <div class="col-md-6 ml-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-requested-items" placeholder="Search...">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIST OF REQUESTED ITEMS Section (match Replenish UI style) -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-success mt-3">
+                    <div class="card-header p-0">
+                        <!-- Tabs Navigation -->
+                        <ul class="nav nav-tabs" id="request-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" id="pending-requests-tab" data-toggle="tab" href="#pending-requests" role="tab" aria-controls="pending-requests" aria-selected="true">
+                                    <i class="fas fa-clock mr-1"></i>Pending Requests
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="false">
+                                    <i class="fas fa-check-circle mr-1"></i>Approved
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="request-tab-content">
+                            <!-- Pending Requests Tab -->
+                            <div class="tab-pane fade show active" id="pending-requests" role="tabpanel" aria-labelledby="pending-requests-tab">
+                                <!-- No Matching Results Message -->
+                                <div id="no-results-message-pending" class="text-center py-5" style="display: none;">
+                                    <i class="fas fa-search fa-3x text-muted mb-3" style="opacity: 0.5;"></i>
+                                    <h5 class="text-muted">No matching results found</h5>
+                                    <p class="text-muted">Try a different search term</p>
+                                </div>
+                                
+                                <!-- Action Button -->
+                                <div class="row mb-3">
+                                    <div class="col-md-12 text-right">
+                                        <button type="button" class="btn btn-success btn-sm" id="add-item-btn">
+                                            <i class="fas fa-plus mr-1"></i>Request Supplies
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Requested items table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="request-items-tbody">
+                                            <!-- Rows will be added via JavaScript later -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Approved Tab -->
+                            <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                                <!-- No Matching Results Message -->
+                                <div id="no-results-message-approved" class="text-center py-5" style="display: none;">
+                                    <i class="fas fa-search fa-3x text-muted mb-3" style="opacity: 0.5;"></i>
+                                    <h5 class="text-muted">No matching results found</h5>
+                                    <p class="text-muted">Try a different search term</p>
+                                </div>
+                                
+                                <!-- Approved items table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">No.</th>
+                                                <th>Date</th>
+                                                <th>Transaction No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th>Status</th>
+                                                <th>Conforme By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="approved-items-tbody">
+                                            <!-- Rows will be added via JavaScript later -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" role="dialog"
+     aria-labelledby="addItemModalLabel" aria-hidden="true"
+     data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #28a745; color: #fff; border-bottom: none;">
+                <h5 class="modal-title" id="addItemModalLabel">
+                    <i class="fas fa-plus-circle mr-2"></i>Add Supplies to Request
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                        style="color: #fff; opacity: 1;">
+                    <span aria-hidden="true" style="font-size: 1.5rem;">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Item -->
+                <div class="form-group mb-0">
+                    <label for="search-supply-description">
+                        <i class="fas fa-search mr-2"></i>Search supply
+                    </label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="search-supply-description"
+                               placeholder="Type item description to search..." autocomplete="off">
+                        <!-- Dropdown list of results (all DB descriptions, filtered as you type) -->
+                        <div id="search-results-dropdown" class="list-group" style="display: none;">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                    <small class="form-text text-muted" id="search-help-text">
+                        Start typing to search available supplies...
+                    </small>
+                    <div id="search-loading" class="text-center mt-2" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Searching...
+                    </div>
+                    <div id="no-results-message" class="alert alert-info mt-2" style="display: none;">
+                        <i class="fas fa-info-circle mr-2"></i>No items found matching your search.
+                    </div>
+                </div>
+                <!-- Extra spacing between search area and description row (approx. 1 inch) -->
+                <div class="mb-5"></div>
+
+                <!-- Description / Sub-Category row -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="item-description">
+                                <i class="fas fa-file-alt mr-2"></i>Description <span class="text-danger">*</span>
+                            </label>
+                            <!-- Filled automatically from the search bar selection -->
+                            <input type="text" class="form-control" id="item-description"
+                                   placeholder="Enter Items "  required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="item-sub-category">
+                                <i class="fas fa-tags mr-2"></i>Sub-Category
+                            </label>
+                            <input type="text" class="form-control" id="item-sub-category"
+                                   placeholder="Enter sub-category">
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="selected-supply-id">
+
+                <!-- Quantity / Unit row -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="item-quantity">
+                                <i class="fas fa-calculator mr-2"></i>Quantity <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="item-quantity"
+                                   placeholder="Enter quantity" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="item-unit">
+                                <i class="fas fa-ruler mr-2"></i>Unit <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="item-unit"
+                                   placeholder="Enter unit (e.g., Pcs, Box, Ream)" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="save-item-btn">Add Supplies</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Header date
+        var today = new Date();
+        var options = {year: 'numeric', month: 'long', day: 'numeric'};
+        var dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            dateEl.textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Pagination state
+        var currentPagePending = 1;
+        var currentPageApproved = 1;
+        var totalPagesPending = 1;
+        var totalPagesApproved = 1;
+        var activeTab = 'pending'; // Track active tab
+
+        // Load and display requested supplies in table (10 per page) - filtered by status
+        function loadRequestSupplies(page, status) {
+            if (!page) {
+                page = 1;
+            }
+            if (!status) {
+                status = 'pending'; // Default to pending
+            }
+            
+            $.ajax({
+                url: '{% url "request_supply_list" %}',
+                method: 'GET',
+                data: { page: page, status: status },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.requests) {
+                        if (status === 'approved') {
+                            currentPageApproved = response.pagination.current_page;
+                            totalPagesApproved = response.pagination.total_pages;
+                            renderRequestTable(response.requests, response.pagination, 'approved');
+                        } else {
+                            currentPagePending = response.pagination.current_page;
+                            totalPagesPending = response.pagination.total_pages;
+                            renderRequestTable(response.requests, response.pagination, 'pending');
+                        }
+                    } else {
+                        var tbodyId = status === 'approved' ? '#approved-items-tbody' : '#request-items-tbody';
+                        $(tbodyId).html('<tr><td colspan="11" class="text-center text-muted">No requests found.</td></tr>');
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load request supplies.');
+                    var tbodyId = status === 'approved' ? '#approved-items-tbody' : '#request-items-tbody';
+                    $(tbodyId).html('<tr><td colspan="11" class="text-center text-danger">Error loading requests.</td></tr>');
+                }
+            });
+        }
+
+        // Helper function to escape HTML (prevent XSS)
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Helper function to get status badge class
+        function getStatusBadgeClass(statusValue) {
+            var statusMap = {
+                'approved': 'badge-success',
+                'rejected': 'badge-danger',
+                'pending': 'badge-warning',
+                'Out of Stocks': 'badge-danger'
+            };
+            return statusMap[statusValue] || 'badge-secondary';
+        }
+
+        // Render request supplies in table (optimized with document fragment)
+        function renderRequestTable(requests, pagination, tabType) {
+            var tbodyId = tabType === 'approved' ? 'approved-items-tbody' : 'request-items-tbody';
+            var tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+
+            // Clear existing content
+            tbody.innerHTML = '';
+
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No requests found.</td></tr>';
+                renderPaginationControls(pagination, tabType);
+                return;
+            }
+
+            var startIndex = (pagination.current_page - 1) * pagination.page_size;
+            
+            // Use document fragment for better performance when adding multiple rows
+            var fragment = document.createDocumentFragment();
+
+            requests.forEach(function(req, index) {
+                var rowNum = startIndex + index + 1;
+                var statusClass = getStatusBadgeClass(req.status_value);
+                var statusText = req.status || 'Pending';
+                
+                // Use template literals for cleaner, more readable code
+                var row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${rowNum}</td>
+                    <td>${escapeHtml(req.date || '')}</td>
+                    <td>${escapeHtml(req.transaction_no || '')}</td>
+                    <td>${escapeHtml(req.item_code || '')}</td>
+                    <td>${escapeHtml(req.description || '')}</td>
+                    <td>${escapeHtml(req.main_category || '')}</td>
+                    <td>${escapeHtml(req.sub_category || '')}</td>
+                    <td>${escapeHtml(req.unit || '')}</td>
+                    <td>${req.quantity || 0}</td>
+                    <td><span class="badge ${statusClass}">${escapeHtml(statusText)}</span></td>
+                    <td>${escapeHtml(req.conforme_by || '-')}</td>
+                `;
+                fragment.appendChild(row);
+            });
+
+            // Append all rows at once (better performance)
+            tbody.appendChild(fragment);
+
+            // Render pagination controls
+            renderPaginationControls(pagination, tabType);
+            
+            // Re-run search after rendering to apply any existing search filter
+            setTimeout(function() {
+                performSearch();
+            }, 100);
+            
+            // Re-run search after rendering to apply any existing search filter
+            setTimeout(function() {
+                performSearch();
+            }, 100);
+        }
+
+        function renderPaginationControls(pagination, tabType) {
+            var containerId = tabType === 'approved' ? 'approved-pagination' : 'request-pagination';
+            var container = $('#' + containerId);
+            if (!container.length) {
+                // Create container under the appropriate table
+                var tableSelector = tabType === 'approved' ? '#approved .table-responsive' : '#pending-requests .table-responsive';
+                $(tableSelector).after('<div class="d-flex justify-content-between align-items-center mt-2" id="' + containerId + '"></div>');
+                container = $('#' + containerId);
+            }
+
+            var html = '';
+            html += '<div>Page ' + pagination.current_page + ' of ' + pagination.total_pages + '</div>';
+            html += '<div>';
+            html += '<button class="btn btn-sm btn-outline-secondary mr-2" id="' + containerId + '-prev" ' + (pagination.has_previous ? '' : 'disabled') + '>Previous</button>';
+            html += '<button class="btn btn-sm btn-outline-secondary" id="' + containerId + '-next" ' + (pagination.has_next ? '' : 'disabled') + '>Next</button>';
+            html += '</div>';
+
+            container.html(html);
+
+            // Attach handlers
+            $('#' + containerId + '-prev').off('click').on('click', function() {
+                if (pagination.has_previous) {
+                    loadRequestSupplies(pagination.current_page - 1, tabType);
+                }
+            });
+            $('#' + containerId + '-next').off('click').on('click', function() {
+                if (pagination.has_next) {
+                    loadRequestSupplies(pagination.current_page + 1, tabType);
+                }
+            });
+        }
+
+        // Tab switching handler
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var target = $(e.target).attr("href"); // e.g., #pending-requests or #approved
+            if (target === '#approved') {
+                activeTab = 'approved';
+                loadRequestSupplies(1, 'approved');
+            } else {
+                activeTab = 'pending';
+                loadRequestSupplies(1, 'pending');
+            }
+            // Re-run search when switching tabs
+            performSearch();
+        });
+
+        // Search functionality - Real-time filter visible table rows (client-side filtering)
+        var visibleRows = [];
+        
+        function performSearch() {
+            var searchTerm = $('#search-requested-items').val().toLowerCase().trim();
+            
+            // Determine which table to search based on active tab
+            var activeTableSelector;
+            
+            if (activeTab === 'approved') {
+                activeTableSelector = '#approved-items-tbody';
+            } else {
+                activeTableSelector = '#request-items-tbody';
+            }
+            
+            var $tbody = $(activeTableSelector);
+            if ($tbody.length === 0) {
+                return;
+            }
+            
+            var rows = $tbody.find('tr');
+            visibleRows = [];
+            var visibleCount = 0;
+            
+            // Remove any existing "no results" row
+            $tbody.find('.no-results-row').remove();
+            
+            rows.each(function() {
+                var $row = $(this);
+                
+                // Skip the "No requests found" row and "no results" row
+                if ($row.find('td[colspan]').length > 0 || $row.hasClass('no-results-row')) {
+                    // Hide empty state rows when searching
+                    if (searchTerm) {
+                        $row.hide();
+                    } else {
+                        // Only show empty state if there are no data rows
+                        var hasDataRows = $tbody.find('tr').not(':has(td[colspan])').not('.no-results-row').length > 0;
+                        if (!hasDataRows) {
+                            $row.show();
+                        } else {
+                            $row.hide();
+                        }
+                    }
+                    return;
+                }
+                
+                // If search term is empty, show all rows
+                if (searchTerm === '') {
+                    $row.show();
+                    visibleRows.push($row[0]);
+                    visibleCount++;
+                    return;
+                }
+                
+                // Get all text from the row (excluding buttons)
+                var rowText = '';
+                $row.find('td').each(function() {
+                    // Skip if it contains buttons
+                    if ($(this).find('.btn').length === 0) {
+                        rowText += $(this).text().toLowerCase().trim() + ' ';
+                    }
+                });
+                
+                // Check if search term matches any part of the row text
+                if (rowText.indexOf(searchTerm) > -1) {
+                    $row.show();
+                    visibleRows.push($row[0]);
+                    visibleCount++;
+                } else {
+                    $row.hide();
+                }
+            });
+            
+            // Hide the entire table if no matching results and search term is not empty
+            var $tableContainer = $tbody.closest('.table-responsive');
+            var $noResultsMessage;
+            
+            if (activeTab === 'approved') {
+                $noResultsMessage = $('#no-results-message-approved');
+            } else {
+                $noResultsMessage = $('#no-results-message-pending');
+            }
+            
+            if (searchTerm && visibleCount === 0) {
+                // Hide the table when no matches found
+                $tableContainer.hide();
+                // Show "No matching results" message if element exists
+                if ($noResultsMessage.length) {
+                    $noResultsMessage.show();
+                }
+            } else {
+                // Show the table when there are matches or no search
+                $tableContainer.show();
+                // Hide "No matching results" message
+                if ($noResultsMessage.length) {
+                    $noResultsMessage.hide();
+                }
+            }
+        }
+        
+        // Search input event handler
+        $('#search-requested-items').on('input keyup paste', function(e) {
+            performSearch();
+        });
+
+        // Load requests when page loads (first page - pending requests)
+        loadRequestSupplies(1, 'pending');
+        
+        // Initialize search on page load
+        setTimeout(function() {
+            performSearch();
+        }, 500);
+
+        // All unique descriptions from DB
+        var uniqueDescriptions = [];
+        // Extra details per description (e.g., id, unit, sub-category, available qty, cost)
+        var descriptionDetails = {};
+
+        function loadDescriptions() {
+            $.ajax({
+                url: '{% url "supply_list" %}',
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    if (!response.success || !response.supplies) {
+                        return;
+                    }
+
+                    var map = {};
+                    response.supplies.forEach(function (supply) {
+                        if (supply.description && String(supply.description).trim() !== '') {
+                            var desc = String(supply.description).trim();
+                            map[desc] = true;
+                            
+                            // FIFO: Store oldest supply for each description (first one encountered is oldest due to ordering)
+                            if (!descriptionDetails[desc]) {
+                                // Determine available quantity (prefer real_time_balance)
+                                var available = parseInt(supply.real_time_balance || 0, 10) || 0;
+                                descriptionDetails[desc] = {
+                                    id: supply.id,
+                                    item_code: supply.item_code || '',
+                                    unit: supply.unit || '',
+                                    sub_category: supply.sub_category || '',
+                                    available: available,
+                                    cost_per_item: parseFloat(supply.cost_per_item || '0') || 0,
+                                    date: supply.date || '',
+                                    has_stock: available > 0
+                                };
+                            } else {
+                                // If we already have one, check if this one is older and has stock
+                                // (Since supplies are ordered FIFO, first one is oldest)
+                                // But if first one has no stock, use the next one with stock
+                                var currentAvailable = parseInt(supply.real_time_balance || 0, 10) || 0;
+                                if (descriptionDetails[desc].available <= 0 && currentAvailable > 0) {
+                                    // Update to use supply with stock
+                                    descriptionDetails[desc] = {
+                                        id: supply.id,
+                                        item_code: supply.item_code || '',
+                                        unit: supply.unit || '',
+                                        sub_category: supply.sub_category || '',
+                                        available: currentAvailable,
+                                        cost_per_item: parseFloat(supply.cost_per_item || '0') || 0,
+                                        date: supply.date || '',
+                                        has_stock: true
+                                    };
+                                }
+                            }
+                        }
+                    });
+
+                    uniqueDescriptions = Object.keys(map).sort();
+                },
+                error: function () {
+                    console.error('Failed to load descriptions.');
+                }
+            });
+        }
+
+        // Open modal
+        $('#add-item-btn').on('click', function () {
+            $('#addItemModal').modal('show');
+        });
+
+        // When modal is shown, load descriptions once
+        $('#addItemModal').on('shown.bs.modal', function () {
+            if (!uniqueDescriptions.length) {
+                loadDescriptions();
+            }
+            // Clear search state
+            $('#search-supply-description').val('');
+            $('#item-description').val('');
+            $('#item-unit').val('');
+            $('#item-sub-category').val('');
+            $('#item-quantity').val('');
+            $('#selected-supply-id').val('');
+            $('#search-results-dropdown').hide();
+            $('#no-results-message').hide();
+            $('#search-loading').hide();
+            $('#search-help-text').show();
+        });
+
+        // Debounced search that filters the in‑memory description list
+        var searchTimeout = null;
+        $('#search-supply-description').on('input', function () {
+            var term = $(this).val().trim();
+
+            clearTimeout(searchTimeout);
+
+            // If nothing typed, show whole list
+            if (term === '') {
+                $('#search-loading').hide();
+                $('#search-help-text').show();
+                showFilteredDescriptions('');
+                return;
+            }
+
+            $('#search-help-text').hide();
+            $('#search-loading').show();
+            $('#no-results-message').hide();
+
+            searchTimeout = setTimeout(function () {
+                $('#search-loading').hide();
+                showFilteredDescriptions(term);
+            }, 250);
+        });
+
+        // Also show full list when field gains focus
+        $('#search-supply-description').on('focus', function () {
+            if (!uniqueDescriptions.length) {
+                loadDescriptions();
+            }
+            showFilteredDescriptions($(this).val().trim());
+        });
+
+        function showFilteredDescriptions(searchTerm) {
+            if (!uniqueDescriptions.length) {
+                $('#search-results-dropdown').hide();
+                return;
+            }
+
+            var hasTerm = searchTerm && searchTerm.length > 0;
+            var filtered = hasTerm
+                ? uniqueDescriptions.filter(function (d) {
+                    return d.toLowerCase().includes(searchTerm.toLowerCase());
+                })
+                : uniqueDescriptions.slice();
+
+            if (!filtered.length) {
+                $('#search-results-dropdown').hide();
+                $('#no-results-message').show();
+                return;
+            }
+
+            $('#no-results-message').hide();
+
+            var html = '';
+            filtered.forEach(function (description) {
+                var baseText = description;
+                if (hasTerm) {
+                    var safe = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    var re = new RegExp('(' + safe + ')', 'gi');
+                    baseText = description.replace(re, '<strong>$1</strong>');
+                }
+
+                var details = descriptionDetails[description] || {};
+                var qtyNumber = (typeof details.available === 'number') ? details.available : null;
+                var hasStock = details.has_stock !== false && qtyNumber > 0;
+                var stockClass = hasStock ? 'text-success' : 'text-danger';
+                var stockText = hasStock ? 'Available: ' + qtyNumber : 'Out of Stock';
+
+                var escaped = $('<div>').text(description).html();
+                html += '' +
+                    '<a href=\"#\" class=\"list-group-item list-group-item-action search-result-item ' + (hasStock ? '' : 'list-group-item-danger') + '\" ' +
+                    'data-description=\"' + escaped + '\" data-has-stock=\"' + hasStock + '\">' +
+                        '<span class=\"search-result-text\">' + baseText + '</span>' +
+                        '<span class=\"search-result-qty ' + stockClass + '\">' + stockText + '</span>' +
+                    '</a>';
+            });
+
+            $('#search-results-dropdown').html(html).show();
+        }
+
+        // Clicking a result sets search box + description + unit + sub-category
+        $(document).on('click', '.search-result-item', function (e) {
+            e.preventDefault();
+            var description = $(this).data('description');
+            var hasStock = $(this).data('has-stock') === true || $(this).data('has-stock') === 'true';
+            
+            // Warn if out of stock
+            if (!hasStock) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Out of Stock!',
+                    text: 'This item is currently out of stock. Please select another item or contact the administrator.',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+            
+            $('#search-supply-description').val(description);
+            $('#item-description').val(description);
+            // Auto-fill unit and sub-category based on selected description (if available)
+            if (descriptionDetails[description]) {
+                $('#item-unit').val(descriptionDetails[description].unit || '');
+                $('#item-sub-category').val(descriptionDetails[description].sub_category || '');
+                $('#selected-supply-id').val(descriptionDetails[description].id || '');
+            }
+            $('#search-results-dropdown').hide();
+            $('#search-help-text').hide();
+        });
+
+        // Hide dropdown when clicking outside
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#search-supply-description, #search-results-dropdown').length) {
+                $('#search-results-dropdown').hide();
+            }
+        });
+
+        // Helper to get CSRF token from cookies
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Save request (Add Supplies button)
+        $('#save-item-btn').on('click', function () {
+            var supplyId = $('#selected-supply-id').val();
+            var description = $('#item-description').val().trim();
+            var quantity = parseInt($('#item-quantity').val(), 10) || 0;
+
+            if (!description) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Description Required',
+                    text: 'Please select a supply from the search list first.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            if (!quantity || quantity <= 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Quantity',
+                    text: 'Please enter a valid quantity.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+
+            // Check available stock before submitting
+            var details = descriptionDetails[description];
+            if (details && details.available !== undefined) {
+                if (quantity > details.available) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Insufficient Stock!',
+                        text: 'Requested quantity (' + quantity + ') exceeds available stock (' + details.available + ').',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: '{% url "request_supply_create" %}',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    supply_id: supplyId || null,  // Can be null, backend will find by description (FIFO)
+                    description: description,
+                    quantity: quantity
+                }),
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            
+                            confirmButtonColor: '#28a745',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(function() {
+                            $('#addItemModal').modal('hide');
+                            // Clear form
+                            $('#search-supply-description').val('');
+                            $('#item-description').val('');
+                            $('#item-unit').val('');
+                            $('#item-sub-category').val('');
+                            $('#item-quantity').val('');
+                            $('#selected-supply-id').val('');
+                            // Reload descriptions to update stock
+                            uniqueDescriptions = [];
+                            descriptionDetails = {};
+                            loadDescriptions();
+                            // Reload the pending requests tab after adding new request
+                            loadRequestSupplies(1, 'pending');
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.error || 'Failed to submit request.',
+                            confirmButtonColor: '#28a745'
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error saving request:', xhr.responseText);
+                    var errorMsg = 'An error occurred while saving the request.';
+                    var isOutOfStock = false;
+                    
+                    if (xhr.responseJSON) {
+                        errorMsg = xhr.responseJSON.error || errorMsg;
+                        isOutOfStock = xhr.responseJSON.out_of_stock || false;
+                    }
+                    
+                    Swal.fire({
+                        icon: isOutOfStock ? 'warning' : 'error',
+                        title: isOutOfStock ? 'Out of Stock!' : 'Error',
+                        text: errorMsg,
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock main_content %}
+
+

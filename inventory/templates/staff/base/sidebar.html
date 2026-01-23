@@ -1,0 +1,61 @@
+{% load static %}
+
+<style>
+  /* Custom hover effect for sidebar nav items */
+  .sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15)!important;
+    transition: all 0.3s ease;
+  }
+</style>
+
+<aside class="main-sidebar sidebar-dark-success elevation-4" style="
+  background: 
+    linear-gradient(to right, rgba(34, 139, 34, 0.9), rgba(0, 128, 0, 0.9)),
+    url('{% static "image/bg11.png" %}')!important;
+  background-size: cover!important;
+  background-position: center!important;
+  background-repeat: no-repeat!important;
+">
+      <!-- Brand Logo -->
+      <a href="{% url 'staff_dashboard' %}" class="brand-link" style="padding: 15px 0;">
+        <img src="{% static 'image/logo1.png' %}" alt="Brand Logo" style="width: 190px; height: 120px; object-fit: contain; display: block; margin: 0 auto;">
+      </a>
+
+      <!-- Sidebar -->
+      <div class="sidebar" style="color: #000!important;">
+        <!-- Sidebar user panel (optional) -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+          <div class="image">
+           
+          </div>
+        <div class="info">
+            <a href="#" class="d-block" style="color: #f0eeee!important;">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+          </div>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <li class="nav-item">
+              <a href="{% url 'staff_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_dashboard' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_dashboard' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-home" style="color: #fbf8f8!important;"></i>
+                <p>Dashboard</p>
+              </a>
+            </li>
+
+            <!-- Request Supplies -->
+            <li class="nav-item">
+              <a href="{% url 'staff_request_supplies' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_request_supplies' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_request_supplies' %}background: #FFD700!important;{% endif %}">
+                <i class="nav-icon fas fa-clipboard-list" style="color: #fbf8f8!important;"></i>
+                <p>Request Supplies</p>
+              </a>
+            </li>
+
+            <!-- Add more nav-items here as needed for staff functionality -->
+            
+          </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+      </div>
+      <!-- /.sidebar -->
+    </aside>

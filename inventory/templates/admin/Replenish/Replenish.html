@@ -1,0 +1,3181 @@
+{% extends 'admin/base/base.html' %}
+
+{% block title %}
+Replenish/Add New Item
+{% endblock title %}
+
+{% block page_title %}
+Replenish/Add New Item
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+<style>
+    /* Smaller font size for table */
+    #requested-items-table {
+        font-size: 0.875rem;
+    }
+    #requested-items-table th,
+    #requested-items-table td {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+    #requested-items-table .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Custom tab styling - Active tabs green, inactive tabs black */
+    #inventory-tabs .nav-link {
+        color: #000000 !important;
+        background-color: transparent;
+        border-color: transparent;
+        font-weight: 500;
+    }
+    
+    #inventory-tabs .nav-link:hover {
+        color: #28a745 !important;
+        border-color: transparent;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    #inventory-tabs .nav-link.active {
+        color: #28a745 !important;
+        background-color: #ffffff;
+        border-color: #28a745 #28a745 #ffffff;
+        border-bottom-color: transparent;
+        font-weight: 600;
+    }
+    
+    #inventory-tabs .nav-link.active:hover {
+        color: #28a745 !important;
+        border-color: #28a745 #28a745 #ffffff;
+    }
+    
+    /* Card border color - green instead of blue */
+    .card.card-outline.card-success {
+        border-top: 3px solid #28a745 !important;
+    }
+    
+    .card.card-outline.card-success .card-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    /* Pagination styling */
+    .dataTables_info {
+        padding-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .dataTables_paginate {
+        padding-top: 0.25rem;
+    }
+    
+    .pagination {
+        margin-bottom: 0;
+    }
+    
+    .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        color: #28a745;
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-link:hover {
+        color: #1e7e34;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: #ffffff;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+</style>
+
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "warning" %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">Replenish</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row mb-3">
+            <div class="col-md-6 ml-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-requested" placeholder="Search...">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5"></div>
+        
+
+        <!-- Action Buttons -->
+        <div class="row mb-3">
+            <div class="col-md-12 text-right">
+                <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-supplies-btn">
+                    <i class="fas fa-plus mr-1"></i>Add new supplies
+                </button>
+                <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-main-category-btn">
+                    <i class="fas fa-plus mr-1"></i>add Main category
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row">
+            <div class="col-12">
+                <!-- LIST OF REQUESTED ITEMS Section -->
+                <div class="card card-outline card-success mt-3">
+                    <div class="card-header p-0">
+                        <!-- Tabs Navigation -->
+                        <ul class="nav nav-tabs" id="inventory-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" id="all-items-tab" data-toggle="tab" href="#all-items" role="tab" aria-controls="all-items" aria-selected="true">
+                                    <i class="fas fa-list mr-1"></i>All Items
+                                    {% if supplies.count > 0 %}
+                                    <span class="badge badge-primary ml-1">{{ supplies.count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="out-of-stock-tab" data-toggle="tab" href="#out-of-stock" role="tab" aria-controls="out-of-stock" aria-selected="false">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Out of Stock
+                                    {% if out_of_stock_supplies.count > 0 %}
+                                    <span class="badge badge-danger ml-1">{{ out_of_stock_supplies.count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="expiring-supplies-tab" data-toggle="tab" href="#expiring-supplies" role="tab" aria-controls="expiring-supplies" aria-selected="false">
+                                    <i class="fas fa-clock mr-1"></i>Expiring Supplies
+                                    {% if expiring_supplies.count > 0 %}
+                                    <span class="badge badge-warning ml-1">{{ expiring_supplies.count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="deleted-supplies-tab" data-toggle="tab" href="#deleted-supplies" role="tab" aria-controls="deleted-supplies" aria-selected="false">
+                                    <i class="fas fa-trash-alt mr-1"></i>Deleted Supplies
+                                    {% if deleted_supplies.count > 0 %}
+                                    <span class="badge badge-secondary ml-1">{{ deleted_supplies.count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="inventory-tab-content">
+                            <!-- All Items Tab -->
+                            <div class="tab-pane fade show active" id="all-items" role="tabpanel" aria-labelledby="all-items-tab">
+                                <!-- Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th>Opening Balance</th>
+                                                <th>Cost per Item</th>
+                                                <th>Stock-In (Replenish)</th>
+                                                <th>Running Count</th>
+                                                <th>Running Cost</th>
+                                                <th>Total Released</th>
+                                                <th>Real-Time Balance</th>
+                                                <th>Total Cost</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="all-items-table">
+                                            {% for supply in supplies %}
+                                            <tr data-supply-id="{{ supply.id }}">
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ supply.item_code }}</td>
+                                                <td>{{ supply.description }}</td>
+                                                <td>{{ supply.main_category.name|default:"N/A" }}</td>
+                                                <td>{{ supply.sub_category|default:"N/A" }}</td>
+                                                <td>{{ supply.unit }}</td>
+                                                <td>{{ supply.opening_balance }}</td>
+                                                <td>₱{{ supply.cost_per_item|floatformat:2 }}</td>
+                                                <td>{{ supply.stock_in }}</td>
+                                                <td>{{ supply.running_count }}</td>
+                                                <td>₱{{ supply.running_cost|floatformat:2 }}</td>
+                                                <td>{{ supply.total_released}}</td>
+                                                <td>
+                                                    <span class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
+                                                        {{ supply.real_time_balance }}
+                                                    </span>
+                                                </td>
+                                                <td>₱{{ supply.total_cost|floatformat:2 }}</td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="empty-database-row">
+                                                <td colspan="15" class="text-center text-muted py-4">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p class="mb-0">No supplies found</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <!-- No Matching Results Row (hidden by default) -->
+                                            <tr class="no-matching-row" style="display: none;">
+                                                <td colspan="15" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-0">No matching results found</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Pagination Controls -->
+                                <div class="row mt-3">
+                                    <div class="col-sm-12 col-md-5">
+                                        <div class="dataTables_info" id="all-items-info" role="status" aria-live="polite">
+                                            Showing <span id="all-items-start">0</span> to <span id="all-items-end">0</span> of <span id="all-items-total">0</span> entries
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 col-md-7">
+                                        <div class="dataTables_paginate paging_simple_numbers float-right" id="all-items-pagination">
+                                            <ul class="pagination">
+                                                <li class="paginate_button page-item previous disabled" id="all-items-prev">
+                                                    <a href="#" class="page-link">Previous</a>
+                                                </li>
+                                                <!-- Page numbers will be inserted here -->
+                                                <li class="paginate_button page-item next disabled" id="all-items-next">
+                                                    <a href="#" class="page-link">Next</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Out of Stock Tab -->
+                            <div class="tab-pane fade" id="out-of-stock" role="tabpanel" aria-labelledby="out-of-stock-tab">
+                                <!-- Action Buttons for Out of Stock -->
+                                <div class="row mb-3">
+                                    <div class="col-md-12 text-right">
+                                        <button type="button" class="btn btn-info btn-sm mr-2" id="print-out-of-stock-btn">
+                                            <i class="fas fa-print mr-1"></i> Print Selected
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="save-pdf-out-of-stock-btn">
+                                            <i class="fas fa-file-pdf mr-1"></i> Save as PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;" id="out-of-stock-table-main">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <input type="checkbox" id="select-all-out-of-stock" title="Select All">
+                                                </th>
+                                                <th>No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th>Opening Balance</th>
+                                                <th>Cost per Item</th>
+                                                <th>Stock-In (Replenish)</th>
+                                                <th>Running Count</th>
+                                                <th>Running Cost</th>
+                                                <th>Total Released</th>
+                                                <th>Real-Time Balance</th>
+                                                <th>Total Cost</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="out-of-stock-table">
+                                            {% for supply in out_of_stock_supplies %}
+                                            <tr data-supply-id="{{ supply.id }}" class="out-of-stock-row">
+                                                <td>
+                                                    <input type="checkbox" class="out-of-stock-checkbox" data-supply-id="{{ supply.id }}">
+                                                </td>
+                                                <td class="row-number"></td>
+                                                <td>{{ supply.item_code }}</td>
+                                                <td>{{ supply.description }}</td>
+                                                <td>{{ supply.main_category.name|default:"N/A" }}</td>
+                                                <td>{{ supply.sub_category|default:"N/A" }}</td>
+                                                <td>{{ supply.unit }}</td>
+                                                <td>{{ supply.opening_balance }}</td>
+                                                <td>₱{{ supply.cost_per_item|floatformat:2 }}</td>
+                                                <td>{{ supply.stock_in }}</td>
+                                                <td>{{ supply.running_count }}</td>
+                                                <td>₱{{ supply.running_cost|floatformat:2 }}</td>
+                                                <td>{{ supply.total_released|floatformat:2 }}</td>
+                                                <td>
+                                                    <span class="badge {% if supply.real_time_balance == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                                                        {{ supply.real_time_balance }}
+                                                    </span>
+                                                </td>
+                                                <td>₱{{ supply.total_cost|floatformat:2 }}</td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="empty-database-row">
+                                                <td colspan="16" class="text-center text-muted py-4">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p class="mb-0">No out of stock items found</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <!-- No Matching Results Row (hidden by default) -->
+                                            <tr class="no-matching-row" style="display: none;">
+                                                <td colspan="16" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-0">No matching results found</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Expiring Soon Tab -->
+                            <div class="tab-pane fade" id="expiring-supplies" role="tabpanel" aria-labelledby="expiring-supplies-tab">
+                                <!-- Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th>Expiration Date</th>
+                                                <th>Days Remaining</th>
+                                                <!-- <th>Opening Balance</th>
+                                                <th>Cost per Item</th>
+                                                <th>Stock-In (Replenish)</th>
+                                                <th>Running Count</th>
+                                                <th>Running Cost</th>
+                                                <th>Total Released</th> -->
+                                                <th>Real-Time Balance</th>
+                                                <th>Total Cost</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="expiring-supplies-table">
+                                            {% load inventory_filters %}
+                                            {% for supply in expiring_supplies %}
+                                            <tr data-supply-id="{{ supply.id }}" class="expiring-supply-row">
+                                                <td class="row-number"></td>
+                                                <td>{{ supply.item_code }}</td>
+                                                <td>{{ supply.description }}</td>
+                                                <td>{{ supply.main_category.name|default:"N/A" }}</td>
+                                                <td>{{ supply.sub_category|default:"N/A" }}</td>
+                                                <td>{{ supply.unit }}</td>
+                                                <td>{{ supply.expiration_date|date:"m/d/Y" }}</td>
+                                                <td>
+                                                    {% with days=supply.expiration_date|days_until_expiration %}
+                                                        <span class="badge {{ days|expiration_badge_class }}">
+                                                            {{ days|expiration_text }}
+                                                        </span>
+                                                    {% endwith %}
+                                                </td>
+                                                <!-- <td>{{ supply.opening_balance }}</td>
+                                                <td>₱{{ supply.cost_per_item|floatformat:2 }}</td>
+                                                <td>{{ supply.stock_in }}</td>
+                                                <td>{{ supply.running_count }}</td>
+                                                <td>₱{{ supply.running_cost|floatformat:2 }}</td>
+                                                <td>{{ supply.total_released|floatformat:2 }}</td>-->
+                                                <td>
+                                                    <span class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
+                                                        {{ supply.real_time_balance }}
+                                                    </span>
+                                                </td> 
+                                                <td>₱{{ supply.total_cost|floatformat:2 }}</td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-info view-supply-details-btn" data-supply-id="{{ supply.id }}" title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <!-- <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button> -->
+                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="empty-database-row">
+                                                <td colspan="12" class="text-center text-muted py-4">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p class="mb-0">No expiring supplies found</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <!-- No Matching Results Row (hidden by default) -->
+                                            <tr class="no-matching-row" style="display: none;">
+                                                <td colspan="12" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-0">No matching results found</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Deleted Supplies Tab -->
+                            <div class="tab-pane fade" id="deleted-supplies" role="tabpanel" aria-labelledby="deleted-supplies-tab">
+                                <!-- Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Item Code</th>
+                                                <th>Description</th>
+                                                <th>Main Category</th>
+                                                <th>Sub-Category</th>
+                                                <th>Unit</th>
+                                                <th>Opening Balance</th>
+                                                <th>Cost per Item</th>
+                                                <th>Stock-In (Replenish)</th>
+                                                <th>Running Count</th>
+                                                <th>Running Cost</th>
+                                                <th>Total Released</th>
+                                                <th>Real-Time Balance</th>
+                                                <th>Total Cost</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="deleted-supplies-table">
+                                            {% for supply in deleted_supplies %}
+                                            <tr data-supply-id="{{ supply.id }}">
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ supply.item_code }}</td>
+                                                <td>{{ supply.description }}</td>
+                                                <td>{{ supply.main_category.name|default:"N/A" }}</td>
+                                                <td>{{ supply.sub_category|default:"N/A" }}</td>
+                                                <td>{{ supply.unit }}</td>
+                                                <td>{{ supply.opening_balance }}</td>
+                                                <td>₱{{ supply.cost_per_item|floatformat:2 }}</td>
+                                                <td>{{ supply.stock_in }}</td>
+                                                <td>{{ supply.running_count }}</td>
+                                                <td>₱{{ supply.running_cost|floatformat:2 }}</td>
+                                                <td>{{ supply.total_released|floatformat:2 }}</td>
+                                                <td>
+                                                    <span class="badge badge-secondary">
+                                                        {{ supply.real_time_balance }}
+                                                    </span>
+                                                </td>
+                                                <td>₱{{ supply.total_cost|floatformat:2 }}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-success restore-supply-btn" data-supply-id="{{ supply.id }}" title="Restore">
+                                                        <i class="fas fa-undo"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-permanently-btn" data-supply-id="{{ supply.id }}" title="Delete Permanently">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="empty-database-row">
+                                                <td colspan="15" class="text-center text-muted py-4">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p class="mb-0">No deleted supplies found</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <!-- No Matching Results Row (hidden by default) -->
+                                            <tr class="no-matching-row" style="display: none;">
+                                                <td colspan="15" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-0">No matching results found</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="addItemModalLabel">
+                    <i class="fas fa-plus-circle mr-2"></i>Add New Supplies 
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="add-item-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Item Code -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="item-code">Item Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="item-code" name="item_code" 
+                                       placeholder="Enter item code" readonly required>
+                            </div>
+                        </div>
+
+                        <!-- Unit -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="item-unit">Unit <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="item-unit" name="item_unit" 
+                                       placeholder="Enter unit" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Second Row: Description (full width) -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="item-description">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="item-description" name="item_description" 
+                                          rows="3" placeholder="Enter item description" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Third Row: Main Category, Sub-Category -->
+                    <div class="row">
+                        <!-- Main Category -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="main-category">Main Category <span class="text-danger">*</span></label>
+                                <select class="form-control" id="main-category" name="main_category" required>
+                                    <option value="">Select main category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sub-Category -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="sub-category">Sub-Category <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="sub-category" name="sub_category" 
+                                       placeholder="Enter sub-category" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fourth Row: Opening Balance, Cost per Item -->
+                    <div class="row">
+                        <!-- Opening Balance -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="opening-balance">Opening Balance</label>
+                                <input type="number" class="form-control" id="opening-balance" name="opening_balance" 
+                                       placeholder="Enter opening balance" min="0" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- Cost per Item -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cost-per-item">Cost per Item</label>
+                                <input type="number" class="form-control" id="cost-per-item" name="cost_per_item" 
+                                       placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fifth Row: Expiration Date and Days Remaining (Read-only) - Only for Service Perks -->
+                    <div class="row" id="expiration-date-row" style="display: none;">
+                        <!-- Expiration Date -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="expiration-date">Expiration Date <span class="text-danger" id="expiration-required">*</span></label>
+                                <input type="date" class="form-control" id="expiration-date" name="expiration_date">
+                            </div>
+                        </div>
+
+                        <!-- Expired (Days Remaining) -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="expired">Days Until Expiration</label>
+                                <input type="text" class="form-control" id="expired" name="expired" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sixth Row: Stock-In (Replenish), Running Count -->
+                    <div class="row">
+                        <!-- Stock-In (Replenish) -->
+                        <!-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="item-quantity">Stock-In (Replenish)</label>
+                                <input type="number" class="form-control" id="item-quantity" name="item_quantity" 
+                                       placeholder="Enter stock-in quantity" min="0" step="0.01">
+                            </div>
+                        </div> -->
+
+                        <!-- Running Count -->
+                        <!-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="running-count">Running Count</label>
+                                <input type="number" class="form-control" id="running-count" name="running_count" 
+                                       placeholder="Enter running count" min="0" step="0.01">
+                            </div>
+                        </div> -->
+                    </div>
+
+                    <!-- Seventh Row: Running Cost, Total Released -->
+                    <div class="row">
+                        <!-- Running Cost -->
+                        <!-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="running-cost">Running Cost</label>
+                                <input type="number" class="form-control" id="running-cost" name="running_cost" 
+                                       placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?">
+                            </div>
+                        </div> -->
+
+                        <!-- Total Released -->
+                        <!-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="total-released">Total Released</label>
+                                <input type="number" class="form-control" id="total-released" name="total_released" 
+                                       placeholder="Enter total released" min="0" step="0.01">
+                            </div>
+                        </div> -->
+                    </div>
+
+                    <!-- Eighth Row: Real-Time Balance, Total Cost -->
+                    <div class="row">
+                        <!-- Real-Time Balance -->
+                        <!-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="real-time-balance">Real-Time Balance</label>
+                                <input type="number" class="form-control" id="real-time-balance" name="real_time_balance" 
+                                       placeholder="Enter real-time balance" min="0" step="0.01">
+                            </div>
+                        </div> -->
+
+                        <!-- Total Cost -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="total-cost">Total Cost</label>
+                                <input type="number" class="form-control" id="total-cost" name="total_cost" 
+                                       placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save mr-1"></i>Add supplies
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Main Category Modal -->
+<div class="modal fade" id="mainCategoryModal" tabindex="-1" role="dialog" aria-labelledby="mainCategoryModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="mainCategoryModalLabel">
+                    <i class="fas fa-list mr-2"></i>Manage Main Categories
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Add New Category Form -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-plus-circle mr-2"></i>Add New Main Category
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-main-category-form">
+                            <div class="form-group">
+                                <label for="new-main-category-name">Category Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="new-main-category-name" 
+                                       placeholder="Enter main category name" required>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="fas fa-save mr-1"></i>Add Category
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Categories List -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list mr-2"></i>Existing Main Categories
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 5%;">No.</th>
+                                        <th>Category Name</th>
+                                        <th style="width: 30%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="main-categories-list">
+                                    <!-- Categories will be populated here -->
+                                    {% for category in categories %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ category.name }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary edit-category-btn" data-category-id="{{ category.id }}" data-category-name="{{ category.name }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger delete-category-btn" data-category-id="{{ category.id }}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No categories found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Main Category Modal -->
+<div class="modal fade" id="editMainCategoryModal" tabindex="-1" role="dialog" aria-labelledby="editMainCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="editMainCategoryModalLabel">
+                    <i class="fas fa-edit mr-2"></i>Edit Main Category
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="edit-main-category-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit-main-category-name">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit-main-category-name" required>
+                        <input type="hidden" id="edit-main-category-id">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i>Update Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Supply Modal -->
+<div class="modal fade" id="editSupplyModal" tabindex="-1" role="dialog" aria-labelledby="editSupplyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="editSupplyModalLabel">
+                    <i class="fas fa-edit mr-2"></i>Edit Supply Item
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="edit-supply-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-supply-id">
+                    <div class="row">
+                        <!-- Item Code -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-item-code">Item Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-item-code" readonly>
+                            </div>
+                        </div>
+                        <!-- Description -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-item-description">Description <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-item-description" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Main Category -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-main-category">Main Category <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit-main-category" required>
+                                    <option value="">-- Select Main Category --</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Sub-Category -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-sub-category">Sub-Category <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-sub-category" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Unit -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-item-unit">Unit <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-item-unit" placeholder="e.g., pcs, box, ream" required>
+                            </div>
+                        </div>
+                        <!-- Opening Balance -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-opening-balance">Opening Balance</label>
+                                <input type="number" class="form-control" id="edit-opening-balance" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Cost per Item -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-cost-per-item">Cost per Item (₱)</label>
+                                <input type="number" class="form-control" id="edit-cost-per-item" step="0.01" min="0" value="0">
+                            </div>
+                        </div>
+                        <!-- Stock-In -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-stock-in">Stock-In (Replenish)</label>
+                                <input type="number" class="form-control" id="edit-stock-in" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expiration Date Row - Only for Service Perks -->
+                    <div class="row" id="edit-expiration-date-row" style="display: none;">
+                        <!-- Expiration Date -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-expiration-date">Expiration Date <span class="text-danger" id="edit-expiration-required">*</span></label>
+                                <input type="date" class="form-control" id="edit-expiration-date" name="expiration_date">
+                            </div>
+                        </div>
+
+                        <!-- Expired (Days Remaining) -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-expired">Days Until Expiration</label>
+                                <input type="text" class="form-control" id="edit-expired" name="expired" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i>Update Supply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Modal -->
+<div class="modal fade" id="addStockModal" tabindex="-1" role="dialog" aria-labelledby="addStockModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="addStockModalLabel">
+                    <i class="fas fa-plus-circle mr-2"></i>Add Stock
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="add-stock-form">
+                <div class="modal-body">
+                    <input type="hidden" id="add-stock-supply-id">
+                    
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label>Item Code</label>
+                        <input type="text" class="form-control" id="add-stock-item-code" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" id="add-stock-description" rows="2" readonly></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Main Category</label>
+                                <input type="text" class="form-control" id="add-stock-main-category" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Sub-Category</label>
+                                <input type="text" class="form-control" id="add-stock-sub-category" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Unit</label>
+                                <input type="text" class="form-control" id="add-stock-unit" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Current Stock Balance</label>
+                                <input type="text" class="form-control" id="add-stock-current-balance" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Editable field: Stock-In -->
+                    <div class="form-group">
+                        <label for="add-stock-quantity">Stock-In (Add Quantity) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="add-stock-quantity" 
+                               placeholder="Enter quantity to add" min="1" step="1" required>
+                        <small class="form-text text-muted">Enter the quantity you want to add to the stock.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus mr-1"></i>Add Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Supply Details Modal -->
+<div class="modal fade" id="viewSupplyDetailsModal" tabindex="-1" role="dialog" aria-labelledby="viewSupplyDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewSupplyDetailsModalLabel">
+                    <i class="fas fa-info-circle mr-2"></i>Supply Details
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-box mr-2"></i>Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5">Item Code:</dt>
+                                    <dd class="col-sm-7" id="view-item-code">-</dd>
+                                    
+                                    <dt class="col-sm-5">Description:</dt>
+                                    <dd class="col-sm-7" id="view-description">-</dd>
+                                    
+                                    <dt class="col-sm-5">Main Category:</dt>
+                                    <dd class="col-sm-7" id="view-main-category">-</dd>
+                                    
+                                    <dt class="col-sm-5">Sub-Category:</dt>
+                                    <dd class="col-sm-7" id="view-sub-category">-</dd>
+                                    
+                                    <dt class="col-sm-5">Unit:</dt>
+                                    <dd class="col-sm-7" id="view-unit">-</dd>
+                                    
+                                    <dt class="col-sm-5">Date Added:</dt>
+                                    <dd class="col-sm-7" id="view-date">-</dd>
+                                </dl>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-calendar-alt mr-2"></i>Expiration Info</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5">Expiration Date:</dt>
+                                    <dd class="col-sm-7" id="view-expiration-date">-</dd>
+                                    
+                                    <dt class="col-sm-5">Status:</dt>
+                                    <dd class="col-sm-7" id="view-expiration-status">-</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-warehouse mr-2"></i>Inventory Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-6">Opening Balance:</dt>
+                                    <dd class="col-sm-6" id="view-opening-balance">-</dd>
+                                    
+                                    <dt class="col-sm-6">Stock-In:</dt>
+                                    <dd class="col-sm-6" id="view-stock-in">-</dd>
+                                    
+                                    <dt class="col-sm-6">Running Count:</dt>
+                                    <dd class="col-sm-6" id="view-running-count">-</dd>
+                                    
+                                    <dt class="col-sm-6">Total Released:</dt>
+                                    <dd class="col-sm-6" id="view-total-released">-</dd>
+                                    
+                                    <dt class="col-sm-6"><strong>Real-Time Balance:</strong></dt>
+                                    <dd class="col-sm-6"><strong><span id="view-real-time-balance" class="badge badge-info">-</span></strong></dd>
+                                </dl>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-dollar-sign mr-2"></i>Cost Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-6">Cost per Item:</dt>
+                                    <dd class="col-sm-6" id="view-cost-per-item">-</dd>
+                                    
+                                    <dt class="col-sm-6">Running Cost:</dt>
+                                    <dd class="col-sm-6" id="view-running-cost">-</dd>
+                                    
+                                    <dt class="col-sm-6"><strong>Total Cost:</strong></dt>
+                                    <dd class="col-sm-6"><strong id="view-total-cost">-</strong></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Info -->
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- SweetAlert2 JS -->
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<!-- jsPDF Library for PDF Generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<!-- Custom JavaScript for Replenish page -->
+<script>
+    // Helper function to get CSRF token from cookie
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    $(document).ready(function() {
+        // Fix for aria-hidden warning: Remove aria-hidden from wrapper when modals open
+        // Bootstrap automatically sets aria-hidden="true" on the wrapper when a modal opens,
+        // but since the modal is inside the wrapper, this causes accessibility warnings.
+        // Solution: Remove aria-hidden from wrapper after Bootstrap sets it.
+        $(document).on('shown.bs.modal', '.modal', function() {
+            // Remove aria-hidden from wrapper to prevent accessibility warnings
+            $('.wrapper').removeAttr('aria-hidden');
+        });
+        
+        // Display current date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            const dateString = now.toLocaleDateString('en-US', options);
+            $('#current-date').text(dateString);
+        }
+        updateCurrentDate();
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow', function() {
+                $(this).remove();
+            });
+        }, 5000);
+
+
+
+        // Search functionality don't touch this is working fine
+        $('#search-requested').on('keyup', function() {
+            const searchTerm = $(this).val().toLowerCase().trim();
+            const activeTab = $('#inventory-tabs .nav-link.active').attr('href');
+            
+            // Determine which table to search based on active tab
+            let tableBody, noMatchingRow, emptyDatabaseRow;
+            if (activeTab === '#all-items') {
+                tableBody = $('#all-items-table tr:not(.empty-database-row):not(.no-matching-row)');
+                noMatchingRow = $('#all-items-table .no-matching-row');
+                emptyDatabaseRow = $('#all-items-table .empty-database-row');
+            } else if (activeTab === '#out-of-stock') {
+                tableBody = $('#out-of-stock-table tr:not(.empty-database-row):not(.no-matching-row)');
+                noMatchingRow = $('#out-of-stock-table .no-matching-row');
+                emptyDatabaseRow = $('#out-of-stock-table .empty-database-row');
+            } else if (activeTab === '#expiring-supplies') {
+                tableBody = $('#expiring-supplies-table tr:not(.empty-database-row):not(.no-matching-row)');
+                noMatchingRow = $('#expiring-supplies-table .no-matching-row');
+                emptyDatabaseRow = $('#expiring-supplies-table .empty-database-row');
+            } else if (activeTab === '#deleted-supplies') {
+                tableBody = $('#deleted-supplies-table tr:not(.empty-database-row):not(.no-matching-row)');
+                noMatchingRow = $('#deleted-supplies-table .no-matching-row');
+                emptyDatabaseRow = $('#deleted-supplies-table .empty-database-row');
+            }
+            
+            if (tableBody) {
+                let visibleCount = 0;
+                
+                // Hide empty database row when searching
+                if (searchTerm.length > 0) {
+                    emptyDatabaseRow.hide();
+                } else {
+                    // Show empty database row if it exists and no search term
+                    emptyDatabaseRow.show();
+                    noMatchingRow.hide();
+                }
+                
+                // Filter rows
+                tableBody.each(function() {
+                    const text = $(this).text().toLowerCase();
+                    if (searchTerm.length === 0 || text.indexOf(searchTerm) !== -1) {
+                        $(this).show();
+                        visibleCount++;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+                
+                // Show/hide no matching message
+                if (searchTerm.length > 0) {
+                    if (visibleCount === 0) {
+                        noMatchingRow.show();
+                    } else {
+                        noMatchingRow.hide();
+                    }
+                } else {
+                    noMatchingRow.hide();
+                }
+            }
+        });
+
+        // Reset search when switching tabs - DISABLED to persist search across tabs
+        $('#inventory-tabs .nav-link').on('shown.bs.tab', function() {
+            $('#search-requested').val('').trigger('keyup');
+        });
+
+        // Renumber out-of-stock table rows
+        function renumberOutOfStockRows() {
+            $('#out-of-stock-table .out-of-stock-row').each(function(index) {
+                $(this).find('.row-number').text(index + 1);
+            });
+        }
+
+        // Renumber expiring supplies table rows
+        function renumberExpiringSuppliesRows() {
+            $('#expiring-supplies-table .expiring-supply-row').each(function(index) {
+                $(this).find('.row-number').text(index + 1);
+            });
+        }
+
+        // Initial numbering
+        renumberOutOfStockRows();
+        renumberExpiringSuppliesRows();
+
+        // Renumber when out-of-stock tab is shown
+        $('#out-of-stock-tab').on('shown.bs.tab', function() {
+            renumberOutOfStockRows();
+        });
+        
+        // Renumber when expiring supplies tab is shown
+        $('#expiring-supplies-tab').on('shown.bs.tab', function() {
+            renumberExpiringSuppliesRows();
+        });
+        // until here
+
+
+        // ========== MAIN CATEGORY FUNCTIONALITY START ==========
+        // Category Management Functions
+        function addCategoryToTable(category) {
+            const tbody = $('#main-categories-list');
+            
+            // Remove "No categories found" placeholder row if it exists
+            tbody.find('tr').filter(function() {
+                return $(this).find('td[colspan="3"]').length > 0;
+            }).remove();
+            
+            // Create new row (row number will be updated by renumberCategoryRows)
+            const newRow = `
+                <tr>
+                    <td>1</td>
+                    <td>${category.name}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-primary edit-category-btn" 
+                                data-category-id="${category.id}" data-category-name="${category.name}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger delete-category-btn" 
+                                data-category-id="${category.id}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            `;
+            // Prepend to add at the top instead of append
+            tbody.prepend(newRow);
+            
+            // Renumber all rows to ensure consistency
+            renumberCategoryRows();
+        }
+        
+        function renumberCategoryRows() {
+            const tbody = $('#main-categories-list');
+            tbody.find('tr').each(function(index) {
+                // Skip placeholder rows
+                if ($(this).find('td[colspan="3"]').length === 0) {
+                    $(this).find('td').first().text(index + 1);
+                }
+            });
+        }
+        
+        function updateCategoryInTable(categoryId, categoryName) {
+            const row = $(`.edit-category-btn[data-category-id="${categoryId}"]`).closest('tr');
+            row.find('td').eq(1).text(categoryName);
+            row.find('.edit-category-btn').attr('data-category-name', categoryName);
+        }
+        
+        function removeCategoryFromTable(categoryId) {
+            $(`.delete-category-btn[data-category-id="${categoryId}"]`).closest('tr').remove();
+            const tbody = $('#main-categories-list');
+            
+            // Check if there are any category rows left (excluding placeholder rows)
+            const categoryRows = tbody.find('tr').filter(function() {
+                return $(this).find('td[colspan="3"]').length === 0;
+            });
+            
+            if (categoryRows.length === 0) {
+                tbody.append('<tr><td colspan="3" class="text-center text-muted">No categories found</td></tr>');
+            } else {
+                // Renumber remaining rows
+                renumberCategoryRows();
+            }
+        }
+        
+        function updateCategoryDropdown(categories) {
+            const dropdown = $('#main-category');
+            if (dropdown.length) {
+                dropdown.find('option:not(:first)').remove();
+                categories.forEach(category => {
+                    dropdown.append(`<option value="${category.id}">${category.name}</option>`);
+                });
+            }
+        }
+        
+        function refreshCategoriesList() {
+            $.ajax({
+                url: '/api/categories/',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        updateCategoryDropdown(response.categories);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to refresh categories list');
+                }
+            });
+        }
+
+        function showSwalAlert(icon, title, text, timer = null) {
+            const config = {
+                icon: icon,
+                title: title,
+                text: text,
+                showConfirmButton: timer === null
+            };
+            if (timer) config.timer = timer;
+            Swal.fire(config);
+        }
+
+        // Modal handlers
+        $('#add-new-main-category-btn').on('click', function() {
+            $('#add-main-category-form')[0].reset();
+            $('#mainCategoryModal').modal('show');
+        });
+
+       
+        // Add Main Category form
+        $('#add-main-category-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const categoryName = $('#new-main-category-name').val().trim();
+            if (!categoryName) {
+                showSwalAlert('warning', 'Validation Error', 'Please enter a category name.');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/categories/create/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ name: categoryName }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#add-main-category-form')[0].reset();
+                        addCategoryToTable(response.category);
+                        refreshCategoriesList();
+                        showSwalAlert('success', 'Success', 'Category added successfully!', 2000);
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to add category.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to add category.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+
+        // Edit Category
+        $(document).on('click', '.edit-category-btn', function() {
+            const categoryId = $(this).data('category-id');
+            const categoryName = $(this).data('category-name');
+            $('#edit-main-category-id').val(categoryId);
+            $('#edit-main-category-name').val(categoryName);
+            $('#editMainCategoryModal').modal('show');
+        });
+
+        $('#edit-main-category-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const categoryId = $('#edit-main-category-id').val();
+            const categoryName = $('#edit-main-category-name').val().trim();
+            
+            if (!categoryName) {
+                showSwalAlert('warning', 'Validation Error', 'Please enter a category name.');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/categories/' + categoryId + '/update/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ name: categoryName }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#editMainCategoryModal').modal('hide');
+                        updateCategoryInTable(categoryId, categoryName);
+                        refreshCategoriesList();
+                        showSwalAlert('success', 'Success', 'Category updated successfully!', 2000);
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to update category.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to update category.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+
+        // Delete Category 
+        $(document).on('click', '.delete-category-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const categoryId = $(this).data('category-id');
+            console.log('Delete button clicked, Category ID:', categoryId);
+            
+            if (!categoryId) {
+                showSwalAlert('error', 'Error', 'Category ID not found.');
+                return;
+            }
+            
+            const csrfToken = getCookie('csrftoken');
+            if (!csrfToken) {
+                showSwalAlert('error', 'Error', 'CSRF token not found. Please refresh the page.');
+                return;
+            }
+            
+            console.log('About to show confirmation dialog');
+            
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                console.log('Confirmation result:', result);
+                
+                // Only proceed if user clicked "Yes, delete it!"
+                // Check both result.value (older SweetAlert2) and result.isConfirmed (newer versions)
+                if (result.value || result.isConfirmed) {
+                    console.log('User confirmed deletion, making AJAX call');
+                    
+                    $.ajax({
+                        url: '/api/categories/' + categoryId + '/delete-permanently/',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        success: function(response) {
+                            console.log('Delete response:', response);
+                            if (response.success) {
+                                removeCategoryFromTable(categoryId);
+                                refreshCategoriesList();
+                                showSwalAlert('success', 'Deleted!', 'Category deleted successfully.', 2000);
+                            } else {
+                                showSwalAlert('error', 'Error', response.error || response.message || 'Failed to delete category.');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Delete error:', xhr);
+                            let errorMsg = 'Failed to delete category.';
+                            if (xhr.responseJSON) {
+                                errorMsg = xhr.responseJSON.error || xhr.responseJSON.message || errorMsg;
+                            } else if (xhr.status === 404) {
+                                errorMsg = 'Category not found.';
+                            } else if (xhr.status === 403) {
+                                errorMsg = 'Permission denied.';
+                            }
+                            showSwalAlert('error', 'Error', errorMsg);
+                        }
+                    });
+                } else {
+                    console.log('User cancelled deletion');
+                }
+            });
+        });
+        // ========== MAIN CATEGORY FUNCTIONALITY END ==========
+
+       
+        
+               // ========== ADD ITEM FUNCTIONALITY START ==========
+        // Modal handler for Add New Supplies
+        $('#add-new-supplies-btn').on('click', function() {
+            // Clear form
+            $('#add-item-form')[0].reset();
+            // Fetch item code from server
+            $.ajax({
+                url: '/api/supplies/generate-item-code/',
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#item-code').val(response.item_code);
+                    } else {
+                        // Fallback to client-side generation if API fails
+                        const now = new Date();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const day = String(now.getDate()).padStart(2, '0');
+                        const year = String(now.getFullYear()).slice(-2);
+                        const itemCode = 'ITM' + month + day + year + '00001';
+                        $('#item-code').val(itemCode);
+                    }
+                },
+                error: function() {
+                    // Fallback to client-side generation if API fails
+                    const now = new Date();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const year = String(now.getFullYear()).slice(-2);
+                    const itemCode = 'ITM' + month + day + year + '00001';
+                    $('#item-code').val(itemCode);
+                }
+            });
+            // Show modal
+            $('#addItemModal').modal('show');
+        });
+
+        // Handle Main Category change to show/hide Expiration Date row
+        $('#main-category').on('change', function() {
+            const selectedCategoryId = $(this).val();
+            const selectedCategoryText = $(this).find('option:selected').text().trim();
+            
+            // Check if "Service Perks" is selected
+            if (selectedCategoryText === 'Service Perks') {
+                // Show expiration date row and make it required
+                $('#expiration-date-row').slideDown(300);
+                $('#expiration-date').prop('required', true);
+                $('#expiration-required').show();
+            } else {
+                // Hide expiration date row and remove required
+                $('#expiration-date-row').slideUp(300);
+                $('#expiration-date').prop('required', false);
+                $('#expiration-date').val(''); // Clear the value
+                $('#expired').val(''); // Clear days remaining
+                $('#expiration-required').hide();
+            }
+        });
+
+        // Calculate Days Until Expiration when date is selected
+        $('#expiration-date').on('change', function() {
+            const expirationDate = new Date($(this).val());
+            const today = new Date();
+            
+            // Reset time to midnight for accurate day calculation
+            today.setHours(0, 0, 0, 0);
+            expirationDate.setHours(0, 0, 0, 0);
+            
+            if (expirationDate) {
+                const timeDiff = expirationDate - today;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff < 0) {
+                    $('#expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
+                    $('#expired').addClass('text-danger');
+                } else if (daysDiff === 0) {
+                    $('#expired').val('Expires today');
+                    $('#expired').addClass('text-warning');
+                } else {
+                    $('#expired').val(daysDiff + ' days remaining');
+                    $('#expired').removeClass('text-danger text-warning');
+                }
+            }
+        });
+
+        // Reset expiration date row when modal is closed
+        $('#addItemModal').on('hidden.bs.modal', function() {
+            $('#expiration-date-row').hide();
+            $('#expiration-date').prop('required', false);
+            $('#expiration-date').val('');
+            $('#expired').val('');
+        });
+
+
+         // Add New Supplies form
+         $('#add-item-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const opening_balance = parseFloat($('#opening-balance').val()) || 0;
+            const cost_per_item = parseFloat($('#cost-per-item').val()) || 0;
+            const total_cost = opening_balance * cost_per_item;
+            
+            const formData = {
+                item_code: $('#item-code').val(),
+                description: $('#item-description').val(),
+                main_category: $('#main-category').val(),
+                sub_category: $('#sub-category').val(),
+                unit: $('#item-unit').val(),
+                opening_balance: opening_balance,
+                cost_per_item: cost_per_item,
+                stock_in: 0,
+                running_count: 0,
+                running_cost: 0,
+                total_cost: total_cost,
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            // Add expiration_date if it has a value (only for Service Perks)
+            const expirationDate = $('#expiration-date').val();
+            if (expirationDate) {
+                formData.expiration_date = expirationDate;
+            }
+            
+            if (!formData.item_code || !formData.description || !formData.main_category || 
+                !formData.sub_category || !formData.unit) {
+                showSwalAlert('warning', 'Validation Error', 'Please fill in all required fields.');
+                return;
+            }
+            
+            // Check if expiration date is required (when Service Perks is selected)
+            if ($('#expiration-date-row').is(':visible') && !expirationDate) {
+                showSwalAlert('warning', 'Validation Error', 'Expiration Date is required for Service Perks.');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/supplies/create/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addItemModal').modal('hide');
+                        showSwalAlert('success', 'Success', 'Supply added successfully!', 2000);
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to add supply.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to add supply.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+       
+
+        
+        // Auto-calculate Total Cost when Opening Balance * Cost per Item s
+        $('#opening-balance, #cost-per-item').on('input', function() {
+            const openingBalance = parseFloat($('#opening-balance').val()) || 0;
+            const costPerItem = parseFloat($('#cost-per-item').val()) || 0;
+            const totalCost = openingBalance * costPerItem;
+            $('#total-cost').val(totalCost.toFixed(2));
+        });
+
+
+
+         // ========== ADD ITEM FUNCTIONALITY END ==========
+
+         
+        
+        // Clear forms when modals are closed
+        $('#addItemModal').on('hidden.bs.modal', function() {
+            $('#add-item-form')[0].reset();
+        });
+
+        $('#mainCategoryModal').on('hidden.bs.modal', function() {
+            $('#add-main-category-form')[0].reset();
+        });
+
+        $('#editMainCategoryModal').on('hidden.bs.modal', function() {
+            $('#edit-main-category-form')[0].reset();
+        });
+
+
+
+
+        // ========== SUPPLY ITEM CRUD OPERATIONS START ==========
+        
+        // Edit Supply Button
+        $(document).on('click', '.edit-supply-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            // Fetch supply data
+            $.ajax({
+                url: '/api/supplies/' + supplyId + '/',
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const supply = response.supply;
+                        // Populate form fields
+                        $('#edit-supply-id').val(supply.id);
+                        $('#edit-item-code').val(supply.item_code);
+                        $('#edit-item-description').val(supply.description);
+                        $('#edit-main-category').val(supply.main_category);
+                        $('#edit-sub-category').val(supply.sub_category);
+                        $('#edit-item-unit').val(supply.unit);
+                        $('#edit-opening-balance').val(supply.opening_balance);
+                        $('#edit-cost-per-item').val(supply.cost_per_item);
+                        $('#edit-stock-in').val(supply.stock_in);
+                        
+                        // Handle expiration date
+                        if (supply.expiration_date) {
+                            $('#edit-expiration-date').val(supply.expiration_date);
+                            // Calculate days remaining
+                            const expirationDate = new Date(supply.expiration_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            expirationDate.setHours(0, 0, 0, 0);
+                            const timeDiff = expirationDate - today;
+                            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                            
+                            if (daysDiff < 0) {
+                                $('#edit-expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
+                            } else if (daysDiff === 0) {
+                                $('#edit-expired').val('Expires today');
+                            } else {
+                                $('#edit-expired').val(daysDiff + ' days remaining');
+                            }
+                        } else {
+                            $('#edit-expiration-date').val('');
+                            $('#edit-expired').val('');
+                        }
+                        
+                        // Show/hide expiration date row based on category
+                        const selectedCategoryText = $('#edit-main-category option:selected').text().trim();
+                        if (selectedCategoryText === 'Service Perks') {
+                            $('#edit-expiration-date-row').show();
+                            $('#edit-expiration-date').prop('required', true);
+                        } else {
+                            $('#edit-expiration-date-row').hide();
+                            $('#edit-expiration-date').prop('required', false);
+                        }
+                        
+                        // Show modal
+                        $('#editSupplyModal').modal('show');
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+        
+        // Edit Supply Form Submission
+        $('#edit-supply-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const supplyId = $('#edit-supply-id').val();
+            const opening_balance = parseFloat($('#edit-opening-balance').val()) || 0;
+            const cost_per_item = parseFloat($('#edit-cost-per-item').val()) || 0;
+            const total_cost = opening_balance * cost_per_item;
+            
+            const formData = {
+                description: $('#edit-item-description').val(),
+                main_category: $('#edit-main-category').val(),
+                sub_category: $('#edit-sub-category').val(),
+                unit: $('#edit-item-unit').val(),
+                opening_balance: opening_balance,
+                cost_per_item: cost_per_item,
+                stock_in: $('#edit-stock-in').val() || 0,
+                total_cost: total_cost
+            };
+            
+            // Add expiration_date if it has a value and expiration row is visible (Service Perks)
+            const editExpirationDate = $('#edit-expiration-date').val();
+            const isExpirationRowVisible = $('#edit-expiration-date-row').is(':visible');
+            
+            if (isExpirationRowVisible && editExpirationDate) {
+                formData.expiration_date = editExpirationDate;
+            } else {
+                // Clear expiration date if not Service Perks or if empty
+                formData.expiration_date = null;
+            }
+            
+            if (!formData.description || !formData.main_category || 
+                !formData.sub_category || !formData.unit) {
+                showSwalAlert('warning', 'Validation Error', 'Please fill in all required fields.');
+                return;
+            }
+            
+            // Check if expiration date is required (when Service Perks is selected)
+            if ($('#edit-expiration-date-row').is(':visible') && !editExpirationDate) {
+                showSwalAlert('warning', 'Validation Error', 'Expiration Date is required for Service Perks.');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/supplies/' + supplyId + '/update/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.success) {
+                        $('#editSupplyModal').modal('hide');
+                        showSwalAlert('success', 'Success', 'Supply updated successfully!', 2000);
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to update supply.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to update supply.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+        
+        // Handle Edit Modal Main Category change to show/hide Expiration Date row
+        $('#edit-main-category').on('change', function() {
+            const selectedCategoryText = $(this).find('option:selected').text().trim();
+            
+            // Check if "Service Perks" is selected
+            if (selectedCategoryText === 'Service Perks') {
+                // Show expiration date row and make it required
+                $('#edit-expiration-date-row').slideDown(300);
+                $('#edit-expiration-date').prop('required', true);
+                $('#edit-expiration-required').show();
+            } else {
+                // Hide expiration date row and remove required
+                $('#edit-expiration-date-row').slideUp(300);
+                $('#edit-expiration-date').prop('required', false);
+                $('#edit-expiration-date').val(''); // Clear the value
+                $('#edit-expired').val(''); // Clear days remaining
+                $('#edit-expiration-required').hide();
+            }
+        });
+        
+        // Calculate Days Until Expiration for Edit Modal when date is selected
+        $('#edit-expiration-date').on('change', function() {
+            const expirationDate = new Date($(this).val());
+            const today = new Date();
+            
+            // Reset time to midnight for accurate day calculation
+            today.setHours(0, 0, 0, 0);
+            expirationDate.setHours(0, 0, 0, 0);
+            
+            if (expirationDate) {
+                const timeDiff = expirationDate - today;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff < 0) {
+                    $('#edit-expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
+                    $('#edit-expired').addClass('text-danger');
+                } else if (daysDiff === 0) {
+                    $('#edit-expired').val('Expires today');
+                    $('#edit-expired').addClass('text-warning');
+                } else {
+                    $('#edit-expired').val(daysDiff + ' days remaining');
+                    $('#edit-expired').removeClass('text-danger text-warning');
+                }
+            }
+        });
+        
+        // Delete Supply Button (Soft Delete - Move to Deleted Supplies Tab)
+        $(document).on('click', '.delete-supply-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will move the item to Deleted Supplies. You can restore it later.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.value || result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supplies/' + supplyId + '/delete/',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                showSwalAlert('success', 'Deleted!', 'Supply moved to Deleted Supplies tab.', 2000);
+                                setTimeout(() => location.reload(), 2000);
+                            } else {
+                                showSwalAlert('error', 'Error', response.error || 'Failed to delete supply.');
+                            }
+                        },
+                        error: function(xhr) {
+                            const errorMsg = xhr.responseJSON?.error || 'Failed to delete supply.';
+                            showSwalAlert('error', 'Error', errorMsg);
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Restore Supply Button (from Deleted Supplies Tab)
+        $(document).on('click', '.restore-supply-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            Swal.fire({
+                title: 'Restore this item?',
+                text: "This will restore the item back to the active supplies list.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, restore it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.value || result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supplies/' + supplyId + '/restore/',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                showSwalAlert('success', 'Restored!', 'Supply restored successfully.', 2000);
+                                setTimeout(() => location.reload(), 2000);
+                            } else {
+                                showSwalAlert('error', 'Error', response.error || 'Failed to restore supply.');
+                            }
+                        },
+                        error: function(xhr) {
+                            const errorMsg = xhr.responseJSON?.error || 'Failed to restore supply.';
+                            showSwalAlert('error', 'Error', errorMsg);
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Delete Permanently Button (from Deleted Supplies Tab)
+        $(document).on('click', '.delete-permanently-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            Swal.fire({
+                title: 'Delete Permanently?',
+                text: "This action cannot be undone! The item will be completely removed from the database.",
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete permanently!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.value || result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supplies/' + supplyId + '/delete-permanently/',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                showSwalAlert('success', 'Deleted!', 'Supply permanently deleted.', 2000);
+                                setTimeout(() => location.reload(), 2000);
+                            } else {
+                                showSwalAlert('error', 'Error', response.error || 'Failed to delete supply permanently.');
+                            }
+                        },
+                        error: function(xhr) {
+                            const errorMsg = xhr.responseJSON?.error || 'Failed to delete supply permanently.';
+                            showSwalAlert('error', 'Error', errorMsg);
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Clear form when edit modal is closed
+        $('#editSupplyModal').on('hidden.bs.modal', function() {
+            $('#edit-supply-form')[0].reset();
+            $('#edit-supply-id').val('');
+            $('#edit-expiration-date-row').hide();
+            $('#edit-expiration-date').prop('required', false);
+            $('#edit-expiration-date').val('');
+            $('#edit-expired').val('');
+        });
+        
+        // ========== VIEW SUPPLY DETAILS FUNCTIONALITY START ==========
+        
+        // View Supply Details Button - Open modal with complete supply data
+        $(document).on('click', '.view-supply-details-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            // Fetch supply data
+            $.ajax({
+                url: '/api/supplies/' + supplyId + '/',
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const supply = response.supply;
+                        
+                        // Populate Basic Information
+                        $('#view-item-code').text(supply.item_code || 'N/A');
+                        $('#view-description').text(supply.description || 'N/A');
+                        $('#view-main-category').text(supply.main_category_name || 'N/A');
+                        $('#view-sub-category').text(supply.sub_category || 'N/A');
+                        $('#view-unit').text(supply.unit || 'N/A');
+                        
+                        // Format and display date
+                        if (supply.date) {
+                            const date = new Date(supply.date);
+                            $('#view-date').text(date.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            }));
+                        } else {
+                            $('#view-date').text('N/A');
+                        }
+                        
+                        // Populate Expiration Info
+                        if (supply.expiration_date) {
+                            const expDate = new Date(supply.expiration_date);
+                            $('#view-expiration-date').text(expDate.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            }));
+                            
+                            // Calculate days until expiration
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            expDate.setHours(0, 0, 0, 0);
+                            const timeDiff = expDate - today;
+                            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                            
+                            let statusHtml = '';
+                            if (daysDiff < 0) {
+                                statusHtml = '<span class="badge badge-danger">Expired (' + Math.abs(daysDiff) + ' days ago)</span>';
+                            } else if (daysDiff === 0) {
+                                statusHtml = '<span class="badge badge-danger">Expires today</span>';
+                            } else if (daysDiff <= 7) {
+                                statusHtml = '<span class="badge badge-danger">' + daysDiff + ' days remaining</span>';
+                            } else if (daysDiff <= 30) {
+                                statusHtml = '<span class="badge badge-warning">' + daysDiff + ' days remaining</span>';
+                            } else {
+                                statusHtml = '<span class="badge badge-info">' + daysDiff + ' days remaining</span>';
+                            }
+                            $('#view-expiration-status').html(statusHtml);
+                        } else {
+                            $('#view-expiration-date').text('N/A');
+                            $('#view-expiration-status').html('<span class="badge badge-secondary">No expiration date</span>');
+                        }
+                        
+                        // Populate Inventory Details
+                        $('#view-opening-balance').text(supply.opening_balance || '0');
+                        $('#view-stock-in').text(supply.stock_in || '0');
+                        $('#view-running-count').text(supply.running_count || '0');
+                        $('#view-total-released').text(supply.total_released || '0');
+                        
+                        // Real-Time Balance with color coding
+                        const balance = supply.real_time_balance || 0;
+                        let balanceClass = 'badge-info';
+                        if (balance <= 0) {
+                            balanceClass = 'badge-danger';
+                        } else if (balance < 10) {
+                            balanceClass = 'badge-warning';
+                        } else {
+                            balanceClass = 'badge-success';
+                        }
+                        $('#view-real-time-balance').removeClass('badge-danger badge-warning badge-success badge-info')
+                            .addClass(balanceClass)
+                            .text(balance);
+                        
+                        // Populate Cost Information
+                        $('#view-cost-per-item').text('₱' + parseFloat(supply.cost_per_item || 0).toFixed(2));
+                        $('#view-running-cost').text('₱' + parseFloat(supply.running_cost || 0).toFixed(2));
+                        $('#view-total-cost').text('₱' + parseFloat(supply.total_cost || 0).toFixed(2));
+                        
+                        // Populate Transaction Info
+                        $('#view-transaction').text(supply.transaction || 'N/A');
+                        $('#view-requester-name').text(supply.requester_name || 'N/A');
+                        
+                        // Show modal
+                        $('#viewSupplyDetailsModal').modal('show');
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+        
+        // ========== VIEW SUPPLY DETAILS FUNCTIONALITY END ==========
+        
+        // ========== ADD STOCK FUNCTIONALITY START ==========
+        
+        // Add Stock Button - Open modal with supply data
+        $(document).on('click', '.add-stock-btn', function() {
+            const supplyId = $(this).data('supply-id');
+            
+            // Fetch supply data
+            $.ajax({
+                url: '/api/supplies/' + supplyId + '/',
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const supply = response.supply;
+                        // Populate read-only fields
+                        $('#add-stock-supply-id').val(supply.id);
+                        $('#add-stock-item-code').val(supply.item_code);
+                        $('#add-stock-description').val(supply.description);
+                        $('#add-stock-main-category').val(supply.main_category_name || 'N/A');
+                        $('#add-stock-sub-category').val(supply.sub_category || 'N/A');
+                        $('#add-stock-unit').val(supply.unit);
+                        $('#add-stock-current-balance').val(supply.real_time_balance || 0);
+                        
+                        // Clear the editable field
+                        $('#add-stock-quantity').val('');
+                        
+                        // Show modal
+                        $('#addStockModal').modal('show');
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+        
+        // Add Stock Form Submission
+        $('#add-stock-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const supplyId = $('#add-stock-supply-id').val();
+            const quantity = parseInt($('#add-stock-quantity').val()) || 0;
+            
+            if (quantity <= 0) {
+                showSwalAlert('warning', 'Validation Error', 'Please enter a valid quantity greater than 0.');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/supplies/' + supplyId + '/add-stock/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ quantity: quantity }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addStockModal').modal('hide');
+                        showSwalAlert('success', 'Success', 'Stock added successfully!', 2000);
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showSwalAlert('error', 'Error', response.error || 'Failed to add stock.');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Failed to add stock.';
+                    showSwalAlert('error', 'Error', errorMsg);
+                }
+            });
+        });
+        
+        // Clear form when add stock modal is closed
+        $('#addStockModal').on('hidden.bs.modal', function() {
+            $('#add-stock-form')[0].reset();
+            $('#add-stock-supply-id').val('');
+        });
+        
+        // ========== ADD STOCK FUNCTIONALITY END ==========
+        
+        // ========== SUPPLY ITEM CRUD OPERATIONS END ==========
+
+
+        // ========== OUT OF STOCK CHECKBOX AND PRINT FUNCTIONALITY START ==========
+        
+        // Select All checkbox functionality
+        $('#select-all-out-of-stock').on('change', function() {
+            const isChecked = $(this).prop('checked');
+            $('.out-of-stock-checkbox').prop('checked', isChecked);
+        });
+
+        // Individual checkbox change
+        $(document).on('change', '.out-of-stock-checkbox', function() {
+            const totalCheckboxes = $('.out-of-stock-checkbox').length;
+            const checkedCheckboxes = $('.out-of-stock-checkbox:checked').length;
+            $('#select-all-out-of-stock').prop('checked', totalCheckboxes === checkedCheckboxes);
+        });
+
+        // Get selected rows data
+        function getSelectedOutOfStockData() {
+            const selectedData = [];
+            $('.out-of-stock-checkbox:checked').each(function() {
+                const row = $(this).closest('tr');
+                const rowData = {
+                    no: row.find('.row-number').text(),
+                    item_code: row.find('td:eq(2)').text(),
+                    description: row.find('td:eq(3)').text(),
+                    main_category: row.find('td:eq(4)').text(),
+                    sub_category: row.find('td:eq(5)').text(),
+                    unit: row.find('td:eq(6)').text(),
+                    opening_balance: row.find('td:eq(7)').text(),
+                    cost_per_item: row.find('td:eq(8)').text(),
+                    stock_in: row.find('td:eq(9)').text(),
+                    running_count: row.find('td:eq(10)').text(),
+                    running_cost: row.find('td:eq(11)').text(),
+                    total_released: row.find('td:eq(12)').text(),
+                    real_time_balance: row.find('td:eq(13)').text().trim(),
+                    total_cost: row.find('td:eq(14)').text()
+                };
+                selectedData.push(rowData);
+            });
+            return selectedData;
+        }
+
+        // Print Selected Items
+        $('#print-out-of-stock-btn').on('click', function() {
+            const selectedData = getSelectedOutOfStockData();
+            
+            if (selectedData.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Items Selected',
+                    text: 'Please select at least one item to print.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+
+            // Create print window
+            const printWindow = window.open('', '_blank');
+            let printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Out of Stock Items - Print</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                        }
+                        h2 {
+                            text-align: center;
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 11px;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 6px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #28a745;
+                            color: white;
+                            font-weight: bold;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        .header-info {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        .print-date {
+                            text-align: right;
+                            font-size: 10px;
+                            margin-bottom: 10px;
+                        }
+                        @media print {
+                            button {
+                                display: none;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header-info">
+                        <h2>Out of Stock Items Report</h2>
+                    </div>
+                    <div class="print-date">
+                        Print Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Item Code</th>
+                                <th>Description</th>
+                                <th>Main Category</th>
+                                <th>Sub-Category</th>
+                                <th>Unit</th>
+                                <th>Opening Balance</th>
+                                <th>Cost per Item</th>
+                                <th>Stock-In</th>
+                                <th>Running Count</th>
+                                <th>Running Cost</th>
+                                <th>Total Released</th>
+                                <th>Real-Time Balance</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            selectedData.forEach((item) => {
+                printContent += `
+                    <tr>
+                        <td>${item.no}</td>
+                        <td>${item.item_code}</td>
+                        <td>${item.description}</td>
+                        <td>${item.main_category}</td>
+                        <td>${item.sub_category}</td>
+                        <td>${item.unit}</td>
+                        <td>${item.opening_balance}</td>
+                        <td>${item.cost_per_item}</td>
+                        <td>${item.stock_in}</td>
+                        <td>${item.running_count}</td>
+                        <td>${item.running_cost}</td>
+                        <td>${item.total_released}</td>
+                        <td>${item.real_time_balance}</td>
+                        <td>${item.total_cost}</td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
+                        </tbody>
+                    </table>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // Save to print history
+            savePrintHistory({
+                type: 'Out of Stock Report',
+                itemCount: selectedData.length,
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+            });
+        });
+
+        // Function to save print history to localStorage
+        function savePrintHistory(printData) {
+            let printHistory = JSON.parse(localStorage.getItem('printHistory')) || [];
+            printHistory.unshift(printData); // Add to beginning of array
+            
+            // Keep only last 50 entries
+            if (printHistory.length > 50) {
+                printHistory = printHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('printHistory', JSON.stringify(printHistory));
+        }
+
+        // Function to get print history
+        function getPrintHistory() {
+            return JSON.parse(localStorage.getItem('printHistory')) || [];
+        }
+
+        // Show print history when sidebar link is clicked
+        $(document).on('click', '#print-history-link', function(e) {
+            e.preventDefault();
+            const history = getPrintHistory();
+            
+            if (history.length === 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Print History',
+                    text: 'No print records found in history.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            
+            let historyHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
+            historyHTML += '<table class="table table-sm table-bordered" style="font-size: 12px;">';
+            historyHTML += '<thead><tr><th style="width: 50%;">Report Type</th><th style="width: 20%;">Items</th><th style="width: 30%;">Date</th></tr></thead>';
+            historyHTML += '<tbody>';
+            
+            history.forEach((item, index) => {
+                historyHTML += `
+                    <tr>
+                        <td>${item.type}</td>
+                        <td class="text-center">${item.itemCount}</td>
+                        <td style="font-size: 11px;">${item.date}</td>
+                    </tr>
+                `;
+            });
+            
+            historyHTML += '</tbody></table></div>';
+            
+            Swal.fire({
+                icon: 'info',
+                title: 'Print History',
+                html: historyHTML,
+                width: '700px',
+                confirmButtonColor: '#28a745',
+                showCloseButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Close',
+                cancelButtonText: 'Clear History',
+                cancelButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Clear history
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Clear History?',
+                        text: 'Are you sure you want to clear all print history?',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, Clear All',
+                        cancelButtonText: 'Cancel'
+                    }).then((confirmResult) => {
+                        if (confirmResult.isConfirmed) {
+                            localStorage.removeItem('printHistory');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Cleared!',
+                                text: 'Print history has been cleared.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Save as PDF - Direct Download
+        $('#save-pdf-out-of-stock-btn').on('click', function() {
+            console.log('=== SAVE AS PDF BUTTON CLICKED ===');
+            
+            const selectedData = getSelectedOutOfStockData();
+            console.log('Selected items count:', selectedData.length);
+            console.log('Selected data:', selectedData);
+            
+            if (selectedData.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Items Selected',
+                    text: 'Please select at least one item to save as PDF.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+
+            // Ask user confirmation before generating PDF
+            console.log('Showing SweetAlert confirmation dialog...');
+            
+            Swal.fire({
+                icon: 'question',
+                title: 'Save as PDF',
+                text: `Generate PDF report for ${selectedData.length} selected item(s)?`,
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'OK, Generate PDF',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                console.log('SweetAlert result:', result);
+                console.log('result.isConfirmed:', result.isConfirmed);
+                console.log('result.value:', result.value);
+                
+                // Check both isConfirmed and value for compatibility
+                if (result.isConfirmed || result.value === true) {
+                    console.log('User confirmed - starting PDF generation...');
+                    
+                    try {
+                        // Check if jsPDF is available
+                        if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+                            console.error('jsPDF not available!');
+                            throw new Error('PDF library not loaded');
+                        }
+                        
+                        console.log('jsPDF is available');
+                        
+                        // Generate PDF using jsPDF
+                        const { jsPDF } = window.jspdf;
+                        console.log('jsPDF constructor loaded');
+                        const doc = new jsPDF('landscape', 'mm', 'a4');
+                        
+                        // Add title
+                        doc.setFontSize(18);
+                        doc.setTextColor(40, 167, 69);
+                        doc.text('Out of Stock Items Report', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+                        
+                        // Add generation date
+                        doc.setFontSize(9);
+                        doc.setTextColor(100);
+                        const currentDate = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString();
+                        doc.text('Generated: ' + currentDate, doc.internal.pageSize.getWidth() - 15, 10, { align: 'right' });
+                        
+                        // Prepare table data
+                        const tableHeaders = [
+                            'No.', 'Item Code', 'Description', 'Main Category', 'Sub-Category', 
+                            'Unit', 'Opening Balance', 'Cost per Item', 'Stock-In', 
+                            'Running Count', 'Running Cost', 'Total Released', 
+                            'Real-Time Balance', 'Total Cost'
+                        ];
+                        
+                        const tableData = selectedData.map(item => [
+                            item.no,
+                            item.item_code,
+                            item.description,
+                            item.main_category,
+                            item.sub_category,
+                            item.unit,
+                            item.opening_balance,
+                            item.cost_per_item,
+                            item.stock_in,
+                            item.running_count,
+                            item.running_cost,
+                            item.total_released,
+                            item.real_time_balance,
+                            item.total_cost
+                        ]);
+                        
+                        // Check if autoTable is available
+                        if (typeof doc.autoTable !== 'function') {
+                            throw new Error('PDF table plugin not loaded');
+                        }
+                        
+                        // Generate table using autoTable
+                        doc.autoTable({
+                            head: [tableHeaders],
+                            body: tableData,
+                            startY: 22,
+                            theme: 'grid',
+                            styles: {
+                                fontSize: 7,
+                                cellPadding: 2,
+                                lineColor: [200, 200, 200],
+                                lineWidth: 0.1
+                            },
+                            headStyles: {
+                                fillColor: [40, 167, 69],
+                                textColor: [255, 255, 255],
+                                fontStyle: 'bold',
+                                halign: 'center'
+                            },
+                            alternateRowStyles: {
+                                fillColor: [245, 245, 245]
+                            },
+                            columnStyles: {
+                                0: { cellWidth: 10, halign: 'center' },  // No.
+                                1: { cellWidth: 22 },  // Item Code
+                                2: { cellWidth: 35 },  // Description
+                                3: { cellWidth: 22 },  // Main Category
+                                4: { cellWidth: 20 },  // Sub-Category
+                                5: { cellWidth: 12, halign: 'center' },  // Unit
+                                6: { cellWidth: 18, halign: 'right' },   // Opening Balance
+                                7: { cellWidth: 18, halign: 'right' },   // Cost per Item
+                                8: { cellWidth: 15, halign: 'right' },   // Stock-In
+                                9: { cellWidth: 18, halign: 'right' },   // Running Count
+                                10: { cellWidth: 18, halign: 'right' },  // Running Cost
+                                11: { cellWidth: 18, halign: 'right' },  // Total Released
+                                12: { cellWidth: 20, halign: 'right' },  // Real-Time Balance
+                                13: { cellWidth: 18, halign: 'right' }   // Total Cost
+                            },
+                            margin: { top: 22, left: 10, right: 10 }
+                        });
+                        
+                        // Generate filename with timestamp
+                        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
+                        const filename = `Out_of_Stock_Report_${timestamp}.pdf`;
+                        
+                        console.log('Preparing to download:', filename);
+                        
+                        // Try direct save first (simplest method)
+                        try {
+                            doc.save(filename);
+                            console.log('✓ PDF download triggered successfully');
+                        } catch (saveError) {
+                            console.error('Direct save failed:', saveError);
+                            
+                            // Fallback: Use blob method
+                            try {
+                                console.log('Trying blob download method...');
+                                const pdfBlob = doc.output('blob');
+                                console.log('Blob created, size:', pdfBlob.size, 'bytes');
+                                
+                                // Check browser compatibility
+                                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                                    // IE11 & Edge Legacy
+                                    console.log('Using IE/Edge Legacy method');
+                                    window.navigator.msSaveOrOpenBlob(pdfBlob, filename);
+                                } else {
+                                    // Modern browsers
+                                    console.log('Using modern browser method');
+                                    const url = window.URL.createObjectURL(pdfBlob);
+                                    console.log('Blob URL created:', url);
+                                    
+                                    const downloadLink = document.createElement('a');
+                                    downloadLink.href = url;
+                                    downloadLink.download = filename;
+                                    downloadLink.style.display = 'none';
+                                    
+                                    document.body.appendChild(downloadLink);
+                                    console.log('Download link added to DOM');
+                                    
+                                    // Force download
+                                    downloadLink.click();
+                                    console.log('Download link clicked');
+                                    
+                                    // Clean up after delay
+                                    setTimeout(() => {
+                                        if (document.body.contains(downloadLink)) {
+                                            document.body.removeChild(downloadLink);
+                                        }
+                                        window.URL.revokeObjectURL(url);
+                                        console.log('Cleanup completed');
+                                    }, 1000);
+                                }
+                                console.log('✓ Blob download method completed');
+                            } catch (blobError) {
+                                console.error('Blob download failed:', blobError);
+                                throw new Error('All download methods failed: ' + blobError.message);
+                            }
+                        }
+                        
+                        // Save to PDF history
+                        savePDFHistory({
+                            filename: filename,
+                            type: 'Out of Stock Report',
+                            itemCount: selectedData.length,
+                            timestamp: new Date().toISOString(),
+                            date: currentDate
+                        });
+                        
+                    } catch (error) {
+                        console.error('PDF Generation Error:', error);
+                        console.error('Error stack:', error.stack);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'PDF Generation Failed',
+                            html: `Unable to generate PDF.<br><br><small>Error: ${error.message}</small><br><br>Please try refreshing the page.`,
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                } else {
+                    console.log('User cancelled or dismissed dialog');
+                }
+            }).catch((error) => {
+                console.error('SweetAlert promise error:', error);
+            });
+        });
+
+        // Function to save PDF history to localStorage
+        function savePDFHistory(pdfData) {
+            let pdfHistory = JSON.parse(localStorage.getItem('pdfDownloadHistory')) || [];
+            pdfHistory.unshift(pdfData); // Add to beginning of array
+            
+            // Keep only last 50 entries
+            if (pdfHistory.length > 50) {
+                pdfHistory = pdfHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('pdfDownloadHistory', JSON.stringify(pdfHistory));
+        }
+
+        // Function to get PDF history
+        function getPDFHistory() {
+            return JSON.parse(localStorage.getItem('pdfDownloadHistory')) || [];
+        }
+
+        // Show PDF history when sidebar link is clicked
+        $(document).on('click', '#pdf-history-link', function(e) {
+            e.preventDefault();
+            const history = getPDFHistory();
+            
+            if (history.length === 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No PDF History',
+                    text: 'No PDF downloads found in history.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            
+            let historyHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
+            historyHTML += '<table class="table table-sm table-bordered" style="font-size: 12px;">';
+            historyHTML += '<thead><tr><th style="width: 40%;">Filename</th><th style="width: 25%;">Type</th><th style="width: 15%;">Items</th><th style="width: 20%;">Date</th></tr></thead>';
+            historyHTML += '<tbody>';
+            
+            history.forEach((item, index) => {
+                historyHTML += `
+                    <tr>
+                        <td style="word-break: break-all;">${item.filename}</td>
+                        <td>${item.type}</td>
+                        <td class="text-center">${item.itemCount}</td>
+                        <td style="font-size: 10px;">${item.date}</td>
+                    </tr>
+                `;
+            });
+            
+            historyHTML += '</tbody></table></div>';
+            
+            Swal.fire({
+                icon: 'info',
+                title: 'PDF Download History',
+                html: historyHTML,
+                width: '800px',
+                confirmButtonColor: '#28a745',
+                showCloseButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Close',
+                cancelButtonText: 'Clear History',
+                cancelButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Clear history
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Clear History?',
+                        text: 'Are you sure you want to clear all PDF download history?',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, Clear All',
+                        cancelButtonText: 'Cancel'
+                    }).then((confirmResult) => {
+                        if (confirmResult.isConfirmed) {
+                            localStorage.removeItem('pdfDownloadHistory');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Cleared!',
+                                text: 'PDF history has been cleared.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Show activity log (combined print and PDF history)
+        $(document).on('click', '#activity-log-link', function(e) {
+            e.preventDefault();
+            const pdfHistory = getPDFHistory();
+            const printHistory = getPrintHistory();
+            
+            // Combine and sort by timestamp
+            const allActivities = [
+                ...pdfHistory.map(item => ({...item, activity: 'PDF Download'})),
+                ...printHistory.map(item => ({...item, activity: 'Print'}))
+            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            if (allActivities.length === 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Activity Log',
+                    text: 'No activities found in history.',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            
+            let activityHTML = '<div style="text-align: left; max-height: 450px; overflow-y: auto;">';
+            activityHTML += '<table class="table table-sm table-bordered table-hover" style="font-size: 12px;">';
+            activityHTML += '<thead><tr><th style="width: 20%;">Activity</th><th style="width: 35%;">Details</th><th style="width: 15%;">Items</th><th style="width: 30%;">Date & Time</th></tr></thead>';
+            activityHTML += '<tbody>';
+            
+            allActivities.forEach((item, index) => {
+                const activityBadge = item.activity === 'PDF Download' 
+                    ? '<span class="badge badge-danger"><i class="fas fa-file-pdf"></i> PDF</span>' 
+                    : '<span class="badge badge-info"><i class="fas fa-print"></i> Print</span>';
+                
+                const details = item.filename ? item.filename.substring(0, 40) + '...' : item.type;
+                
+                activityHTML += `
+                    <tr>
+                        <td>${activityBadge}</td>
+                        <td style="word-break: break-all; font-size: 11px;">${details}</td>
+                        <td class="text-center"><span class="badge badge-success">${item.itemCount}</span></td>
+                        <td style="font-size: 10px;">${item.date}</td>
+                    </tr>
+                `;
+            });
+            
+            activityHTML += '</tbody></table></div>';
+            activityHTML += `<div class="mt-2 text-center"><small class="text-muted">Total Activities: ${allActivities.length}</small></div>`;
+            
+            Swal.fire({
+                icon: 'info',
+                title: '<i class="fas fa-clipboard-list"></i> Activity Log',
+                html: activityHTML,
+                width: '900px',
+                confirmButtonColor: '#28a745',
+                showCloseButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Close',
+                cancelButtonText: 'Clear All History',
+                cancelButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Clear all history
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Clear All History?',
+                        text: 'This will clear both PDF download and print history. Are you sure?',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, Clear Everything',
+                        cancelButtonText: 'Cancel'
+                    }).then((confirmResult) => {
+                        if (confirmResult.isConfirmed) {
+                            localStorage.removeItem('pdfDownloadHistory');
+                            localStorage.removeItem('printHistory');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Cleared!',
+                                text: 'All activity history has been cleared.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // ========== OUT OF STOCK CHECKBOX AND PRINT FUNCTIONALITY END ==========
+        
+        // ========== PAGINATION FUNCTIONALITY START ==========
+        
+        // Pagination configuration
+        const paginationConfig = {
+            rowsPerPage: 10,
+            currentPage: 1,
+            totalRows: 0,
+            totalPages: 0
+        };
+        
+        // Initialize pagination for All Items table
+        function initializePagination() {
+            const rows = $('#all-items-table tr').not('.empty-database-row, .no-matching-row');
+            paginationConfig.totalRows = rows.length;
+            paginationConfig.totalPages = Math.ceil(paginationConfig.totalRows / paginationConfig.rowsPerPage);
+            paginationConfig.currentPage = 1;
+            
+            renderPagination();
+            displayPage(1);
+        }
+        
+        // Display specific page
+        function displayPage(pageNumber) {
+            paginationConfig.currentPage = pageNumber;
+            const rows = $('#all-items-table tr').not('.empty-database-row, .no-matching-row');
+            
+            // Hide all rows first
+            rows.hide();
+            
+            // Calculate start and end indices
+            const start = (pageNumber - 1) * paginationConfig.rowsPerPage;
+            const end = start + paginationConfig.rowsPerPage;
+            
+            // Show only the rows for current page and update row numbers
+            const visibleRows = rows.slice(start, end);
+            visibleRows.each(function(index) {
+                $(this).show();
+                // Update the row number in the first column
+                $(this).find('td:first').text(start + index + 1);
+            });
+            
+            // Update info text
+            const displayStart = paginationConfig.totalRows > 0 ? start + 1 : 0;
+            const displayEnd = Math.min(end, paginationConfig.totalRows);
+            $('#all-items-start').text(displayStart);
+            $('#all-items-end').text(displayEnd);
+            $('#all-items-total').text(paginationConfig.totalRows);
+            
+            // Update pagination buttons
+            updatePaginationButtons();
+        }
+        
+        // Render pagination buttons
+        function renderPagination() {
+            const paginationList = $('#all-items-pagination ul');
+            const prevButton = $('#all-items-prev');
+            const nextButton = $('#all-items-next');
+            
+            // Remove existing page number buttons
+            paginationList.find('.page-number').remove();
+            
+            // Add page number buttons
+            for (let i = 1; i <= paginationConfig.totalPages; i++) {
+                const pageItem = $('<li>')
+                    .addClass('paginate_button page-item page-number')
+                    .attr('data-page', i);
+                
+                const pageLink = $('<a>')
+                    .addClass('page-link')
+                    .attr('href', '#')
+                    .text(i);
+                
+                pageItem.append(pageLink);
+                pageItem.insertBefore(nextButton);
+            }
+            
+            updatePaginationButtons();
+        }
+        
+        // Update pagination button states
+        function updatePaginationButtons() {
+            const prevButton = $('#all-items-prev');
+            const nextButton = $('#all-items-next');
+            const pageButtons = $('.page-number');
+            
+            // Update Previous button
+            if (paginationConfig.currentPage === 1) {
+                prevButton.addClass('disabled');
+            } else {
+                prevButton.removeClass('disabled');
+            }
+            
+            // Update Next button
+            if (paginationConfig.currentPage === paginationConfig.totalPages || paginationConfig.totalPages === 0) {
+                nextButton.addClass('disabled');
+            } else {
+                nextButton.removeClass('disabled');
+            }
+            
+            // Update page number buttons
+            pageButtons.removeClass('active');
+            pageButtons.filter('[data-page="' + paginationConfig.currentPage + '"]').addClass('active');
+        }
+        
+        // Event handlers for pagination
+        $(document).on('click', '#all-items-prev', function(e) {
+            e.preventDefault();
+            if (paginationConfig.currentPage > 1) {
+                displayPage(paginationConfig.currentPage - 1);
+            }
+        });
+        
+        $(document).on('click', '#all-items-next', function(e) {
+            e.preventDefault();
+            if (paginationConfig.currentPage < paginationConfig.totalPages) {
+                displayPage(paginationConfig.currentPage + 1);
+            }
+        });
+        
+        $(document).on('click', '.page-number', function(e) {
+            e.preventDefault();
+            const pageNumber = parseInt($(this).attr('data-page'));
+            displayPage(pageNumber);
+        });
+        
+        // Initialize pagination on page load 
+        initializePagination();
+        
+        // Re-initialize pagination when search is performed
+        const originalSearchFunction = $('#search-input').on('keyup');
+        $('#search-input').on('keyup', function() {
+            // Wait for search to complete, then update pagination
+            setTimeout(function() {
+                const visibleRows = $('#all-items-table tr:visible').not('.empty-database-row, .no-matching-row');
+                paginationConfig.totalRows = visibleRows.length;
+                paginationConfig.totalPages = Math.ceil(paginationConfig.totalRows / paginationConfig.rowsPerPage);
+                paginationConfig.currentPage = 1;
+                renderPagination();
+                displayPage(1);
+            }, 100);
+        });
+        
+        // ========== PAGINATION FUNCTIONALITY END ==========
+        
+        // Verify PDF library loaded (runs after page loads)
+        setTimeout(function() {
+            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+                console.log('✓ PDF Library Ready');
+                
+                // Test download capability
+                console.log('Browser download support:', {
+                    hasDownloadAttribute: 'download' in document.createElement('a'),
+                    hasBlob: typeof Blob !== 'undefined',
+                    hasURL: typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function'
+                });
+            } else {
+                console.error('✗ PDF Library Failed to Load - Please refresh page');
+            }
+        }, 1500);
+        
+    });
+</script>
+{% endblock custom_js %}

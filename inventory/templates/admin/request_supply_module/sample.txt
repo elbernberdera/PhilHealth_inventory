@@ -1,0 +1,208 @@
+   <!-- Request Entry and List -->
+   <div class="col-md-12">
+    <!-- REQUEST ENTRY Section -->
+    <div class="card card-outline">
+        <div class="card-header">
+            <h4 class="card-title mb-0" style="color: red; font-weight: bold;">
+                REQUEST ENTRY
+            </h4>
+           
+        </div>
+        <div class="card-body">
+           
+            </div>
+           
+        </div>
+    </div>
+ 
+ <form method="POST" action="{% url 'request_supply_module' %}" id="request-form">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Search Item -->
+                                    <div class="form-group">
+                                        <label for="search_item">Search Item:</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="search_item" name="search_item" 
+                                                   placeholder="Search item...">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Unit -->
+                                    <div class="form-group">
+                                        <label for="unit">Unit:</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="unit" name="unit" 
+                                                   placeholder="Unit">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quantity -->
+                                    <div class="form-group">
+                                        <label for="quantity">Quantity:</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                                               placeholder="Enter quantity" min="0">
+                                    </div>
+
+                                    <!-- Type of Transaction -->
+                                    <div class="form-group">
+                                        <label for="transaction_type">Type of Transaction:</label>
+                                        <select class="form-control" id="transaction_type" name="transaction_type">
+                                            <option value="stock_out" selected>Stock-Out</option>
+                                            <option value="stock_in">Stock-In</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- User Name -->
+                                    <div class="form-group">
+                                        <label for="user_name">User Name:</label>
+                                        <input type="text" class="form-control" id="user_name" name="user_name" 
+                                               value="{{ request.user.first_name }} {{ request.user.last_name }}">
+                                    </div>
+
+                                    <!-- Balance -->
+                                    <div class="form-group">
+                                        <label for="balance">Balance:</label>
+                                        <input type="text" class="form-control" id="balance" name="balance" 
+                                               placeholder="0" readonly>
+                                    </div>
+
+                                    <!-- Item Code -->
+                                    <div class="form-group">
+                                        <label for="item_code">Item Code:</label>
+                                        <input type="text" class="form-control" id="item_code" name="item_code" 
+                                               placeholder="Item code will appear here" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // COMMENTED OUT: This function is no longer needed since we're using Django template syntax to render table rows
+    // Table rows are now rendered server-side in the HTML template using Django for loops
+    /*
+    function renderTable() {
+        var tableBody = $('#requested-items-table');
+        tableBody.empty();
+        
+        if (filteredItems.length === 0) {
+            tableBody.append(
+                '<tr><td colspan="15" class="text-center text-muted">No items found. Add items using the form above.</td></tr>'
+            );
+            return;
+        }
+        
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
+        
+        for (var i = startIndex; i < endIndex; i++) {
+            var item = filteredItems[i];
+            var rowNumber = i + 1; // Sequential number starting from 1
+            
+            var row = '<tr data-item-id="' + (item.id || '') + '" data-item-index="' + i + '">' +
+                '<td>' + rowNumber + '</td>' +
+                '<td>' + (item.itemCode || '') + '</td>' +
+                '<td>' + (item.description || '') + '</td>' +
+                '<td>' + (item.mainCategoryName || item.mainCategory || '') + '</td>' +
+                '<td>' + (item.subCategory || '') + '</td>' +
+                '<td>' + (item.unit || '') + '</td>' +
+                '<td>' + formatWholeNumber(item.openingBalance) + '</td>' +
+                '<td>' + (item.costPerItem || '0.00') + '</td>' +
+                '<td>' + formatWholeNumber(item.stockIn) + '</td>' +
+                '<td>' + formatWholeNumber(item.runningCount) + '</td>' +
+                '<td>' + (item.runningCost || '0.00') + '</td>' +
+                '<td>' + (item.totalReleased || '0') + '</td>' +
+                '<td>' + formatWholeNumber(item.realTimeBalance) + '</td>' +
+                '<td>' + (item.totalCost || '0.00') + '</td>' +
+                '<td style="white-space: nowrap;">' +
+                '<button type="button" class="btn btn-primary btn-sm update-item-btn" data-item-id="' + (item.id || '') + '" data-item-index="' + i + '" title="Update" style="margin-right: 5px;">' +
+                '<i class="fas fa-edit mr-1"></i>Update' +
+                '</button>' +
+                '<button type="button" class="btn btn-danger btn-sm delete-item-btn" data-item-id="' + (item.id || '') + '" data-item-index="' + i + '" title="Delete">' +
+                '<i class="fas fa-trash mr-1"></i>Delete' +
+                '</button>' +
+                '</td>' +
+                '</tr>';
+            
+            tableBody.append(row);
+        }
+    }
+    */
+
+    // COMMENTED OUT: This function is no longer needed since we're using Django template syntax to render table rows
+    // Table rows are now rendered server-side in the HTML template using Django for loops
+    /*
+    // Render table for Out of Stock tab
+    function renderTableOut() {
+        var tableBody = $('#out-of-stock-table');
+        tableBody.empty();
+        
+        if (filteredItems.length === 0) {
+            tableBody.append(
+                '<tr><td colspan="15" class="text-center text-muted">No out of stock items found.</td></tr>'
+            );
+            return;
+        }
+        
+        var startIndex = (currentPageOut - 1) * itemsPerPage;
+        var endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
+        
+        for (var i = startIndex; i < endIndex; i++) {
+            var item = filteredItems[i];
+            var rowNumber = i + 1; // Sequential number starting from 1
+            
+            var row = '<tr data-item-id="' + (item.id || '') + '" data-item-index="' + i + '">' +
+                '<td>' + rowNumber + '</td>' +
+                '<td>' + (item.itemCode || '') + '</td>' +
+                '<td>' + (item.description || '') + '</td>' +
+                '<td>' + (item.mainCategoryName || item.mainCategory || '') + '</td>' +
+                '<td>' + (item.subCategory || '') + '</td>' +
+                '<td>' + (item.unit || '') + '</td>' +
+                '<td>' + formatWholeNumber(item.openingBalance) + '</td>' +
+                '<td>' + (item.costPerItem || '0.00') + '</td>' +
+                '<td>' + formatWholeNumber(item.stockIn) + '</td>' +
+                '<td>' + formatWholeNumber(item.runningCount) + '</td>' +
+                '<td>' + (item.runningCost || '0.00') + '</td>' +
+                '<td>' + (item.totalReleased || '0') + '</td>' +
+                '<td><span class="badge badge-danger">' + formatWholeNumber(item.realTimeBalance) + '</span></td>' +
+                '<td>' + (item.totalCost || '0.00') + '</td>' +
+                '<td style="white-space: nowrap;">' +
+                '<button type="button" class="btn btn-primary btn-sm update-item-btn" data-item-id="' + (item.id || '') + '" data-item-index="' + i + '" title="Update" style="margin-right: 5px;">' +
+                '<i class="fas fa-edit mr-1"></i>Update' +
+                '</button>' +
+                '<button type="button" class="btn btn-danger btn-sm delete-item-btn" data-item-id="' + (item.id || '') + '" data-item-index="' + i + '" title="Delete">' +
+                '<i class="fas fa-trash mr-1"></i>Delete' +
+                '</button>' +
+                '</td>' +
+                '</tr>';
+            
+            tableBody.append(row);
+        }
+    }
+    */
