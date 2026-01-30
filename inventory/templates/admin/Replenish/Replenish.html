@@ -2471,8 +2471,8 @@ Replenish/Add New Item
                 return;
             }
 
-            // Generate RIS number
-            const risNumber = `059-26-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+            // Generate RIS number (legacy format: XXX-XX-XXX e.g. 023-26-001)
+            const risNumber = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
             const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
             // Create print window
@@ -2498,8 +2498,10 @@ Replenish/Add New Item
                         .page-border {
                             border: 2px solid #000;
                             padding: 15px;
-                            min-height: 270mm;
                             position: relative;
+                            box-sizing: border-box;
+                            max-height: 277mm;
+                            overflow: hidden;
                         }
                         
                         .header {
@@ -2587,38 +2589,37 @@ Replenish/Add New Item
                         
                         .footer-section {
                             margin-top: 20px;
+                            width: 100%;
                         }
                         
-                        .purpose {
-                            margin-bottom: 10px;
+                        .footer-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 8pt;
+                        }
+                        
+                        .footer-table td,
+                        .footer-table th {
+                            border: 1px solid #000;
+                            padding: 4px 6px;
+                            vertical-align: top;
+                            text-align: left;
+                        }
+                        
+                        .footer-purpose-cell {
                             font-size: 9pt;
+                            padding: 6px 8px;
                         }
                         
-                        .signatures {
-                            display: grid;
-                            grid-template-columns: repeat(4, 1fr);
-                            gap: 10px;
-                            margin-top: 15px;
-                        }
-                        
-                        .sig-box {
-                            text-align: center;
-                            font-size: 7pt;
-                        }
-                        
-                        .sig-label {
+                        .footer-sig-header {
                             font-weight: normal;
-                            margin-bottom: 20px;
+                            padding: 4px 6px;
                         }
                         
-                        .sig-line {
+                        .footer-sig-line {
                             border-bottom: 1px solid #000;
-                            margin: 0 5px 3px 5px;
-                        }
-                        
-                        .sig-text {
-                            font-size: 6pt;
-                            margin: 2px 0;
+                            min-height: 18px;
+                            margin-top: 2px;
                         }
                         
                         @media print {
@@ -2628,6 +2629,7 @@ Replenish/Add New Item
                             }
                             .page-border {
                                 border: 2px solid #000;
+                                page-break-after: avoid;
                             }
                         }
                     </style>
@@ -2638,17 +2640,20 @@ Replenish/Add New Item
                         <div class="header">
                             <div class="header-left">
                                 <img src="{% static 'image/logo.png' %}" alt="PhilHealth Logo" class="logo" onerror="this.style.display='none'">
+                                <div>
+                                    <span class="doc-title" style="font-size: 12pt;">PhilHealth</span><br>
+                                    <span class="doc-subtitle">Your Partner in Health.</span>
+                                </div>
                             </div>
                             <div class="header-right">
-                                <p class="doc-title">Requisition and Issue Slip</p>
-                                <p class="doc-subtitle">(Supplies and Materials)</p>
+                                <p class="doc-title">Requisition and Issue Slip (Supplies and Materials)</p>
                             </div>
                         </div>
                         
                         <!-- Info Row -->
                         <div class="info-row">
                             <div class="info-left">
-                                <strong>Office/End User:</strong> LHDO BUTUAN CITY
+                                <strong>Office-End User:</strong> LHIO BUTUAN CITY
                             </div>
                             <div class="info-right">
                                 <strong>RIS #:</strong> ${risNumber}<br>
@@ -2660,15 +2665,14 @@ Replenish/Add New Item
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th colspan="1" style="background-color: #f0f0f0; ">Balance<br></th>
-                                    <th colspan="4" style="background-color: #f0f0f0; ">REQUISITION</th>
-                                    <th colspan="4" style="background-color: #f0f0f0; ">ISSUANCE</th>
-                                    
+                                    <th colspan="1" style="background-color: #f0f0f0;">Balance on Hand</th>
+                                    <th colspan="4" style="background-color: #f0f0f0;">REQUISITION</th>
+                                    <th colspan="4" style="background-color: #f0f0f0;">ISSUANCE</th>
                                 </tr>
                                 <tr>
-                                    <th class="col-balance"><br>on Hand</th>
+                                    <th class="col-balance"></th>
                                     <th class="col-unit">Unit</th>
-                                    <th class="col-requisition"></th>
+                                    <th class="col-requisition">Item Description</th>
                                     <th class="col-qty">Qty</th>
                                     <th class="col-unit">Unit</th>
                                     <th class="col-qty">Qty</th>
@@ -2679,8 +2683,8 @@ Replenish/Add New Item
                             </thead>
                             <tbody>`;
 
-            // Add data rows (max 25 items to fit on one page)
-            const maxRows = 25;
+            // Add data rows (limit so content + border fit on one page)
+            const maxRows = 15;
             for (let i = 0; i < maxRows; i++) {
                 if (i < selectedData.length) {
                     const item = selectedData[i];
@@ -2714,52 +2718,52 @@ Replenish/Add New Item
             }
 
             printContent += `
+                                <tr>
+                                    <td colspan="8" style="border-left: none; border-right: none; border-bottom: 1px dotted #333; padding: 4px 8px; font-size: 7pt;">
+                                        --------Nothing follows---------
+                                    </td>
+                                    <td class="col-total" style="border: 1px solid #000; font-weight: bold; text-align: center;">TOTAL AMOUNT</td>
+                                </tr>
                             </tbody>
                         </table>
                         
-                        <!-- Footer Section -->
+                        <!-- Footer Section (bordered table matching legacy format) -->
                         <div class="footer-section">
-                            <div class="purpose">
-                                <strong>Purpose:</strong> Operational Use
-                            </div>
-                            
-                            <div class="signatures">
-                                <div class="sig-box">
-                                    <div class="sig-label">Requested by:</div>
-                                    <div class="sig-line"></div>
-                                    <div class="sig-text">Signature</div>
-                                    <div class="sig-text">Printed Name:</div>
-                                    <div class="sig-text">Position:</div>
-                                    <div class="sig-text">Date:</div>
-                                </div>
-                                
-                                <div class="sig-box">
-                                    <div class="sig-label">Approved by:</div>
-                                    <div class="sig-line"></div>
-                                    <div class="sig-text">Signature</div>
-                                    <div class="sig-text">Printed Name:</div>
-                                    <div class="sig-text">Position:</div>
-                                    <div class="sig-text">Date:</div>
-                                </div>
-                                
-                                <div class="sig-box">
-                                    <div class="sig-label">Issued by:</div>
-                                    <div class="sig-line"></div>
-                                    <div class="sig-text">Signature</div>
-                                    <div class="sig-text">Printed Name:</div>
-                                    <div class="sig-text">Position:</div>
-                                    <div class="sig-text">Date:</div>
-                                </div>
-                                
-                                <div class="sig-box">
-                                    <div class="sig-label">Received by:</div>
-                                    <div class="sig-line"></div>
-                                    <div class="sig-text">Signature</div>
-                                    <div class="sig-text">Printed Name:</div>
-                                    <div class="sig-text">Position:</div>
-                                    <div class="sig-text">Date:</div>
-                                </div>
-                            </div>
+                            <table class="footer-table">
+                                <tr>
+                                    <td colspan="4" class="footer-purpose-cell"><strong>Purpose:</strong> Operational Use</td>
+                                </tr>
+                                <tr>
+                                    <th class="footer-sig-header">Requested by:</th>
+                                    <th class="footer-sig-header">Approved by:</th>
+                                    <th class="footer-sig-header">Issued by:</th>
+                                    <th class="footer-sig-header">Received by:</th>
+                                </tr>
+                                <tr>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                </tr>
+                                <tr>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                </tr>
+                                <tr>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                </tr>
+                                <tr>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                     
@@ -2935,19 +2939,18 @@ Replenish/Add New Item
                         // Get current date
                         const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
-                        // Header - PhilHealth Logo and Title
-                        doc.setFontSize(10);
+                        // Header - PhilHealth (legacy format)
+                        doc.setFontSize(12);
                         doc.setFont('helvetica', 'bold');
                         doc.text('PhilHealth', margin, 15);
-                        doc.setFontSize(7);
-                        doc.setFont('helvetica', 'italic');
-                        doc.text('Your Partner for Health', margin, 19);
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Your Partner in Health.', margin, 19);
 
-                        // Title
+                        // Title (legacy: single line right-aligned)
                         doc.setFontSize(9);
                         doc.setFont('helvetica', 'bold');
-                        doc.text('Requisition and Issue Slip', pageWidth - margin, 13, { align: 'right' });
-                        doc.text('(Supplies and Materials)', pageWidth - margin, 17, { align: 'right' });
+                        doc.text('Requisition and Issue Slip (Supplies and Materials)', pageWidth - margin, 16, { align: 'right' });
 
                         // Border around the entire document
                         doc.setLineWidth(0.5);
@@ -2955,16 +2958,16 @@ Replenish/Add New Item
 
                         let yPosition = 32;
 
-                        // Office/End User Info
+                        // Office-End User Info (legacy format)
                         doc.setFontSize(8);
                         doc.setFont('helvetica', 'normal');
-                        doc.text('Office/End User:', margin, yPosition);
+                        doc.text('Office-End User:', margin, yPosition);
                         doc.setFont('helvetica', 'bold');
-                        doc.text('INVENTORY SYSTEM', margin + 30, yPosition);
+                        doc.text('LHIO BUTUAN CITY', margin + 32, yPosition);
 
-                        // RIS # and Date (aligned right)
+                        // RIS # and Date (aligned right, legacy format XXX-XX-XXX)
                         doc.setFont('helvetica', 'normal');
-                        const risNumber = `RIS #: 059-26-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+                        const risNumber = `RIS #: 023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
                         doc.text(risNumber, pageWidth - margin - 5, yPosition, { align: 'right' });
                         doc.text(`Date: ${currentDate}`, pageWidth - margin - 5, yPosition + 4, { align: 'right' });
 
@@ -2986,7 +2989,7 @@ Replenish/Add New Item
                             totalCost: 24
                         };
 
-                        // SECTION HEADER ROW (Balance, REQUISITION, ISSUANCE)
+                        // SECTION HEADER ROW (legacy: Balance on Hand, REQUISITION, ISSUANCE)
                         doc.setFillColor(240, 240, 240);
                         doc.rect(margin, yPosition, pageWidth - (2 * margin), 7, 'F');
 
@@ -2998,9 +3001,9 @@ Replenish/Add New Item
                         const requisitionWidth = colWidths.unit + colWidths.requisition + colWidths.qty + colWidths.unit2;
                         const issuanceWidth = colWidths.qty2 + colWidths.unit3 + colWidths.cost + colWidths.totalCost;
 
-                        // Section headers
+                        // Section headers (legacy format)
                         let xPos = margin;
-                        doc.text('Balance', xPos + (balanceWidth / 2), yPosition + 5, { align: 'center' });
+                        doc.text('Balance on Hand', xPos + (balanceWidth / 2), yPosition + 5, { align: 'center' });
                         xPos += balanceWidth;
 
                         doc.text('REQUISITION', xPos + (requisitionWidth / 2), yPosition + 5, { align: 'center' });
@@ -3031,7 +3034,8 @@ Replenish/Add New Item
                         doc.text('Unit', xPos + (colWidths.unit / 2), yPosition + 5, { align: 'center' });
                         xPos += colWidths.unit;
 
-                        // REQUISITION (empty/description column)
+                        // REQUISITION - Item Description column (legacy)
+                        doc.text('Item Description', xPos + (colWidths.requisition / 2), yPosition + 5, { align: 'center' });
                         xPos += colWidths.requisition;
 
                         // Qty
@@ -3188,8 +3192,23 @@ Replenish/Add New Item
                             doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight);
                         }
 
-                        // Draw remaining vertical lines
                         const finalRowY = dataEndY + (emptyRowsNeeded * rowHeight);
+
+                        // Legacy: "--------Nothing follows---------" row + TOTAL AMOUNT box
+                        const nothingFollowsY = finalRowY + rowHeight;
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineDashPattern([1, 1], 0);
+                        doc.line(margin, nothingFollowsY + 3, margin + (pageWidth - (2 * margin)) - colWidths.totalCost - 2, nothingFollowsY + 3);
+                        doc.setLineDashPattern([], 0);
+                        doc.setDrawColor(0);
+                        doc.setFontSize(6);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('--------Nothing follows---------', margin + 2, nothingFollowsY + 4);
+                        doc.setFont('helvetica', 'bold');
+                        doc.rect(pageWidth - margin - colWidths.totalCost, nothingFollowsY, colWidths.totalCost, rowHeight, 'S');
+                        doc.text('TOTAL AMOUNT', pageWidth - margin - (colWidths.totalCost / 2), nothingFollowsY + 4, { align: 'center' });
+
+                        // Draw remaining vertical lines
                         currentX = margin;
                         doc.line(currentX, dataEndY, currentX, finalRowY);
 
@@ -3220,8 +3239,8 @@ Replenish/Add New Item
                         currentX += colWidths.totalCost;
                         doc.line(currentX, dataEndY, currentX, finalRowY);
 
-                        // Footer Section
-                        yPosition = finalRowY + 5;
+                        // Footer Section (after "Nothing follows" row)
+                        yPosition = nothingFollowsY + rowHeight + 5;
 
                         // Purpose
                         doc.setFontSize(8);
@@ -3265,10 +3284,10 @@ Replenish/Add New Item
                         doc.text('Printed Name:', margin + (sigBoxWidth * 3) + 2, yPosition);
 
                         yPosition += 4;
-                        doc.text('Position:', margin + 2, yPosition);
-                        doc.text('Position:', margin + sigBoxWidth + 2, yPosition);
-                        doc.text('Position:', margin + (sigBoxWidth * 2) + 2, yPosition);
-                        doc.text('Position:', margin + (sigBoxWidth * 3) + 2, yPosition);
+                        doc.text('Designation:', margin + 2, yPosition);
+                        doc.text('Designation:', margin + sigBoxWidth + 2, yPosition);
+                        doc.text('Designation:', margin + (sigBoxWidth * 2) + 2, yPosition);
+                        doc.text('Designation:', margin + (sigBoxWidth * 3) + 2, yPosition);
 
                         yPosition += 4;
                         doc.text('Date:', margin + 2, yPosition);
