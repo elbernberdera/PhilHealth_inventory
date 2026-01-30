@@ -147,5 +147,10 @@ LOGGING = {
             'level': 'ERROR',  # Only show errors, not info logs
             'propagate': False,
         },
+        'inventory.middleware': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
