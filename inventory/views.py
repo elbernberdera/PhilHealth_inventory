@@ -15,41 +15,42 @@ def home(request):
     """Home page view - redirects to login"""
     return redirect('login')
 
+def get_dashboard_redirect(user):
+    """Return the dashboard URL name for the given user (admin vs staff)."""
+    if user.is_superuser:
+        return 'admin_dashboard'
+    if getattr(user, 'is_staff', False):
+        return 'staff_dashboard'
+    return 'admin_dashboard'
+
+
+@login_required
+def dashboard_redirect(request):
+    """Redirect logged-in user to the correct dashboard (admin or staff)."""
+    return redirect(get_dashboard_redirect(request.user))
+
+
 def login(request):
-    """Login view"""
-    # If user is already logged in, redirect to appropriate dashboard
+    """Login view - authenticates user and redirects to dashboard."""
+    # If user is already logged in, send to dashboard
     if request.user.is_authenticated:
-        if request.user.is_superuser:
-            return redirect('admin_dashboard')
-        elif request.user.is_staff:
-            return redirect('staff_dashboard')
-        else:
-            return redirect('admin_dashboard')  # Default fallback
-    
-    # Handle POST request (form submission)
+        return redirect(get_dashboard_redirect(request.user))
+
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        if username and password:
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                auth_login(request, user)
-                messages.success(request, 'Login successful!')
-                
-                # Redirect based on user role
-                if user.is_superuser:
-                    return redirect('admin_dashboard')
-                elif user.is_staff:
-                    return redirect('staff_dashboard')
-                else:
-                    return redirect('admin_dashboard')  # Default fallback
-            else:
-                messages.error(request, 'Invalid username or password.')
-        else:
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+
+        if not username or not password:
             messages.error(request, 'Please enter both username and password.')
-    
-    # GET request - show login page
+            return render(request, 'login.html')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)
+            messages.success(request, 'Login successful!')
+            return redirect(get_dashboard_redirect(user))
+        messages.error(request, 'Invalid username or password.')
+
     return render(request, 'login.html')
 
 @login_required

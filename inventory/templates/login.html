@@ -17,223 +17,326 @@
             height: 100vh;
             margin: 0;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .background-section {
+        /* Full page background with gradient overlay */
+        .page-background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 70%;
+            width: 100%;
             height: 100vh;
-            background-image: url('{% static "image/bg1.png" %}');
+            background-image: url('{% static "image/bg_ph.avif" %}');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             z-index: 0;
         }
 
-        .white-section {
-            position: fixed;
+        /* Gradient overlay - yellow to green (behind login form) */
+        .page-background::after {
+            content: '';
+            position: absolute;
             top: 0;
-            right: 0;
-            width: 50%;
-            height: 100vh;
-            background: white;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(59, 255, 255, 0.55) 0%, rgba(66, 228, 160, 0.55) 100%);
             z-index: 1;
         }
 
-        .logo-top-right {
-            display: block;
-            width: 350px;
-            height: auto;
+        /* Main centered container */
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1100px;
+            height: 650px;
+            display: flex;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Teal/green left section - image with green overlay */
+        .green-section {
+            width: 50%;
+            height: 100%;
+            background-image: linear-gradient(135deg, rgba(24, 160, 135, 0.88) 0%, rgba(26, 140, 110, 0.82) 40%, rgba(126, 184, 138, 0.78) 100%), url('{% static "image/31099699_9.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 50px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle wave/abstract pattern overlay */
+        .green-section::after {
+            content: '';
             position: absolute;
-            top: 30px;
-            left: 15%;
-            z-index: 3;
-            margin-bottom: 40px;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,255,255,0.12) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .green-section .logo-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: -130px;
+        }
+
+        .green-section .logo {
+            width: 410px;
+            height: auto;
+            display: block;
+        }
+
+        .green-section .brand-name {
+            color: #0d3d33;
+            font-size: 1.75em;
+            font-weight: 700;
+            margin-top: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .green-section .slogan {
+            color: #1a1a1a;
+            font-size: 1em;
+            font-weight: 500;
+            margin: 6px 0 0 0;
+        }
+
+        /* White right section - image with light overlay for form readability */
+        .white-section {
+            width: 50%;
+            height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.88)), url('{% static "image/31099699_9.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 40px;
+            box-sizing: border-box;
+            position: relative;
         }
 
         .login-form-container {
-            position: absolute;
-            top: 55%;
-            left: 15%;
-            transform: translateY(-50%);
-            width: 380px;
-            z-index: 10;
-            padding-top: 100px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
         }
 
-        .login-form-container h3 {
-            margin-bottom: 40px;
+        .login-form-container .form-header {
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .login-form-container .form-header h2 {
             color: #333;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 3.5em;
+            margin-bottom: 8px;
+            margin-top: 0;
+        }
+
+        .login-form-container .form-header p {
+            color: #666;
+            font-size: 1.2em;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
             position: relative;
-            z-index: 10;
         }
 
         .form-group input {
-            padding: 12px 45px 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 14px 44px 14px 44px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
             width: 100%;
             font-size: 1em;
             background-color: #fff;
-            position: relative;
-            z-index: 10;
-            pointer-events: auto !important;
-            cursor: text;
+            transition: all 0.25s ease;
             box-sizing: border-box;
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
         }
 
         .form-group input:hover {
-            border-color: #007bff;
+            border-color: #b0b0b0;
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            border-color: #2d8659;
+            box-shadow: 0 0 0 3px rgba(45, 134, 89, 0.12);
         }
 
         .form-group .form-control-icon {
             position: absolute;
-            right: 15px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #888;
+            color: #aaa;
             pointer-events: none;
-            z-index: 11;
+            font-size: 1em;
         }
 
-        .form-group .password-toggle-icon {
+        .form-group .form-control-icon.password-toggle-icon {
+            left: auto;
+            right: 16px;
             pointer-events: auto;
             cursor: pointer;
+            color: #888;
             transition: color 0.2s;
         }
 
-        .form-group .password-toggle-icon:hover {
-            color: #007bff;
+        .form-group .form-control-icon.password-toggle-icon:hover {
+            color: #2d8659;
         }
 
         .btn-primary {
-            background: linear-gradient(to right, #4A90E2, #357ABD);
+            background: #1e5d3f;
             border: none;
-            padding: 12px;
-            font-size: 1.1em;
-            border-radius: 8px;
-            margin-top: 10px;
+            padding: 14px;
+            font-size: 1.05em;
+            border-radius: 10px;
+            margin-top: 8px;
             width: 100%;
             color: white;
-            font-weight: 500;
-            transition: transform 0.2s;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            cursor: pointer;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background: #2d8659;
+            box-shadow: 0 4px 14px rgba(45, 134, 89, 0.35);
         }
 
-        .social-login {
-            margin-top: 20px;
+        .form-links {
             display: flex;
-            gap: 10px;
-        }
-
-        .social-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
 
-        .social-btn:hover {
-            background: #f5f5f5;
-            transform: translateY(-2px);
+        .form-links a {
+            color: #2d8659;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
         }
 
-        .social-btn i {
-            font-size: 1.2em;
+        .form-links a:hover {
+            color: #1e5d3f;
+            text-decoration: underline;
         }
 
-        .social-btn.google i {
-            background: linear-gradient(45deg, #4285F4, #34A853, #FBBC05, #EA4335);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .social-btn.facebook {
-            color: #1877F2;
-        }
-
-        @media (max-width: 768px) {
-            .background-section {
-                width: 100%;
+        @media (max-width: 968px) {
+            .login-container {
+                flex-direction: column;
+                height: auto;
+                max-width: 500px;
             }
+            
+            .green-section {
+                width: 100%;
+                min-height: 260px;
+                padding: 40px 30px;
+            }
+            
+            .green-section .logo {
+                width: 320px;
+            }
+            
+            .green-section .brand-name {
+                font-size: 1.5em;
+            }
+            
             .white-section {
                 width: 100%;
+                padding: 40px 30px;
             }
+            
             .login-form-container {
-                left: 50%;
-                transform: translate(-50%, -50%);
+                max-width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Background Section (Left Side) -->
-    <div class="background-section"></div>
+    <!-- Full Page Background with Low Opacity -->
+    <div class="page-background"></div>
     
-    <!-- White Section (Right Side) -->
-    <div class="white-section">
-        <!-- Logo at the top -->
-        <img src="{% static 'image/logo1.png' %}" alt="Logo" class="logo-top-right">
+    <!-- Main Centered Container -->
+    <div class="login-container">
+        <!-- Teal/Green Left Section -->
+        <div class="green-section">
+            <div class="logo-container">
+                <img src="{% static 'image/logo1.png' %}" alt="PhilHealth Logo" class="logo">
+            </div>
+        </div>
         
-        <!-- Login Form Container -->
-        <div class="login-form-container">
-            {% if messages %}
-                {% for message in messages %}
-                    {% if message.tags == 'error' %}
-                        <div id="error-message" style="display: none;">{{ message }}</div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-            <form method="POST" action="{% url 'login' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <input type="text" id="username" name="username" placeholder="Username" required>
-                    <span class="form-control-icon"><i class="fas fa-user"></i></span>
+        <!-- White/Translucent Right Section -->
+        <div class="white-section">
+            <div class="login-form-container">
+                <div class="form-header">
+                    <h2>Login</h2>
+                    <p>Please login to your account</p>
                 </div>
-                <div class="form-group">
-                    <input type="password" id="password" name="password" placeholder="Password" required>
-                    <span class="form-control-icon password-toggle-icon" id="password-toggle"><i class="fas fa-eye-slash"></i></span>
-                </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-            
-            <!-- Social Login Buttons -->
-            <div class="social-login">
-                <button type="button" class="social-btn google" title="Login with Google">
-                    <i class="fab fa-google"></i>
-                </button>
-                <button type="button" class="social-btn facebook" title="Login with Facebook">
-                    <i class="fab fa-facebook-f"></i>
-                </button>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                            <div id="error-message" style="display: none;">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <span class="form-control-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="username" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <span class="form-control-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        <span class="form-control-icon password-toggle-icon" id="password-toggle"><i class="fas fa-eye-slash"></i></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <div class="form-links">
+                        <a href="#">Forgot password?</a>
+                        <a href="#">Create account</a>
+                    </div>
+                </form>
+                
             </div>
         </div>
     </div>
