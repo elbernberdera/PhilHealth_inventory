@@ -11,6 +11,18 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import logging
+
+# Custom formatter for structured logging
+class CustomFormatter(logging.Formatter):
+    """Custom formatter to support extra fields in log format."""
+    def format(self, record):
+        # Add default values for extra fields if not provided
+        if not hasattr(record, 'device'):
+            record.device = 'Unknown'
+        if not hasattr(record, 'client_ip'):
+            record.client_ip = 'Unknown'
+        return super().format(record)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,19 +144,40 @@ LOGIN_REDIRECT_URL = 'admin_dashboard'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Logging configuration - disable default Django request logging
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            '()': CustomFormatter,
+            'format': '[%(levelname)s] %(asctime)s [%(device)s] [%(client_ip)s] %(message)s',
+            'datefmt': '%d/%b/%Y %H:%M:%S',
+        },
+        'django_server': {
+            'format': '[%(asctime)s] "%(message)s"',
+            'datefmt': '%d/%b/%Y %H:%M:%S',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'django_server': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'django_server',
         },
     },
     'loggers': {
         'django.server': {
+            'handlers': ['django_server'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'inventory.middleware': {
             'handlers': ['console'],
-            'level': 'ERROR',  # Only show errors, not info logs
+            'level': 'INFO',
             'propagate': False,
         },
     },

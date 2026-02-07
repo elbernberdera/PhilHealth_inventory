@@ -15,16 +15,18 @@ Replenish/Add New Item
     #requested-items-table {
         font-size: 0.875rem;
     }
+
     #requested-items-table th,
     #requested-items-table td {
         font-size: 0.875rem;
         padding: 0.5rem;
     }
+
     #requested-items-table .btn {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
     }
-    
+
     /* Custom tab styling - Active tabs green, inactive tabs black */
     #inventory-tabs .nav-link {
         color: #000000 !important;
@@ -32,13 +34,13 @@ Replenish/Add New Item
         border-color: transparent;
         font-weight: 500;
     }
-    
+
     #inventory-tabs .nav-link:hover {
         color: #28a745 !important;
         border-color: transparent;
         background-color: rgba(40, 167, 69, 0.1);
     }
-    
+
     #inventory-tabs .nav-link.active {
         color: #28a745 !important;
         background-color: #ffffff;
@@ -46,55 +48,55 @@ Replenish/Add New Item
         border-bottom-color: transparent;
         font-weight: 600;
     }
-    
+
     #inventory-tabs .nav-link.active:hover {
         color: #28a745 !important;
         border-color: #28a745 #28a745 #ffffff;
     }
-    
+
     /* Card border color - green instead of blue */
     .card.card-outline.card-success {
         border-top: 3px solid #28a745 !important;
     }
-    
+
     .card.card-outline.card-success .card-header {
         border-bottom: 1px solid #dee2e6;
     }
-    
+
     /* Pagination styling */
     .dataTables_info {
         padding-top: 0.75rem;
         font-size: 0.875rem;
         color: #6c757d;
     }
-    
+
     .dataTables_paginate {
         padding-top: 0.25rem;
     }
-    
+
     .pagination {
         margin-bottom: 0;
     }
-    
+
     .pagination .page-link {
         padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
         color: #28a745;
         border-color: #dee2e6;
     }
-    
+
     .pagination .page-link:hover {
         color: #1e7e34;
         background-color: #e9ecef;
         border-color: #dee2e6;
     }
-    
+
     .pagination .page-item.active .page-link {
         background-color: #28a745;
         border-color: #28a745;
         color: #ffffff;
     }
-    
+
     .pagination .page-item.disabled .page-link {
         color: #6c757d;
         pointer-events: none;
@@ -106,41 +108,41 @@ Replenish/Add New Item
 
 <section class="content">
     <div class="container-fluid">
-        
+
         <!-- Display Messages -->
         {% if messages %}
         <div class="row">
             <div class="col-12">
                 {% for message in messages %}
-                    {% if message.tags == "error" %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% elif message.tags == "success" %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% elif message.tags == "warning" %}
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info alert-dismissible fade show" role="alert">
-                            <i class="fas fa-info-circle mr-2"></i>{{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endif %}
+                {% if message.tags == "error" %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% elif message.tags == "success" %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% elif message.tags == "warning" %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% else %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>
@@ -172,7 +174,7 @@ Replenish/Add New Item
         </div>
 
         <div class="mb-5"></div>
-        
+
 
         <!-- Action Buttons -->
         <div class="row mb-3">
@@ -195,7 +197,8 @@ Replenish/Add New Item
                         <!-- Tabs Navigation -->
                         <ul class="nav nav-tabs" id="inventory-tabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link active" id="all-items-tab" data-toggle="tab" href="#all-items" role="tab" aria-controls="all-items" aria-selected="true">
+                                <a class="nav-link active" id="all-items-tab" data-toggle="tab" href="#all-items"
+                                    role="tab" aria-controls="all-items" aria-selected="true">
                                     <i class="fas fa-list mr-1"></i>All Items
                                     {% if supplies.count > 0 %}
                                     <span class="badge badge-primary ml-1">{{ supplies.count }}</span>
@@ -203,7 +206,8 @@ Replenish/Add New Item
                                 </a>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="out-of-stock-tab" data-toggle="tab" href="#out-of-stock" role="tab" aria-controls="out-of-stock" aria-selected="false">
+                                <a class="nav-link" id="out-of-stock-tab" data-toggle="tab" href="#out-of-stock"
+                                    role="tab" aria-controls="out-of-stock" aria-selected="false">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>Out of Stock
                                     {% if out_of_stock_supplies.count > 0 %}
                                     <span class="badge badge-danger ml-1">{{ out_of_stock_supplies.count }}</span>
@@ -211,7 +215,9 @@ Replenish/Add New Item
                                 </a>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="expiring-supplies-tab" data-toggle="tab" href="#expiring-supplies" role="tab" aria-controls="expiring-supplies" aria-selected="false">
+                                <a class="nav-link" id="expiring-supplies-tab" data-toggle="tab"
+                                    href="#expiring-supplies" role="tab" aria-controls="expiring-supplies"
+                                    aria-selected="false">
                                     <i class="fas fa-clock mr-1"></i>Expiring Supplies
                                     {% if expiring_supplies.count > 0 %}
                                     <span class="badge badge-warning ml-1">{{ expiring_supplies.count }}</span>
@@ -219,7 +225,8 @@ Replenish/Add New Item
                                 </a>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="deleted-supplies-tab" data-toggle="tab" href="#deleted-supplies" role="tab" aria-controls="deleted-supplies" aria-selected="false">
+                                <a class="nav-link" id="deleted-supplies-tab" data-toggle="tab" href="#deleted-supplies"
+                                    role="tab" aria-controls="deleted-supplies" aria-selected="false">
                                     <i class="fas fa-trash-alt mr-1"></i>Deleted Supplies
                                     {% if deleted_supplies.count > 0 %}
                                     <span class="badge badge-secondary ml-1">{{ deleted_supplies.count }}</span>
@@ -232,10 +239,12 @@ Replenish/Add New Item
                         <!-- Tab Content -->
                         <div class="tab-content" id="inventory-tab-content">
                             <!-- All Items Tab -->
-                            <div class="tab-pane fade show active" id="all-items" role="tabpanel" aria-labelledby="all-items-tab">
+                            <div class="tab-pane fade show active" id="all-items" role="tabpanel"
+                                aria-labelledby="all-items-tab">
                                 <!-- Table -->
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                    <table class="table table-bordered table-striped table-hover"
+                                        style="font-size: 0.875rem;">
                                         <thead>
                                             <tr>
                                                 <th>No.</th>
@@ -271,20 +280,27 @@ Replenish/Add New Item
                                                 <td>₱{{ supply.running_cost|floatformat:2 }}</td>
                                                 <td>{{ supply.total_released}}</td>
                                                 <td>
-                                                    <span class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
+                                                    <span
+                                                        class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
                                                         {{ supply.real_time_balance }}
                                                     </span>
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
                                                     <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-success add-stock-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Add Stock">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary edit-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Edit">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-danger delete-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Delete">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -308,18 +324,23 @@ Replenish/Add New Item
                                         </tbody>
                                     </table>
                                 </div>
-                                
+
                                 <!-- Pagination Controls -->
                                 <div class="row mt-3">
                                     <div class="col-sm-12 col-md-5">
-                                        <div class="dataTables_info" id="all-items-info" role="status" aria-live="polite">
-                                            Showing <span id="all-items-start">0</span> to <span id="all-items-end">0</span> of <span id="all-items-total">0</span> entries
+                                        <div class="dataTables_info" id="all-items-info" role="status"
+                                            aria-live="polite">
+                                            Showing <span id="all-items-start">0</span> to <span
+                                                id="all-items-end">0</span> of <span id="all-items-total">0</span>
+                                            entries
                                         </div>
                                     </div>
                                     <div class="col-sm-12 col-md-7">
-                                        <div class="dataTables_paginate paging_simple_numbers float-right" id="all-items-pagination">
+                                        <div class="dataTables_paginate paging_simple_numbers float-right"
+                                            id="all-items-pagination">
                                             <ul class="pagination">
-                                                <li class="paginate_button page-item previous disabled" id="all-items-prev">
+                                                <li class="paginate_button page-item previous disabled"
+                                                    id="all-items-prev">
                                                     <a href="#" class="page-link">Previous</a>
                                                 </li>
                                                 <!-- Page numbers will be inserted here -->
@@ -333,25 +354,30 @@ Replenish/Add New Item
                             </div>
 
                             <!-- Out of Stock Tab -->
-                            <div class="tab-pane fade" id="out-of-stock" role="tabpanel" aria-labelledby="out-of-stock-tab">
+                            <div class="tab-pane fade" id="out-of-stock" role="tabpanel"
+                                aria-labelledby="out-of-stock-tab">
                                 <!-- Action Buttons for Out of Stock -->
                                 <div class="row mb-3">
                                     <div class="col-md-12 text-right">
-                                        <button type="button" class="btn btn-info btn-sm mr-2" id="print-out-of-stock-btn">
+                                        <button type="button" class="btn btn-info btn-sm mr-2"
+                                            id="print-out-of-stock-btn">
                                             <i class="fas fa-print mr-1"></i> Print Selected
                                         </button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="save-pdf-out-of-stock-btn">
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            id="save-pdf-out-of-stock-btn">
                                             <i class="fas fa-file-pdf mr-1"></i> Save as PDF
                                         </button>
                                     </div>
                                 </div>
                                 <!-- Table -->
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;" id="out-of-stock-table-main">
+                                    <table class="table table-bordered table-striped table-hover"
+                                        style="font-size: 0.875rem;" id="out-of-stock-table-main">
                                         <thead>
                                             <tr>
                                                 <th>
-                                                    <input type="checkbox" id="select-all-out-of-stock" title="Select All">
+                                                    <input type="checkbox" id="select-all-out-of-stock"
+                                                        title="Select All">
                                                 </th>
                                                 <th>No.</th>
                                                 <th>Item Code</th>
@@ -374,7 +400,8 @@ Replenish/Add New Item
                                             {% for supply in out_of_stock_supplies %}
                                             <tr data-supply-id="{{ supply.id }}" class="out-of-stock-row">
                                                 <td>
-                                                    <input type="checkbox" class="out-of-stock-checkbox" data-supply-id="{{ supply.id }}">
+                                                    <input type="checkbox" class="out-of-stock-checkbox"
+                                                        data-supply-id="{{ supply.id }}">
                                                 </td>
                                                 <td class="row-number"></td>
                                                 <td>{{ supply.item_code }}</td>
@@ -389,20 +416,27 @@ Replenish/Add New Item
                                                 <td>₱{{ supply.running_cost|floatformat:2 }}</td>
                                                 <td>{{ supply.total_released|floatformat:2 }}</td>
                                                 <td>
-                                                    <span class="badge {% if supply.real_time_balance == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                                                    <span
+                                                        class="badge {% if supply.real_time_balance == 0 %}badge-danger{% else %}badge-warning{% endif %}">
                                                         {{ supply.real_time_balance }}
                                                     </span>
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
                                                     <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-success add-stock-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Add Stock">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary edit-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Edit">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-danger delete-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Delete">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -429,10 +463,12 @@ Replenish/Add New Item
                             </div>
 
                             <!-- Expiring Soon Tab -->
-                            <div class="tab-pane fade" id="expiring-supplies" role="tabpanel" aria-labelledby="expiring-supplies-tab">
+                            <div class="tab-pane fade" id="expiring-supplies" role="tabpanel"
+                                aria-labelledby="expiring-supplies-tab">
                                 <!-- Table -->
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                    <table class="table table-bordered table-striped table-hover"
+                                        style="font-size: 0.875rem;">
                                         <thead>
                                             <tr>
                                                 <th>No.</th>
@@ -467,9 +503,9 @@ Replenish/Add New Item
                                                 <td>{{ supply.expiration_date|date:"m/d/Y" }}</td>
                                                 <td>
                                                     {% with days=supply.expiration_date|days_until_expiration %}
-                                                        <span class="badge {{ days|expiration_badge_class }}">
-                                                            {{ days|expiration_text }}
-                                                        </span>
+                                                    <span class="badge {{ days|expiration_badge_class }}">
+                                                        {{ days|expiration_text }}
+                                                    </span>
                                                     {% endwith %}
                                                 </td>
                                                 <!-- <td>{{ supply.opening_balance }}</td>
@@ -479,23 +515,30 @@ Replenish/Add New Item
                                                 <td>₱{{ supply.running_cost|floatformat:2 }}</td>
                                                 <td>{{ supply.total_released|floatformat:2 }}</td>-->
                                                 <td>
-                                                    <span class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
+                                                    <span
+                                                        class="badge {% if supply.real_time_balance <= 0 %}badge-danger{% elif supply.real_time_balance < 10 %}badge-warning{% else %}badge-success{% endif %}">
                                                         {{ supply.real_time_balance }}
                                                     </span>
-                                                </td> 
+                                                </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
                                                     <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-sm btn-info view-supply-details-btn" data-supply-id="{{ supply.id }}" title="View Details">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-info view-supply-details-btn"
+                                                            data-supply-id="{{ supply.id }}" title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
                                                         <!-- <button type="button" class="btn btn-sm btn-success add-stock-btn" data-supply-id="{{ supply.id }}" title="Add Stock">
                                                             <i class="fas fa-plus"></i>
                                                         </button> -->
-                                                        <button type="button" class="btn btn-sm btn-primary edit-supply-btn" data-supply-id="{{ supply.id }}" title="Edit">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary edit-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Edit">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-danger delete-supply-btn" data-supply-id="{{ supply.id }}" title="Delete">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-danger delete-supply-btn"
+                                                            data-supply-id="{{ supply.id }}" title="Delete">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -522,10 +565,12 @@ Replenish/Add New Item
                             </div>
 
                             <!-- Deleted Supplies Tab -->
-                            <div class="tab-pane fade" id="deleted-supplies" role="tabpanel" aria-labelledby="deleted-supplies-tab">
+                            <div class="tab-pane fade" id="deleted-supplies" role="tabpanel"
+                                aria-labelledby="deleted-supplies-tab">
                                 <!-- Table -->
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                    <table class="table table-bordered table-striped table-hover"
+                                        style="font-size: 0.875rem;">
                                         <thead>
                                             <tr>
                                                 <th>No.</th>
@@ -567,10 +612,14 @@ Replenish/Add New Item
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-sm btn-success restore-supply-btn" data-supply-id="{{ supply.id }}" title="Restore">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-success restore-supply-btn"
+                                                        data-supply-id="{{ supply.id }}" title="Restore">
                                                         <i class="fas fa-undo"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-danger delete-permanently-btn" data-supply-id="{{ supply.id }}" title="Delete Permanently">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger delete-permanently-btn"
+                                                        data-supply-id="{{ supply.id }}" title="Delete Permanently">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </button>
                                                 </td>
@@ -603,12 +652,13 @@ Replenish/Add New Item
 </section>
 
 <!-- Add Item Modal -->
-<div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success">
                 <h5 class="modal-title" id="addItemModalLabel">
-                    <i class="fas fa-plus-circle mr-2"></i>Add New Supplies 
+                    <i class="fas fa-plus-circle mr-2"></i>Add New Supplies
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -621,8 +671,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="item-code">Item Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="item-code" name="item_code" 
-                                       placeholder="Enter item code" readonly required>
+                                <input type="text" class="form-control" id="item-code" name="item_code"
+                                    placeholder="Enter item code" readonly required>
                             </div>
                         </div>
 
@@ -630,8 +680,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="item-unit">Unit <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="item-unit" name="item_unit" 
-                                       placeholder="Enter unit" required>
+                                <input type="text" class="form-control" id="item-unit" name="item_unit"
+                                    placeholder="Enter unit" required>
                             </div>
                         </div>
                     </div>
@@ -641,8 +691,8 @@ Replenish/Add New Item
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="item-description">Description <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="item-description" name="item_description" 
-                                          rows="3" placeholder="Enter item description" required></textarea>
+                                <textarea class="form-control" id="item-description" name="item_description" rows="3"
+                                    placeholder="Enter item description" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -666,8 +716,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="sub-category">Sub-Category <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="sub-category" name="sub_category" 
-                                       placeholder="Enter sub-category" required>
+                                <input type="text" class="form-control" id="sub-category" name="sub_category"
+                                    placeholder="Enter sub-category" required>
                             </div>
                         </div>
                     </div>
@@ -678,8 +728,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="opening-balance">Opening Balance</label>
-                                <input type="number" class="form-control" id="opening-balance" name="opening_balance" 
-                                       placeholder="Enter opening balance" min="0" step="0.01">
+                                <input type="number" class="form-control" id="opening-balance" name="opening_balance"
+                                    placeholder="Enter opening balance" min="0" step="0.01">
                             </div>
                         </div>
 
@@ -687,8 +737,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="cost-per-item">Cost per Item</label>
-                                <input type="number" class="form-control" id="cost-per-item" name="cost_per_item" 
-                                       placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?">
+                                <input type="number" class="form-control" id="cost-per-item" name="cost_per_item"
+                                    placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?">
                             </div>
                         </div>
                     </div>
@@ -698,7 +748,8 @@ Replenish/Add New Item
                         <!-- Expiration Date -->
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="expiration-date">Expiration Date <span class="text-danger" id="expiration-required">*</span></label>
+                                <label for="expiration-date">Expiration Date <span class="text-danger"
+                                        id="expiration-required">*</span></label>
                                 <input type="date" class="form-control" id="expiration-date" name="expiration_date">
                             </div>
                         </div>
@@ -769,8 +820,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="total-cost">Total Cost</label>
-                                <input type="number" class="form-control" id="total-cost" name="total_cost" 
-                                       placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?" readonly>
+                                <input type="number" class="form-control" id="total-cost" name="total_cost"
+                                    placeholder="0.00" min="0" step="0.01" pattern="[0-9]+(\.[0-9]{1,2})?" readonly>
                             </div>
                         </div>
                     </div>
@@ -789,7 +840,8 @@ Replenish/Add New Item
 </div>
 
 <!-- Main Category Modal -->
-<div class="modal fade" id="mainCategoryModal" tabindex="-1" role="dialog" aria-labelledby="mainCategoryModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="mainCategoryModal" tabindex="-1" role="dialog" aria-labelledby="mainCategoryModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success">
@@ -811,9 +863,10 @@ Replenish/Add New Item
                     <div class="card-body">
                         <form id="add-main-category-form">
                             <div class="form-group">
-                                <label for="new-main-category-name">Category Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="new-main-category-name" 
-                                       placeholder="Enter main category name" required>
+                                <label for="new-main-category-name">Category Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="new-main-category-name"
+                                    placeholder="Enter main category name" required>
                             </div>
                             <button type="submit" class="btn btn-success btn-sm">
                                 <i class="fas fa-save mr-1"></i>Add Category
@@ -846,10 +899,13 @@ Replenish/Add New Item
                                         <td>{{ forloop.counter }}</td>
                                         <td>{{ category.name }}</td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-primary edit-category-btn" data-category-id="{{ category.id }}" data-category-name="{{ category.name }}">
+                                            <button type="button" class="btn btn-sm btn-primary edit-category-btn"
+                                                data-category-id="{{ category.id }}"
+                                                data-category-name="{{ category.name }}">
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-category-btn" data-category-id="{{ category.id }}">
+                                            <button type="button" class="btn btn-sm btn-danger delete-category-btn"
+                                                data-category-id="{{ category.id }}">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
                                         </td>
@@ -875,7 +931,8 @@ Replenish/Add New Item
 </div>
 
 <!-- Edit Main Category Modal -->
-<div class="modal fade" id="editMainCategoryModal" tabindex="-1" role="dialog" aria-labelledby="editMainCategoryModalLabel" aria-hidden="true">
+<div class="modal fade" id="editMainCategoryModal" tabindex="-1" role="dialog"
+    aria-labelledby="editMainCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary">
@@ -908,7 +965,8 @@ Replenish/Add New Item
 </div>
 
 <!-- Edit Supply Modal -->
-<div class="modal fade" id="editSupplyModal" tabindex="-1" role="dialog" aria-labelledby="editSupplyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="editSupplyModal" tabindex="-1" role="dialog" aria-labelledby="editSupplyModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary">
@@ -933,7 +991,8 @@ Replenish/Add New Item
                         <!-- Description -->
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="edit-item-description">Description <span class="text-danger">*</span></label>
+                                <label for="edit-item-description">Description <span
+                                        class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="edit-item-description" required>
                             </div>
                         </div>
@@ -964,7 +1023,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit-item-unit">Unit <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="edit-item-unit" placeholder="e.g., pcs, box, ream" required>
+                                <input type="text" class="form-control" id="edit-item-unit"
+                                    placeholder="e.g., pcs, box, ream" required>
                             </div>
                         </div>
                         <!-- Opening Balance -->
@@ -980,7 +1040,8 @@ Replenish/Add New Item
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit-cost-per-item">Cost per Item (₱)</label>
-                                <input type="number" class="form-control" id="edit-cost-per-item" step="0.01" min="0" value="0">
+                                <input type="number" class="form-control" id="edit-cost-per-item" step="0.01" min="0"
+                                    value="0">
                             </div>
                         </div>
                         <!-- Stock-In -->
@@ -997,8 +1058,10 @@ Replenish/Add New Item
                         <!-- Expiration Date -->
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="edit-expiration-date">Expiration Date <span class="text-danger" id="edit-expiration-required">*</span></label>
-                                <input type="date" class="form-control" id="edit-expiration-date" name="expiration_date">
+                                <label for="edit-expiration-date">Expiration Date <span class="text-danger"
+                                        id="edit-expiration-required">*</span></label>
+                                <input type="date" class="form-control" id="edit-expiration-date"
+                                    name="expiration_date">
                             </div>
                         </div>
 
@@ -1025,7 +1088,8 @@ Replenish/Add New Item
 </div>
 
 <!-- Add Stock Modal -->
-<div class="modal fade" id="addStockModal" tabindex="-1" role="dialog" aria-labelledby="addStockModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="addStockModal" tabindex="-1" role="dialog" aria-labelledby="addStockModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success">
@@ -1039,18 +1103,18 @@ Replenish/Add New Item
             <form id="add-stock-form">
                 <div class="modal-body">
                     <input type="hidden" id="add-stock-supply-id">
-                    
+
                     <!-- Read-only fields -->
                     <div class="form-group">
                         <label>Item Code</label>
                         <input type="text" class="form-control" id="add-stock-item-code" readonly>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Description</label>
                         <textarea class="form-control" id="add-stock-description" rows="2" readonly></textarea>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -1065,7 +1129,7 @@ Replenish/Add New Item
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -1080,12 +1144,13 @@ Replenish/Add New Item
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Editable field: Stock-In -->
                     <div class="form-group">
-                        <label for="add-stock-quantity">Stock-In (Add Quantity) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="add-stock-quantity" 
-                               placeholder="Enter quantity to add" min="1" step="1" required>
+                        <label for="add-stock-quantity">Stock-In (Add Quantity) <span
+                                class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="add-stock-quantity"
+                            placeholder="Enter quantity to add" min="1" step="1" required>
                         <small class="form-text text-muted">Enter the quantity you want to add to the stock.</small>
                     </div>
                 </div>
@@ -1103,7 +1168,8 @@ Replenish/Add New Item
 </div>
 
 <!-- View Supply Details Modal -->
-<div class="modal fade" id="viewSupplyDetailsModal" tabindex="-1" role="dialog" aria-labelledby="viewSupplyDetailsModalLabel" aria-hidden="true">
+<div class="modal fade" id="viewSupplyDetailsModal" tabindex="-1" role="dialog"
+    aria-labelledby="viewSupplyDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
@@ -1126,25 +1192,25 @@ Replenish/Add New Item
                                 <dl class="row mb-0">
                                     <dt class="col-sm-5">Item Code:</dt>
                                     <dd class="col-sm-7" id="view-item-code">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Description:</dt>
                                     <dd class="col-sm-7" id="view-description">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Main Category:</dt>
                                     <dd class="col-sm-7" id="view-main-category">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Sub-Category:</dt>
                                     <dd class="col-sm-7" id="view-sub-category">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Unit:</dt>
                                     <dd class="col-sm-7" id="view-unit">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Date Added:</dt>
                                     <dd class="col-sm-7" id="view-date">-</dd>
                                 </dl>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-3">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0"><i class="fas fa-calendar-alt mr-2"></i>Expiration Info</h6>
@@ -1153,14 +1219,14 @@ Replenish/Add New Item
                                 <dl class="row mb-0">
                                     <dt class="col-sm-5">Expiration Date:</dt>
                                     <dd class="col-sm-7" id="view-expiration-date">-</dd>
-                                    
+
                                     <dt class="col-sm-5">Status:</dt>
                                     <dd class="col-sm-7" id="view-expiration-status">-</dd>
                                 </dl>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Right Column -->
                     <div class="col-md-6">
                         <div class="card mb-3">
@@ -1171,22 +1237,23 @@ Replenish/Add New Item
                                 <dl class="row mb-0">
                                     <dt class="col-sm-6">Opening Balance:</dt>
                                     <dd class="col-sm-6" id="view-opening-balance">-</dd>
-                                    
+
                                     <dt class="col-sm-6">Stock-In:</dt>
                                     <dd class="col-sm-6" id="view-stock-in">-</dd>
-                                    
+
                                     <dt class="col-sm-6">Running Count:</dt>
                                     <dd class="col-sm-6" id="view-running-count">-</dd>
-                                    
+
                                     <dt class="col-sm-6">Total Released:</dt>
                                     <dd class="col-sm-6" id="view-total-released">-</dd>
-                                    
+
                                     <dt class="col-sm-6"><strong>Real-Time Balance:</strong></dt>
-                                    <dd class="col-sm-6"><strong><span id="view-real-time-balance" class="badge badge-info">-</span></strong></dd>
+                                    <dd class="col-sm-6"><strong><span id="view-real-time-balance"
+                                                class="badge badge-info">-</span></strong></dd>
                                 </dl>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-3">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0"><i class="fas fa-dollar-sign mr-2"></i>Cost Information</h6>
@@ -1195,10 +1262,10 @@ Replenish/Add New Item
                                 <dl class="row mb-0">
                                     <dt class="col-sm-6">Cost per Item:</dt>
                                     <dd class="col-sm-6" id="view-cost-per-item">-</dd>
-                                    
+
                                     <dt class="col-sm-6">Running Cost:</dt>
                                     <dd class="col-sm-6" id="view-running-cost">-</dd>
-                                    
+
                                     <dt class="col-sm-6"><strong>Total Cost:</strong></dt>
                                     <dd class="col-sm-6"><strong id="view-total-cost">-</strong></dd>
                                 </dl>
@@ -1206,9 +1273,9 @@ Replenish/Add New Item
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Additional Info -->
-                
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -1245,22 +1312,22 @@ Replenish/Add New Item
         return cookieValue;
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Fix for aria-hidden warning: Remove aria-hidden from wrapper when modals open
         // Bootstrap automatically sets aria-hidden="true" on the wrapper when a modal opens,
         // but since the modal is inside the wrapper, this causes accessibility warnings.
         // Solution: Remove aria-hidden from wrapper after Bootstrap sets it.
-        $(document).on('shown.bs.modal', '.modal', function() {
+        $(document).on('shown.bs.modal', '.modal', function () {
             // Remove aria-hidden from wrapper to prevent accessibility warnings
             $('.wrapper').removeAttr('aria-hidden');
         });
-        
+
         // Display current date
         function updateCurrentDate() {
             const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
+            const options = {
+                year: 'numeric',
+                month: 'long',
                 day: 'numeric',
                 weekday: 'long'
             };
@@ -1270,8 +1337,8 @@ Replenish/Add New Item
         updateCurrentDate();
 
         // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow', function() {
+        setTimeout(function () {
+            $('.alert').fadeOut('slow', function () {
                 $(this).remove();
             });
         }, 5000);
@@ -1279,10 +1346,10 @@ Replenish/Add New Item
 
 
         // Search functionality don't touch this is working fine
-        $('#search-requested').on('keyup', function() {
+        $('#search-requested').on('keyup', function () {
             const searchTerm = $(this).val().toLowerCase().trim();
             const activeTab = $('#inventory-tabs .nav-link.active').attr('href');
-            
+
             // Determine which table to search based on active tab
             let tableBody, noMatchingRow, emptyDatabaseRow;
             if (activeTab === '#all-items') {
@@ -1302,10 +1369,10 @@ Replenish/Add New Item
                 noMatchingRow = $('#deleted-supplies-table .no-matching-row');
                 emptyDatabaseRow = $('#deleted-supplies-table .empty-database-row');
             }
-            
+
             if (tableBody) {
                 let visibleCount = 0;
-                
+
                 // Hide empty database row when searching
                 if (searchTerm.length > 0) {
                     emptyDatabaseRow.hide();
@@ -1314,9 +1381,9 @@ Replenish/Add New Item
                     emptyDatabaseRow.show();
                     noMatchingRow.hide();
                 }
-                
+
                 // Filter rows
-                tableBody.each(function() {
+                tableBody.each(function () {
                     const text = $(this).text().toLowerCase();
                     if (searchTerm.length === 0 || text.indexOf(searchTerm) !== -1) {
                         $(this).show();
@@ -1325,7 +1392,7 @@ Replenish/Add New Item
                         $(this).hide();
                     }
                 });
-                
+
                 // Show/hide no matching message
                 if (searchTerm.length > 0) {
                     if (visibleCount === 0) {
@@ -1340,20 +1407,20 @@ Replenish/Add New Item
         });
 
         // Reset search when switching tabs - DISABLED to persist search across tabs
-        $('#inventory-tabs .nav-link').on('shown.bs.tab', function() {
+        $('#inventory-tabs .nav-link').on('shown.bs.tab', function () {
             $('#search-requested').val('').trigger('keyup');
         });
 
         // Renumber out-of-stock table rows
         function renumberOutOfStockRows() {
-            $('#out-of-stock-table .out-of-stock-row').each(function(index) {
+            $('#out-of-stock-table .out-of-stock-row').each(function (index) {
                 $(this).find('.row-number').text(index + 1);
             });
         }
 
         // Renumber expiring supplies table rows
         function renumberExpiringSuppliesRows() {
-            $('#expiring-supplies-table .expiring-supply-row').each(function(index) {
+            $('#expiring-supplies-table .expiring-supply-row').each(function (index) {
                 $(this).find('.row-number').text(index + 1);
             });
         }
@@ -1363,12 +1430,12 @@ Replenish/Add New Item
         renumberExpiringSuppliesRows();
 
         // Renumber when out-of-stock tab is shown
-        $('#out-of-stock-tab').on('shown.bs.tab', function() {
+        $('#out-of-stock-tab').on('shown.bs.tab', function () {
             renumberOutOfStockRows();
         });
-        
+
         // Renumber when expiring supplies tab is shown
-        $('#expiring-supplies-tab').on('shown.bs.tab', function() {
+        $('#expiring-supplies-tab').on('shown.bs.tab', function () {
             renumberExpiringSuppliesRows();
         });
         // until here
@@ -1378,12 +1445,12 @@ Replenish/Add New Item
         // Category Management Functions
         function addCategoryToTable(category) {
             const tbody = $('#main-categories-list');
-            
+
             // Remove "No categories found" placeholder row if it exists
-            tbody.find('tr').filter(function() {
+            tbody.find('tr').filter(function () {
                 return $(this).find('td[colspan="3"]').length > 0;
             }).remove();
-            
+
             // Create new row (row number will be updated by renumberCategoryRows)
             const newRow = `
                 <tr>
@@ -1403,36 +1470,36 @@ Replenish/Add New Item
             `;
             // Prepend to add at the top instead of append
             tbody.prepend(newRow);
-            
+
             // Renumber all rows to ensure consistency
             renumberCategoryRows();
         }
-        
+
         function renumberCategoryRows() {
             const tbody = $('#main-categories-list');
-            tbody.find('tr').each(function(index) {
+            tbody.find('tr').each(function (index) {
                 // Skip placeholder rows
                 if ($(this).find('td[colspan="3"]').length === 0) {
                     $(this).find('td').first().text(index + 1);
                 }
             });
         }
-        
+
         function updateCategoryInTable(categoryId, categoryName) {
             const row = $(`.edit-category-btn[data-category-id="${categoryId}"]`).closest('tr');
             row.find('td').eq(1).text(categoryName);
             row.find('.edit-category-btn').attr('data-category-name', categoryName);
         }
-        
+
         function removeCategoryFromTable(categoryId) {
             $(`.delete-category-btn[data-category-id="${categoryId}"]`).closest('tr').remove();
             const tbody = $('#main-categories-list');
-            
+
             // Check if there are any category rows left (excluding placeholder rows)
-            const categoryRows = tbody.find('tr').filter(function() {
+            const categoryRows = tbody.find('tr').filter(function () {
                 return $(this).find('td[colspan="3"]').length === 0;
             });
-            
+
             if (categoryRows.length === 0) {
                 tbody.append('<tr><td colspan="3" class="text-center text-muted">No categories found</td></tr>');
             } else {
@@ -1440,7 +1507,7 @@ Replenish/Add New Item
                 renumberCategoryRows();
             }
         }
-        
+
         function updateCategoryDropdown(categories) {
             const dropdown = $('#main-category');
             if (dropdown.length) {
@@ -1450,17 +1517,17 @@ Replenish/Add New Item
                 });
             }
         }
-        
+
         function refreshCategoriesList() {
             $.ajax({
                 url: '/api/categories/',
                 method: 'GET',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         updateCategoryDropdown(response.categories);
                     }
                 },
-                error: function() {
+                error: function () {
                     console.error('Failed to refresh categories list');
                 }
             });
@@ -1478,22 +1545,22 @@ Replenish/Add New Item
         }
 
         // Modal handlers
-        $('#add-new-main-category-btn').on('click', function() {
+        $('#add-new-main-category-btn').on('click', function () {
             $('#add-main-category-form')[0].reset();
             $('#mainCategoryModal').modal('show');
         });
 
-       
+
         // Add Main Category form
-        $('#add-main-category-form').on('submit', function(e) {
+        $('#add-main-category-form').on('submit', function (e) {
             e.preventDefault();
-            
+
             const categoryName = $('#new-main-category-name').val().trim();
             if (!categoryName) {
                 showSwalAlert('warning', 'Validation Error', 'Please enter a category name.');
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/categories/create/',
                 method: 'POST',
@@ -1502,7 +1569,7 @@ Replenish/Add New Item
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify({ name: categoryName }),
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#add-main-category-form')[0].reset();
                         addCategoryToTable(response.category);
@@ -1512,7 +1579,7 @@ Replenish/Add New Item
                         showSwalAlert('error', 'Error', response.error || 'Failed to add category.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to add category.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
@@ -1520,7 +1587,7 @@ Replenish/Add New Item
         });
 
         // Edit Category
-        $(document).on('click', '.edit-category-btn', function() {
+        $(document).on('click', '.edit-category-btn', function () {
             const categoryId = $(this).data('category-id');
             const categoryName = $(this).data('category-name');
             $('#edit-main-category-id').val(categoryId);
@@ -1528,17 +1595,17 @@ Replenish/Add New Item
             $('#editMainCategoryModal').modal('show');
         });
 
-        $('#edit-main-category-form').on('submit', function(e) {
+        $('#edit-main-category-form').on('submit', function (e) {
             e.preventDefault();
-            
+
             const categoryId = $('#edit-main-category-id').val();
             const categoryName = $('#edit-main-category-name').val().trim();
-            
+
             if (!categoryName) {
                 showSwalAlert('warning', 'Validation Error', 'Please enter a category name.');
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/categories/' + categoryId + '/update/',
                 method: 'POST',
@@ -1547,7 +1614,7 @@ Replenish/Add New Item
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify({ name: categoryName }),
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#editMainCategoryModal').modal('hide');
                         updateCategoryInTable(categoryId, categoryName);
@@ -1557,7 +1624,7 @@ Replenish/Add New Item
                         showSwalAlert('error', 'Error', response.error || 'Failed to update category.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to update category.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
@@ -1565,26 +1632,26 @@ Replenish/Add New Item
         });
 
         // Delete Category 
-        $(document).on('click', '.delete-category-btn', function(e) {
+        $(document).on('click', '.delete-category-btn', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const categoryId = $(this).data('category-id');
             console.log('Delete button clicked, Category ID:', categoryId);
-            
+
             if (!categoryId) {
                 showSwalAlert('error', 'Error', 'Category ID not found.');
                 return;
             }
-            
+
             const csrfToken = getCookie('csrftoken');
             if (!csrfToken) {
                 showSwalAlert('error', 'Error', 'CSRF token not found. Please refresh the page.');
                 return;
             }
-            
+
             console.log('About to show confirmation dialog');
-            
+
             // Show confirmation dialog
             Swal.fire({
                 title: 'Are you sure?',
@@ -1597,12 +1664,12 @@ Replenish/Add New Item
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 console.log('Confirmation result:', result);
-                
+
                 // Only proceed if user clicked "Yes, delete it!"
                 // Check both result.value (older SweetAlert2) and result.isConfirmed (newer versions)
                 if (result.value || result.isConfirmed) {
                     console.log('User confirmed deletion, making AJAX call');
-                    
+
                     $.ajax({
                         url: '/api/categories/' + categoryId + '/delete-permanently/',
                         method: 'POST',
@@ -1610,7 +1677,7 @@ Replenish/Add New Item
                             'X-CSRFToken': csrfToken,
                             'Content-Type': 'application/json'
                         },
-                        success: function(response) {
+                        success: function (response) {
                             console.log('Delete response:', response);
                             if (response.success) {
                                 removeCategoryFromTable(categoryId);
@@ -1620,7 +1687,7 @@ Replenish/Add New Item
                                 showSwalAlert('error', 'Error', response.error || response.message || 'Failed to delete category.');
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             console.error('Delete error:', xhr);
                             let errorMsg = 'Failed to delete category.';
                             if (xhr.responseJSON) {
@@ -1640,11 +1707,11 @@ Replenish/Add New Item
         });
         // ========== MAIN CATEGORY FUNCTIONALITY END ==========
 
-       
-        
-               // ========== ADD ITEM FUNCTIONALITY START ==========
+
+
+        // ========== ADD ITEM FUNCTIONALITY START ==========
         // Modal handler for Add New Supplies
-        $('#add-new-supplies-btn').on('click', function() {
+        $('#add-new-supplies-btn').on('click', function () {
             // Clear form
             $('#add-item-form')[0].reset();
             // Fetch item code from server
@@ -1654,7 +1721,7 @@ Replenish/Add New Item
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#item-code').val(response.item_code);
                     } else {
@@ -1667,7 +1734,7 @@ Replenish/Add New Item
                         $('#item-code').val(itemCode);
                     }
                 },
-                error: function() {
+                error: function () {
                     // Fallback to client-side generation if API fails
                     const now = new Date();
                     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1682,10 +1749,10 @@ Replenish/Add New Item
         });
 
         // Handle Main Category change to show/hide Expiration Date row
-        $('#main-category').on('change', function() {
+        $('#main-category').on('change', function () {
             const selectedCategoryId = $(this).val();
             const selectedCategoryText = $(this).find('option:selected').text().trim();
-            
+
             // Check if "Service Perks" is selected
             if (selectedCategoryText === 'Service Perks') {
                 // Show expiration date row and make it required
@@ -1703,18 +1770,18 @@ Replenish/Add New Item
         });
 
         // Calculate Days Until Expiration when date is selected
-        $('#expiration-date').on('change', function() {
+        $('#expiration-date').on('change', function () {
             const expirationDate = new Date($(this).val());
             const today = new Date();
-            
+
             // Reset time to midnight for accurate day calculation
             today.setHours(0, 0, 0, 0);
             expirationDate.setHours(0, 0, 0, 0);
-            
+
             if (expirationDate) {
                 const timeDiff = expirationDate - today;
                 const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                
+
                 if (daysDiff < 0) {
                     $('#expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
                     $('#expired').addClass('text-danger');
@@ -1729,7 +1796,7 @@ Replenish/Add New Item
         });
 
         // Reset expiration date row when modal is closed
-        $('#addItemModal').on('hidden.bs.modal', function() {
+        $('#addItemModal').on('hidden.bs.modal', function () {
             $('#expiration-date-row').hide();
             $('#expiration-date').prop('required', false);
             $('#expiration-date').val('');
@@ -1737,14 +1804,14 @@ Replenish/Add New Item
         });
 
 
-         // Add New Supplies form
-         $('#add-item-form').on('submit', function(e) {
+        // Add New Supplies form
+        $('#add-item-form').on('submit', function (e) {
             e.preventDefault();
-            
+
             const opening_balance = parseFloat($('#opening-balance').val()) || 0;
             const cost_per_item = parseFloat($('#cost-per-item').val()) || 0;
             const total_cost = opening_balance * cost_per_item;
-            
+
             const formData = {
                 item_code: $('#item-code').val(),
                 description: $('#item-description').val(),
@@ -1759,25 +1826,25 @@ Replenish/Add New Item
                 total_cost: total_cost,
                 date: new Date().toISOString().split('T')[0]
             };
-            
+
             // Add expiration_date if it has a value (only for Service Perks)
             const expirationDate = $('#expiration-date').val();
             if (expirationDate) {
                 formData.expiration_date = expirationDate;
             }
-            
-            if (!formData.item_code || !formData.description || !formData.main_category || 
+
+            if (!formData.item_code || !formData.description || !formData.main_category ||
                 !formData.sub_category || !formData.unit) {
                 showSwalAlert('warning', 'Validation Error', 'Please fill in all required fields.');
                 return;
             }
-            
+
             // Check if expiration date is required (when Service Perks is selected)
             if ($('#expiration-date-row').is(':visible') && !expirationDate) {
                 showSwalAlert('warning', 'Validation Error', 'Expiration Date is required for Service Perks.');
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/supplies/create/',
                 method: 'POST',
@@ -1786,7 +1853,7 @@ Replenish/Add New Item
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify(formData),
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#addItemModal').modal('hide');
                         showSwalAlert('success', 'Success', 'Supply added successfully!', 2000);
@@ -1795,17 +1862,17 @@ Replenish/Add New Item
                         showSwalAlert('error', 'Error', response.error || 'Failed to add supply.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to add supply.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-       
 
-        
+
+
         // Auto-calculate Total Cost when Opening Balance * Cost per Item s
-        $('#opening-balance, #cost-per-item').on('input', function() {
+        $('#opening-balance, #cost-per-item').on('input', function () {
             const openingBalance = parseFloat($('#opening-balance').val()) || 0;
             const costPerItem = parseFloat($('#cost-per-item').val()) || 0;
             const totalCost = openingBalance * costPerItem;
@@ -1814,20 +1881,20 @@ Replenish/Add New Item
 
 
 
-         // ========== ADD ITEM FUNCTIONALITY END ==========
+        // ========== ADD ITEM FUNCTIONALITY END ==========
 
-         
-        
+
+
         // Clear forms when modals are closed
-        $('#addItemModal').on('hidden.bs.modal', function() {
+        $('#addItemModal').on('hidden.bs.modal', function () {
             $('#add-item-form')[0].reset();
         });
 
-        $('#mainCategoryModal').on('hidden.bs.modal', function() {
+        $('#mainCategoryModal').on('hidden.bs.modal', function () {
             $('#add-main-category-form')[0].reset();
         });
 
-        $('#editMainCategoryModal').on('hidden.bs.modal', function() {
+        $('#editMainCategoryModal').on('hidden.bs.modal', function () {
             $('#edit-main-category-form')[0].reset();
         });
 
@@ -1835,11 +1902,11 @@ Replenish/Add New Item
 
 
         // ========== SUPPLY ITEM CRUD OPERATIONS START ==========
-        
+
         // Edit Supply Button
-        $(document).on('click', '.edit-supply-btn', function() {
+        $(document).on('click', '.edit-supply-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             // Fetch supply data
             $.ajax({
                 url: '/api/supplies/' + supplyId + '/',
@@ -1847,7 +1914,7 @@ Replenish/Add New Item
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         const supply = response.supply;
                         // Populate form fields
@@ -1860,7 +1927,7 @@ Replenish/Add New Item
                         $('#edit-opening-balance').val(supply.opening_balance);
                         $('#edit-cost-per-item').val(supply.cost_per_item);
                         $('#edit-stock-in').val(supply.stock_in);
-                        
+
                         // Handle expiration date
                         if (supply.expiration_date) {
                             $('#edit-expiration-date').val(supply.expiration_date);
@@ -1871,7 +1938,7 @@ Replenish/Add New Item
                             expirationDate.setHours(0, 0, 0, 0);
                             const timeDiff = expirationDate - today;
                             const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                            
+
                             if (daysDiff < 0) {
                                 $('#edit-expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
                             } else if (daysDiff === 0) {
@@ -1883,7 +1950,7 @@ Replenish/Add New Item
                             $('#edit-expiration-date').val('');
                             $('#edit-expired').val('');
                         }
-                        
+
                         // Show/hide expiration date row based on category
                         const selectedCategoryText = $('#edit-main-category option:selected').text().trim();
                         if (selectedCategoryText === 'Service Perks') {
@@ -1893,29 +1960,29 @@ Replenish/Add New Item
                             $('#edit-expiration-date-row').hide();
                             $('#edit-expiration-date').prop('required', false);
                         }
-                        
+
                         // Show modal
                         $('#editSupplyModal').modal('show');
                     } else {
                         showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-        
+
         // Edit Supply Form Submission
-        $('#edit-supply-form').on('submit', function(e) {
+        $('#edit-supply-form').on('submit', function (e) {
             e.preventDefault();
-            
+
             const supplyId = $('#edit-supply-id').val();
             const opening_balance = parseFloat($('#edit-opening-balance').val()) || 0;
             const cost_per_item = parseFloat($('#edit-cost-per-item').val()) || 0;
             const total_cost = opening_balance * cost_per_item;
-            
+
             const formData = {
                 description: $('#edit-item-description').val(),
                 main_category: $('#edit-main-category').val(),
@@ -1926,30 +1993,30 @@ Replenish/Add New Item
                 stock_in: $('#edit-stock-in').val() || 0,
                 total_cost: total_cost
             };
-            
+
             // Add expiration_date if it has a value and expiration row is visible (Service Perks)
             const editExpirationDate = $('#edit-expiration-date').val();
             const isExpirationRowVisible = $('#edit-expiration-date-row').is(':visible');
-            
+
             if (isExpirationRowVisible && editExpirationDate) {
                 formData.expiration_date = editExpirationDate;
             } else {
                 // Clear expiration date if not Service Perks or if empty
                 formData.expiration_date = null;
             }
-            
-            if (!formData.description || !formData.main_category || 
+
+            if (!formData.description || !formData.main_category ||
                 !formData.sub_category || !formData.unit) {
                 showSwalAlert('warning', 'Validation Error', 'Please fill in all required fields.');
                 return;
             }
-            
+
             // Check if expiration date is required (when Service Perks is selected)
             if ($('#edit-expiration-date-row').is(':visible') && !editExpirationDate) {
                 showSwalAlert('warning', 'Validation Error', 'Expiration Date is required for Service Perks.');
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/supplies/' + supplyId + '/update/',
                 method: 'POST',
@@ -1958,7 +2025,7 @@ Replenish/Add New Item
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify(formData),
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#editSupplyModal').modal('hide');
                         showSwalAlert('success', 'Success', 'Supply updated successfully!', 2000);
@@ -1967,17 +2034,17 @@ Replenish/Add New Item
                         showSwalAlert('error', 'Error', response.error || 'Failed to update supply.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to update supply.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-        
+
         // Handle Edit Modal Main Category change to show/hide Expiration Date row
-        $('#edit-main-category').on('change', function() {
+        $('#edit-main-category').on('change', function () {
             const selectedCategoryText = $(this).find('option:selected').text().trim();
-            
+
             // Check if "Service Perks" is selected
             if (selectedCategoryText === 'Service Perks') {
                 // Show expiration date row and make it required
@@ -1993,20 +2060,20 @@ Replenish/Add New Item
                 $('#edit-expiration-required').hide();
             }
         });
-        
+
         // Calculate Days Until Expiration for Edit Modal when date is selected
-        $('#edit-expiration-date').on('change', function() {
+        $('#edit-expiration-date').on('change', function () {
             const expirationDate = new Date($(this).val());
             const today = new Date();
-            
+
             // Reset time to midnight for accurate day calculation
             today.setHours(0, 0, 0, 0);
             expirationDate.setHours(0, 0, 0, 0);
-            
+
             if (expirationDate) {
                 const timeDiff = expirationDate - today;
                 const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                
+
                 if (daysDiff < 0) {
                     $('#edit-expired').val('Expired (' + Math.abs(daysDiff) + ' days ago)');
                     $('#edit-expired').addClass('text-danger');
@@ -2019,11 +2086,11 @@ Replenish/Add New Item
                 }
             }
         });
-        
+
         // Delete Supply Button (Soft Delete - Move to Deleted Supplies Tab)
-        $(document).on('click', '.delete-supply-btn', function() {
+        $(document).on('click', '.delete-supply-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             Swal.fire({
                 title: 'Are you sure?',
                 text: "This will move the item to Deleted Supplies. You can restore it later.",
@@ -2042,7 +2109,7 @@ Replenish/Add New Item
                             'X-CSRFToken': getCookie('csrftoken'),
                             'Content-Type': 'application/json'
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 showSwalAlert('success', 'Deleted!', 'Supply moved to Deleted Supplies tab.', 2000);
                                 setTimeout(() => location.reload(), 2000);
@@ -2050,7 +2117,7 @@ Replenish/Add New Item
                                 showSwalAlert('error', 'Error', response.error || 'Failed to delete supply.');
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             const errorMsg = xhr.responseJSON?.error || 'Failed to delete supply.';
                             showSwalAlert('error', 'Error', errorMsg);
                         }
@@ -2058,11 +2125,11 @@ Replenish/Add New Item
                 }
             });
         });
-        
+
         // Restore Supply Button (from Deleted Supplies Tab)
-        $(document).on('click', '.restore-supply-btn', function() {
+        $(document).on('click', '.restore-supply-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             Swal.fire({
                 title: 'Restore this item?',
                 text: "This will restore the item back to the active supplies list.",
@@ -2081,7 +2148,7 @@ Replenish/Add New Item
                             'X-CSRFToken': getCookie('csrftoken'),
                             'Content-Type': 'application/json'
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 showSwalAlert('success', 'Restored!', 'Supply restored successfully.', 2000);
                                 setTimeout(() => location.reload(), 2000);
@@ -2089,7 +2156,7 @@ Replenish/Add New Item
                                 showSwalAlert('error', 'Error', response.error || 'Failed to restore supply.');
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             const errorMsg = xhr.responseJSON?.error || 'Failed to restore supply.';
                             showSwalAlert('error', 'Error', errorMsg);
                         }
@@ -2097,11 +2164,11 @@ Replenish/Add New Item
                 }
             });
         });
-        
+
         // Delete Permanently Button (from Deleted Supplies Tab)
-        $(document).on('click', '.delete-permanently-btn', function() {
+        $(document).on('click', '.delete-permanently-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             Swal.fire({
                 title: 'Delete Permanently?',
                 text: "This action cannot be undone! The item will be completely removed from the database.",
@@ -2120,7 +2187,7 @@ Replenish/Add New Item
                             'X-CSRFToken': getCookie('csrftoken'),
                             'Content-Type': 'application/json'
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 showSwalAlert('success', 'Deleted!', 'Supply permanently deleted.', 2000);
                                 setTimeout(() => location.reload(), 2000);
@@ -2128,7 +2195,7 @@ Replenish/Add New Item
                                 showSwalAlert('error', 'Error', response.error || 'Failed to delete supply permanently.');
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             const errorMsg = xhr.responseJSON?.error || 'Failed to delete supply permanently.';
                             showSwalAlert('error', 'Error', errorMsg);
                         }
@@ -2136,9 +2203,9 @@ Replenish/Add New Item
                 }
             });
         });
-        
+
         // Clear form when edit modal is closed
-        $('#editSupplyModal').on('hidden.bs.modal', function() {
+        $('#editSupplyModal').on('hidden.bs.modal', function () {
             $('#edit-supply-form')[0].reset();
             $('#edit-supply-id').val('');
             $('#edit-expiration-date-row').hide();
@@ -2146,13 +2213,13 @@ Replenish/Add New Item
             $('#edit-expiration-date').val('');
             $('#edit-expired').val('');
         });
-        
+
         // ========== VIEW SUPPLY DETAILS FUNCTIONALITY START ==========
-        
+
         // View Supply Details Button - Open modal with complete supply data
-        $(document).on('click', '.view-supply-details-btn', function() {
+        $(document).on('click', '.view-supply-details-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             // Fetch supply data
             $.ajax({
                 url: '/api/supplies/' + supplyId + '/',
@@ -2160,45 +2227,45 @@ Replenish/Add New Item
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         const supply = response.supply;
-                        
+
                         // Populate Basic Information
                         $('#view-item-code').text(supply.item_code || 'N/A');
                         $('#view-description').text(supply.description || 'N/A');
                         $('#view-main-category').text(supply.main_category_name || 'N/A');
                         $('#view-sub-category').text(supply.sub_category || 'N/A');
                         $('#view-unit').text(supply.unit || 'N/A');
-                        
+
                         // Format and display date
                         if (supply.date) {
                             const date = new Date(supply.date);
-                            $('#view-date').text(date.toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
+                            $('#view-date').text(date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
                             }));
                         } else {
                             $('#view-date').text('N/A');
                         }
-                        
+
                         // Populate Expiration Info
                         if (supply.expiration_date) {
                             const expDate = new Date(supply.expiration_date);
-                            $('#view-expiration-date').text(expDate.toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
+                            $('#view-expiration-date').text(expDate.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
                             }));
-                            
+
                             // Calculate days until expiration
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
                             expDate.setHours(0, 0, 0, 0);
                             const timeDiff = expDate - today;
                             const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                            
+
                             let statusHtml = '';
                             if (daysDiff < 0) {
                                 statusHtml = '<span class="badge badge-danger">Expired (' + Math.abs(daysDiff) + ' days ago)</span>';
@@ -2216,13 +2283,13 @@ Replenish/Add New Item
                             $('#view-expiration-date').text('N/A');
                             $('#view-expiration-status').html('<span class="badge badge-secondary">No expiration date</span>');
                         }
-                        
+
                         // Populate Inventory Details
                         $('#view-opening-balance').text(supply.opening_balance || '0');
                         $('#view-stock-in').text(supply.stock_in || '0');
                         $('#view-running-count').text(supply.running_count || '0');
                         $('#view-total-released').text(supply.total_released || '0');
-                        
+
                         // Real-Time Balance with color coding
                         const balance = supply.real_time_balance || 0;
                         let balanceClass = 'badge-info';
@@ -2236,37 +2303,37 @@ Replenish/Add New Item
                         $('#view-real-time-balance').removeClass('badge-danger badge-warning badge-success badge-info')
                             .addClass(balanceClass)
                             .text(balance);
-                        
+
                         // Populate Cost Information
                         $('#view-cost-per-item').text('₱' + parseFloat(supply.cost_per_item || 0).toFixed(2));
                         $('#view-running-cost').text('₱' + parseFloat(supply.running_cost || 0).toFixed(2));
                         $('#view-total-cost').text('₱' + parseFloat(supply.total_cost || 0).toFixed(2));
-                        
+
                         // Populate Transaction Info
                         $('#view-transaction').text(supply.transaction || 'N/A');
                         $('#view-requester-name').text(supply.requester_name || 'N/A');
-                        
+
                         // Show modal
                         $('#viewSupplyDetailsModal').modal('show');
                     } else {
                         showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-        
+
         // ========== VIEW SUPPLY DETAILS FUNCTIONALITY END ==========
-        
+
         // ========== ADD STOCK FUNCTIONALITY START ==========
-        
+
         // Add Stock Button - Open modal with supply data
-        $(document).on('click', '.add-stock-btn', function() {
+        $(document).on('click', '.add-stock-btn', function () {
             const supplyId = $(this).data('supply-id');
-            
+
             // Fetch supply data
             $.ajax({
                 url: '/api/supplies/' + supplyId + '/',
@@ -2274,7 +2341,7 @@ Replenish/Add New Item
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         const supply = response.supply;
                         // Populate read-only fields
@@ -2285,35 +2352,35 @@ Replenish/Add New Item
                         $('#add-stock-sub-category').val(supply.sub_category || 'N/A');
                         $('#add-stock-unit').val(supply.unit);
                         $('#add-stock-current-balance').val(supply.real_time_balance || 0);
-                        
+
                         // Clear the editable field
                         $('#add-stock-quantity').val('');
-                        
+
                         // Show modal
                         $('#addStockModal').modal('show');
                     } else {
                         showSwalAlert('error', 'Error', response.error || 'Failed to fetch supply data.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to fetch supply data.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-        
+
         // Add Stock Form Submission
-        $('#add-stock-form').on('submit', function(e) {
+        $('#add-stock-form').on('submit', function (e) {
             e.preventDefault();
-            
+
             const supplyId = $('#add-stock-supply-id').val();
             const quantity = parseInt($('#add-stock-quantity').val()) || 0;
-            
+
             if (quantity <= 0) {
                 showSwalAlert('warning', 'Validation Error', 'Please enter a valid quantity greater than 0.');
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/supplies/' + supplyId + '/add-stock/',
                 method: 'POST',
@@ -2322,7 +2389,7 @@ Replenish/Add New Item
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify({ quantity: quantity }),
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         $('#addStockModal').modal('hide');
                         showSwalAlert('success', 'Success', 'Stock added successfully!', 2000);
@@ -2331,34 +2398,34 @@ Replenish/Add New Item
                         showSwalAlert('error', 'Error', response.error || 'Failed to add stock.');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const errorMsg = xhr.responseJSON?.error || 'Failed to add stock.';
                     showSwalAlert('error', 'Error', errorMsg);
                 }
             });
         });
-        
+
         // Clear form when add stock modal is closed
-        $('#addStockModal').on('hidden.bs.modal', function() {
+        $('#addStockModal').on('hidden.bs.modal', function () {
             $('#add-stock-form')[0].reset();
             $('#add-stock-supply-id').val('');
         });
-        
+
         // ========== ADD STOCK FUNCTIONALITY END ==========
-        
+
         // ========== SUPPLY ITEM CRUD OPERATIONS END ==========
 
 
         // ========== OUT OF STOCK CHECKBOX AND PRINT FUNCTIONALITY START ==========
-        
+
         // Select All checkbox functionality
-        $('#select-all-out-of-stock').on('change', function() {
+        $('#select-all-out-of-stock').on('change', function () {
             const isChecked = $(this).prop('checked');
             $('.out-of-stock-checkbox').prop('checked', isChecked);
         });
 
         // Individual checkbox change
-        $(document).on('change', '.out-of-stock-checkbox', function() {
+        $(document).on('change', '.out-of-stock-checkbox', function () {
             const totalCheckboxes = $('.out-of-stock-checkbox').length;
             const checkedCheckboxes = $('.out-of-stock-checkbox:checked').length;
             $('#select-all-out-of-stock').prop('checked', totalCheckboxes === checkedCheckboxes);
@@ -2367,7 +2434,7 @@ Replenish/Add New Item
         // Get selected rows data
         function getSelectedOutOfStockData() {
             const selectedData = [];
-            $('.out-of-stock-checkbox:checked').each(function() {
+            $('.out-of-stock-checkbox:checked').each(function () {
                 const row = $(this).closest('tr');
                 const rowData = {
                     no: row.find('.row-number').text(),
@@ -2390,10 +2457,10 @@ Replenish/Add New Item
             return selectedData;
         }
 
-        // Print Selected Items
-        $('#print-out-of-stock-btn').on('click', function() {
+        // Print Selected Items - PhilHealth Requisition Format
+        $('#print-out-of-stock-btn').on('click', function () {
             const selectedData = getSelectedOutOfStockData();
-            
+
             if (selectedData.length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -2404,113 +2471,307 @@ Replenish/Add New Item
                 return;
             }
 
+            // Generate RIS number (legacy format: XXX-XX-XXX e.g. 023-26-001)
+            const risNumber = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+            const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+
             // Create print window
             const printWindow = window.open('', '_blank');
             let printContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Out of Stock Items - Print</title>
+                    <title>Requisition and Issue Slip - Print</title>
                     <style>
+                        @page {
+                            size: A4 portrait;
+                            margin: 10mm;
+                        }
+                        
                         body {
                             font-family: Arial, sans-serif;
-                            margin: 20px;
+                            margin: 0;
+                            padding: 15px;
+                            font-size: 9pt;
                         }
-                        h2 {
-                            text-align: center;
-                            color: #333;
+                        
+                        .page-border {
+                            border: 2px solid #000;
+                            padding: 15px;
+                            position: relative;
+                            box-sizing: border-box;
+                            max-height: 277mm;
+                            overflow: hidden;
+                        }
+                        
+                        .header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
                             margin-bottom: 20px;
+                            border-bottom: 1px solid #000;
+                            padding-bottom: 10px;
                         }
-                        table {
+                        
+                        .header-left {
+                            display: flex;
+                            align-items: center;
+                        }
+                        
+                        .logo {
+                            width: 80px;
+                            height: 80px;
+                            margin-right: 10px;
+                        }
+                        
+                        .header-right {
+                            text-align: right;
+                        }
+                        
+                        .doc-title {
+                            font-size: 11pt;
+                            font-weight: bold;
+                            margin: 0;
+                        }
+                        
+                        .doc-subtitle {
+                            font-size: 9pt;
+                            margin: 2px 0 0 0;
+                        }
+                        
+                        .info-row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 15px;
+                            padding: 5px 0;
+                        }
+                        
+                        .info-left {
+                            font-size: 9pt;
+                        }
+                        
+                        .info-right {
+                            text-align: right;
+                            font-size: 9pt;
+                        }
+                        
+                        .data-table {
                             width: 100%;
                             border-collapse: collapse;
-                            font-size: 11px;
+                            margin-bottom: 15px;
                         }
-                        th, td {
-                            border: 1px solid #ddd;
-                            padding: 6px;
+                        
+                        .data-table th {
+                            border: 1px solid #000;
+                            padding: 5px 3px;
+                            font-size: 7pt;
+                            font-weight: bold;
+                            text-align: center;
+                            background-color: #e8e8e8;
+                        }
+                        
+                        .data-table td {
+                            border: 1px solid #000;
+                            padding: 4px 3px;
+                            font-size: 7pt;
+                        }
+                        
+                        .data-table tr {
+                            height: 18px;
+                        }
+                        
+                        .col-balance { width: 10%; text-align: center; }
+                        .col-unit { width: 8%; text-align: center; }
+                        .col-requisition { width: 30%; }
+                        .col-qty { width: 7%; text-align: center; }
+                        .col-cost { width: 10%; text-align: right; }
+                        .col-total { width: 12%; text-align: right; }
+                        
+                        .footer-section {
+                            margin-top: 20px;
+                            width: 100%;
+                        }
+                        
+                        .footer-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 8pt;
+                        }
+                        
+                        .footer-table td,
+                        .footer-table th {
+                            border: 1px solid #000;
+                            padding: 4px 6px;
+                            vertical-align: top;
                             text-align: left;
                         }
-                        th {
-                            background-color: #28a745;
-                            color: white;
-                            font-weight: bold;
+                        
+                        .footer-purpose-cell {
+                            font-size: 9pt;
+                            padding: 6px 8px;
                         }
-                        tr:nth-child(even) {
-                            background-color: #f9f9f9;
+                        
+                        .footer-sig-header {
+                            font-weight: normal;
+                            padding: 4px 6px;
                         }
-                        .header-info {
-                            text-align: center;
-                            margin-bottom: 20px;
+                        
+                        .footer-sig-line {
+                            border-bottom: 1px solid #000;
+                            min-height: 18px;
+                            margin-top: 2px;
                         }
-                        .print-date {
-                            text-align: right;
-                            font-size: 10px;
-                            margin-bottom: 10px;
-                        }
+                        
                         @media print {
-                            button {
-                                display: none;
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .page-border {
+                                border: 2px solid #000;
+                                page-break-after: avoid;
                             }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="header-info">
-                        <h2>Out of Stock Items Report</h2>
-                    </div>
-                    <div class="print-date">
-                        Print Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Item Code</th>
-                                <th>Description</th>
-                                <th>Main Category</th>
-                                <th>Sub-Category</th>
-                                <th>Unit</th>
-                                <th>Opening Balance</th>
-                                <th>Cost per Item</th>
-                                <th>Stock-In</th>
-                                <th>Running Count</th>
-                                <th>Running Cost</th>
-                                <th>Total Released</th>
-                                <th>Real-Time Balance</th>
-                                <th>Total Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+                    <div class="page-border">
+                        <!-- Header -->
+                        <div class="header">
+                            <div class="header-left">
+                                <img src="{% static 'image/logo.png' %}" alt="PhilHealth Logo" class="logo" onerror="this.style.display='none'">
+                                <div>
+                                    <span class="doc-title" style="font-size: 12pt;">PhilHealth</span><br>
+                                    <span class="doc-subtitle">Your Partner in Health.</span>
+                                </div>
+                            </div>
+                            <div class="header-right">
+                                <p class="doc-title">Requisition and Issue Slip (Supplies and Materials)</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Row -->
+                        <div class="info-row">
+                            <div class="info-left">
+                                <strong>Office-End User:</strong> LHIO BUTUAN CITY
+                            </div>
+                            <div class="info-right">
+                                <strong>RIS #:</strong> ${risNumber}<br>
+                                <strong>Date:</strong> ${currentDate}
+                            </div>
+                        </div>
+                        
+                        <!-- Data Table -->
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="1" style="background-color: #f0f0f0;">Balance on Hand</th>
+                                    <th colspan="4" style="background-color: #f0f0f0;">REQUISITION</th>
+                                    <th colspan="4" style="background-color: #f0f0f0;">ISSUANCE</th>
+                                </tr>
+                                <tr>
+                                    <th class="col-balance"></th>
+                                    <th class="col-unit">Unit</th>
+                                    <th class="col-requisition">Item Description</th>
+                                    <th class="col-qty">Qty</th>
+                                    <th class="col-unit">Unit</th>
+                                    <th class="col-qty">Qty</th>
+                                    <th class="col-unit">Unit</th>
+                                    <th class="col-cost">Cost</th>
+                                    <th class="col-total">Total Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
-            selectedData.forEach((item) => {
-                printContent += `
-                    <tr>
-                        <td>${item.no}</td>
-                        <td>${item.item_code}</td>
-                        <td>${item.description}</td>
-                        <td>${item.main_category}</td>
-                        <td>${item.sub_category}</td>
-                        <td>${item.unit}</td>
-                        <td>${item.opening_balance}</td>
-                        <td>${item.cost_per_item}</td>
-                        <td>${item.stock_in}</td>
-                        <td>${item.running_count}</td>
-                        <td>${item.running_cost}</td>
-                        <td>${item.total_released}</td>
-                        <td>${item.real_time_balance}</td>
-                        <td>${item.total_cost}</td>
-                    </tr>
-                `;
-            });
+            // Add data rows (limit so content + border fit on one page)
+            const maxRows = 15;
+            for (let i = 0; i < maxRows; i++) {
+                if (i < selectedData.length) {
+                    const item = selectedData[i];
+                    printContent += `
+                                <tr>
+                                    <td class="col-balance">${item.real_time_balance}</td>
+                                    <td class="col-unit">${item.unit}</td>
+                                    <td class="col-requisition">${item.description.substring(0, 50)}</td>
+                                    <td class="col-qty">${item.stock_in}</td>
+                                    <td class="col-unit">${item.unit}</td>
+                                    <td class="col-qty"></td>
+                                    <td class="col-unit"></td>
+                                    <td class="col-cost"></td>
+                                    <td class="col-total"></td>
+                                </tr>`;
+                } else {
+                    // Empty rows to fill the page
+                    printContent += `
+                                <tr>
+                                    <td class="col-balance"></td>
+                                    <td class="col-unit"></td>
+                                    <td class="col-requisition"></td>
+                                    <td class="col-qty"></td>
+                                    <td class="col-unit"></td>
+                                    <td class="col-qty"></td>
+                                    <td class="col-unit"></td>
+                                    <td class="col-cost"></td>
+                                    <td class="col-total"></td>
+                                </tr>`;
+                }
+            }
 
             printContent += `
-                        </tbody>
-                    </table>
+                                <tr>
+                                    <td colspan="8" style="border-left: none; border-right: none; border-bottom: 1px dotted #333; padding: 4px 8px; font-size: 7pt;">
+                                        --------Nothing follows---------
+                                    </td>
+                                    <td class="col-total" style="border: 1px solid #000; font-weight: bold; text-align: center;">TOTAL AMOUNT</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Footer Section (bordered table matching legacy format) -->
+                        <div class="footer-section">
+                            <table class="footer-table">
+                                <tr>
+                                    <td colspan="4" class="footer-purpose-cell"><strong>Purpose:</strong> Operational Use</td>
+                                </tr>
+                                <tr>
+                                    <th class="footer-sig-header">Requested by:</th>
+                                    <th class="footer-sig-header">Approved by:</th>
+                                    <th class="footer-sig-header">Issued by:</th>
+                                    <th class="footer-sig-header">Received by:</th>
+                                </tr>
+                                <tr>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                </tr>
+                                <tr>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                    <td>Printed Name:</td>
+                                </tr>
+                                <tr>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                    <td>Designation:</td>
+                                </tr>
+                                <tr>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                    <td>Date:</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <script>
                         window.onload = function() {
-                            window.print();
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
                         }
                     <\/script>
                 </body>
@@ -2519,13 +2780,13 @@ Replenish/Add New Item
 
             printWindow.document.write(printContent);
             printWindow.document.close();
-            
+
             // Save to print history
             savePrintHistory({
-                type: 'Out of Stock Report',
+                type: 'Requisition and Issue Slip',
                 itemCount: selectedData.length,
                 timestamp: new Date().toISOString(),
-                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+                date: currentDate
             });
         });
 
@@ -2533,12 +2794,12 @@ Replenish/Add New Item
         function savePrintHistory(printData) {
             let printHistory = JSON.parse(localStorage.getItem('printHistory')) || [];
             printHistory.unshift(printData); // Add to beginning of array
-            
+
             // Keep only last 50 entries
             if (printHistory.length > 50) {
                 printHistory = printHistory.slice(0, 50);
             }
-            
+
             localStorage.setItem('printHistory', JSON.stringify(printHistory));
         }
 
@@ -2548,10 +2809,10 @@ Replenish/Add New Item
         }
 
         // Show print history when sidebar link is clicked
-        $(document).on('click', '#print-history-link', function(e) {
+        $(document).on('click', '#print-history-link', function (e) {
             e.preventDefault();
             const history = getPrintHistory();
-            
+
             if (history.length === 0) {
                 Swal.fire({
                     icon: 'info',
@@ -2561,12 +2822,12 @@ Replenish/Add New Item
                 });
                 return;
             }
-            
+
             let historyHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
             historyHTML += '<table class="table table-sm table-bordered" style="font-size: 12px;">';
             historyHTML += '<thead><tr><th style="width: 50%;">Report Type</th><th style="width: 20%;">Items</th><th style="width: 30%;">Date</th></tr></thead>';
             historyHTML += '<tbody>';
-            
+
             history.forEach((item, index) => {
                 historyHTML += `
                     <tr>
@@ -2576,9 +2837,9 @@ Replenish/Add New Item
                     </tr>
                 `;
             });
-            
+
             historyHTML += '</tbody></table></div>';
-            
+
             Swal.fire({
                 icon: 'info',
                 title: 'Print History',
@@ -2618,14 +2879,14 @@ Replenish/Add New Item
             });
         });
 
-        // Save as PDF - Direct Download
-        $('#save-pdf-out-of-stock-btn').on('click', function() {
+        // Save as PDF - PhilHealth Requisition Format
+        $('#save-pdf-out-of-stock-btn').on('click', function () {
             console.log('=== SAVE AS PDF BUTTON CLICKED ===');
-            
+
             const selectedData = getSelectedOutOfStockData();
             console.log('Selected items count:', selectedData.length);
             console.log('Selected data:', selectedData);
-            
+
             if (selectedData.length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -2638,11 +2899,11 @@ Replenish/Add New Item
 
             // Ask user confirmation before generating PDF
             console.log('Showing SweetAlert confirmation dialog...');
-            
+
             Swal.fire({
                 icon: 'question',
                 title: 'Save as PDF',
-                text: `Generate PDF report for ${selectedData.length} selected item(s)?`,
+                text: `Generate RIS ${selectedData.length} selected item(s)?`,
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#6c757d',
@@ -2652,125 +2913,407 @@ Replenish/Add New Item
                 console.log('SweetAlert result:', result);
                 console.log('result.isConfirmed:', result.isConfirmed);
                 console.log('result.value:', result.value);
-                
+
                 // Check both isConfirmed and value for compatibility
                 if (result.isConfirmed || result.value === true) {
                     console.log('User confirmed - starting PDF generation...');
-                    
+
                     try {
                         // Check if jsPDF is available
                         if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
                             console.error('jsPDF not available!');
                             throw new Error('PDF library not loaded');
                         }
-                        
+
                         console.log('jsPDF is available');
-                        
-                        // Generate PDF using jsPDF
+
+                        // Generate PDF using jsPDF (A4 Portrait)
                         const { jsPDF } = window.jspdf;
                         console.log('jsPDF constructor loaded');
-                        const doc = new jsPDF('landscape', 'mm', 'a4');
-                        
-                        // Add title
-                        doc.setFontSize(18);
-                        doc.setTextColor(40, 167, 69);
-                        doc.text('Out of Stock Items Report', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-                        
-                        // Add generation date
+                        const doc = new jsPDF('portrait', 'mm', 'a4');
+
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+                        const margin = 10;
+
+                        // Get current date
+                        const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+
+                        // Header - PhilHealth (legacy format)
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('PhilHealth', margin, 15);
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Your Partner in Health.', margin, 19);
+
+                        // Title (legacy: single line right-aligned)
                         doc.setFontSize(9);
-                        doc.setTextColor(100);
-                        const currentDate = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString();
-                        doc.text('Generated: ' + currentDate, doc.internal.pageSize.getWidth() - 15, 10, { align: 'right' });
-                        
-                        // Prepare table data
-                        const tableHeaders = [
-                            'No.', 'Item Code', 'Description', 'Main Category', 'Sub-Category', 
-                            'Unit', 'Opening Balance', 'Cost per Item', 'Stock-In', 
-                            'Running Count', 'Running Cost', 'Total Released', 
-                            'Real-Time Balance', 'Total Cost'
-                        ];
-                        
-                        const tableData = selectedData.map(item => [
-                            item.no,
-                            item.item_code,
-                            item.description,
-                            item.main_category,
-                            item.sub_category,
-                            item.unit,
-                            item.opening_balance,
-                            item.cost_per_item,
-                            item.stock_in,
-                            item.running_count,
-                            item.running_cost,
-                            item.total_released,
-                            item.real_time_balance,
-                            item.total_cost
-                        ]);
-                        
-                        // Check if autoTable is available
-                        if (typeof doc.autoTable !== 'function') {
-                            throw new Error('PDF table plugin not loaded');
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Requisition and Issue Slip (Supplies and Materials)', pageWidth - margin, 16, { align: 'right' });
+
+                        // Border around the entire document
+                        doc.setLineWidth(0.5);
+                        doc.rect(margin - 5, 25, pageWidth - (2 * margin) + 10, pageHeight - 35);
+
+                        let yPosition = 32;
+
+                        // Office-End User Info (legacy format)
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Office-End User:', margin, yPosition);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('LHIO BUTUAN CITY', margin + 32, yPosition);
+
+                        // RIS # and Date (aligned right, legacy format XXX-XX-XXX)
+                        doc.setFont('helvetica', 'normal');
+                        const risNumber = `RIS #: 023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                        doc.text(risNumber, pageWidth - margin - 5, yPosition, { align: 'right' });
+                        doc.text(`Date: ${currentDate}`, pageWidth - margin - 5, yPosition + 4, { align: 'right' });
+
+                        yPosition += 10;
+
+                        // Table Headers
+                        const tableStartY = yPosition;
+
+                        // Column widths - adjusted to match print format
+                        const colWidths = {
+                            balanceOnHand: 18,
+                            unit: 15,
+                            requisition: 60,
+                            qty: 12,
+                            unit2: 15,
+                            qty2: 12,
+                            unit3: 15,
+                            cost: 18,
+                            totalCost: 24
+                        };
+
+                        // SECTION HEADER ROW (legacy: Balance on Hand, REQUISITION, ISSUANCE)
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(margin, yPosition, pageWidth - (2 * margin), 7, 'F');
+
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'bold');
+
+                        // Calculate section widths
+                        const balanceWidth = colWidths.balanceOnHand;
+                        const requisitionWidth = colWidths.unit + colWidths.requisition + colWidths.qty + colWidths.unit2;
+                        const issuanceWidth = colWidths.qty2 + colWidths.unit3 + colWidths.cost + colWidths.totalCost;
+
+                        // Section headers (legacy format)
+                        let xPos = margin;
+                        doc.text('Balance on Hand', xPos + (balanceWidth / 2), yPosition + 5, { align: 'center' });
+                        xPos += balanceWidth;
+
+                        doc.text('REQUISITION', xPos + (requisitionWidth / 2), yPosition + 5, { align: 'center' });
+                        xPos += requisitionWidth;
+
+                        doc.text('ISSUANCE', xPos + (issuanceWidth / 2), yPosition + 5, { align: 'center' });
+
+                        // Draw horizontal line after section headers
+                        yPosition += 7;
+                        doc.setLineWidth(0.5);
+                        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+
+                        // COLUMN HEADER ROW
+                        doc.setFillColor(255, 255, 255);
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'bold');
+
+                        yPosition += 0.5;
+                        const columnHeaderY = yPosition;
+
+                        xPos = margin + 2;
+
+                        // Balance on Hand
+                        doc.text('on Hand', xPos + (colWidths.balanceOnHand / 2) - 2, yPosition + 5, { align: 'center' });
+                        xPos += colWidths.balanceOnHand;
+
+                        // Unit
+                        doc.text('Unit', xPos + (colWidths.unit / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.unit;
+
+                        // REQUISITION - Item Description column (legacy)
+                        doc.text('Item Description', xPos + (colWidths.requisition / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.requisition;
+
+                        // Qty
+                        doc.text('Qty', xPos + (colWidths.qty / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.qty;
+
+                        // Unit
+                        doc.text('Unit', xPos + (colWidths.unit2 / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.unit2;
+
+                        // Qty (ISSUANCE)
+                        doc.text('Qty', xPos + (colWidths.qty2 / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.qty2;
+
+                        // Unit
+                        doc.text('Unit', xPos + (colWidths.unit3 / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.unit3;
+
+                        // Cost
+                        doc.text('Cost', xPos + (colWidths.cost / 2), yPosition + 5, { align: 'center' });
+                        xPos += colWidths.cost;
+
+                        // Total Cost
+                        doc.text('Total Cost', xPos + (colWidths.totalCost / 2), yPosition + 5, { align: 'center' });
+
+                        yPosition += 7;
+
+                        // Draw table grid
+                        doc.setLineWidth(0.3);
+                        doc.setDrawColor(0);
+
+                        // Vertical lines for headers
+                        let currentX = margin;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.balanceOnHand;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.unit;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.requisition;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.qty;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.unit2;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.qty2;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.unit3;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.cost;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        currentX += colWidths.totalCost;
+                        doc.line(currentX, tableStartY, currentX, yPosition);
+
+                        // Horizontal line
+                        doc.line(margin, tableStartY, pageWidth - margin, tableStartY);
+                        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+
+                        // Data rows
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7);
+
+                        const rowHeight = 6;
+                        const maxRows = 25; // Maximum rows that fit on page
+
+                        for (let i = 0; i < Math.min(selectedData.length, maxRows); i++) {
+                            const item = selectedData[i];
+                            const rowY = yPosition + (i * rowHeight);
+
+                            // Draw row
+                            xPos = margin + 2;
+
+                            // Balance on Hand (Real-time balance)
+                            doc.text(item.real_time_balance, xPos + (colWidths.balanceOnHand / 2), rowY + 4, { align: 'center' });
+                            xPos += colWidths.balanceOnHand;
+
+                            // Unit
+                            doc.text(item.unit, xPos + (colWidths.unit / 2), rowY + 4, { align: 'center' });
+                            xPos += colWidths.unit;
+
+                            // Requisition (Description)
+                            const description = item.description.substring(0, 50);
+                            doc.text(description, xPos + 2, rowY + 4);
+                            xPos += colWidths.requisition;
+
+                            // Qty (Stock In)
+                            doc.text(item.stock_in, xPos + (colWidths.qty / 2), rowY + 4, { align: 'center' });
+                            xPos += colWidths.qty;
+
+                            // Unit (repeat)
+                            doc.text(item.unit, xPos + (colWidths.unit2 / 2), rowY + 4, { align: 'center' });
+                            xPos += colWidths.unit2;
+
+                            // Qty (ISSUANCE - empty)
+                            xPos += colWidths.qty2;
+
+                            // Unit (ISSUANCE - empty)
+                            xPos += colWidths.unit3;
+
+                            // Cost (ISSUANCE - empty)
+                            xPos += colWidths.cost;
+
+                            // Total Cost (ISSUANCE - empty)
+                            xPos += colWidths.totalCost;
+
+                            // Draw horizontal line
+                            doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight);
                         }
-                        
-                        // Generate table using autoTable
-                        doc.autoTable({
-                            head: [tableHeaders],
-                            body: tableData,
-                            startY: 22,
-                            theme: 'grid',
-                            styles: {
-                                fontSize: 7,
-                                cellPadding: 2,
-                                lineColor: [200, 200, 200],
-                                lineWidth: 0.1
-                            },
-                            headStyles: {
-                                fillColor: [40, 167, 69],
-                                textColor: [255, 255, 255],
-                                fontStyle: 'bold',
-                                halign: 'center'
-                            },
-                            alternateRowStyles: {
-                                fillColor: [245, 245, 245]
-                            },
-                            columnStyles: {
-                                0: { cellWidth: 10, halign: 'center' },  // No.
-                                1: { cellWidth: 22 },  // Item Code
-                                2: { cellWidth: 35 },  // Description
-                                3: { cellWidth: 22 },  // Main Category
-                                4: { cellWidth: 20 },  // Sub-Category
-                                5: { cellWidth: 12, halign: 'center' },  // Unit
-                                6: { cellWidth: 18, halign: 'right' },   // Opening Balance
-                                7: { cellWidth: 18, halign: 'right' },   // Cost per Item
-                                8: { cellWidth: 15, halign: 'right' },   // Stock-In
-                                9: { cellWidth: 18, halign: 'right' },   // Running Count
-                                10: { cellWidth: 18, halign: 'right' },  // Running Cost
-                                11: { cellWidth: 18, halign: 'right' },  // Total Released
-                                12: { cellWidth: 20, halign: 'right' },  // Real-Time Balance
-                                13: { cellWidth: 18, halign: 'right' }   // Total Cost
-                            },
-                            margin: { top: 22, left: 10, right: 10 }
-                        });
-                        
+
+                        // Draw vertical lines for data rows
+                        const dataEndY = yPosition + (Math.min(selectedData.length, maxRows) * rowHeight);
+                        currentX = margin;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.balanceOnHand;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.unit;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.requisition;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.qty;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.unit2;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.qty2;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.unit3;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.cost;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        currentX += colWidths.totalCost;
+                        doc.line(currentX, yPosition, currentX, dataEndY);
+
+                        // Add empty rows to fill page
+                        const emptyRowsNeeded = maxRows - selectedData.length;
+                        for (let i = 0; i < emptyRowsNeeded; i++) {
+                            const rowY = dataEndY + (i * rowHeight);
+                            doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight);
+                        }
+
+                        const finalRowY = dataEndY + (emptyRowsNeeded * rowHeight);
+
+                        // Legacy: "--------Nothing follows---------" row + TOTAL AMOUNT box
+                        const nothingFollowsY = finalRowY + rowHeight;
+                        doc.setDrawColor(100, 100, 100);
+                        doc.setLineDashPattern([1, 1], 0);
+                        doc.line(margin, nothingFollowsY + 3, margin + (pageWidth - (2 * margin)) - colWidths.totalCost - 2, nothingFollowsY + 3);
+                        doc.setLineDashPattern([], 0);
+                        doc.setDrawColor(0);
+                        doc.setFontSize(6);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('--------Nothing follows---------', margin + 2, nothingFollowsY + 4);
+                        doc.setFont('helvetica', 'bold');
+                        doc.rect(pageWidth - margin - colWidths.totalCost, nothingFollowsY, colWidths.totalCost, rowHeight, 'S');
+                        doc.text('TOTAL AMOUNT', pageWidth - margin - (colWidths.totalCost / 2), nothingFollowsY + 4, { align: 'center' });
+
+                        // Draw remaining vertical lines
+                        currentX = margin;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.balanceOnHand;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.unit;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.requisition;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.qty;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.unit2;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.qty2;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.unit3;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.cost;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        currentX += colWidths.totalCost;
+                        doc.line(currentX, dataEndY, currentX, finalRowY);
+
+                        // Footer Section (after "Nothing follows" row)
+                        yPosition = nothingFollowsY + rowHeight + 5;
+
+                        // Purpose
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Purpose: Operational Use', margin, yPosition);
+
+                        yPosition += 8;
+
+                        // Signature section
+                        const sigBoxWidth = (pageWidth - (2 * margin)) / 4;
+
+                        // Headers
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Requested by:', margin + 5, yPosition);
+                        doc.text('Approved by:', margin + sigBoxWidth + 5, yPosition);
+                        doc.text('Issued by:', margin + (sigBoxWidth * 2) + 5, yPosition);
+                        doc.text('Received by:', margin + (sigBoxWidth * 3) + 5, yPosition);
+
+                        yPosition += 15;
+
+                        // Signature lines and names
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('_________________', margin + 2, yPosition);
+                        doc.text('_________________', margin + sigBoxWidth + 2, yPosition);
+                        doc.text('_________________', margin + (sigBoxWidth * 2) + 2, yPosition);
+                        doc.text('_________________', margin + (sigBoxWidth * 3) + 2, yPosition);
+
+                        yPosition += 4;
+                        doc.setFontSize(6);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Signature', margin + 10, yPosition);
+                        doc.text('Signature', margin + sigBoxWidth + 10, yPosition);
+                        doc.text('Signature', margin + (sigBoxWidth * 2) + 10, yPosition);
+                        doc.text('Signature', margin + (sigBoxWidth * 3) + 10, yPosition);
+
+                        yPosition += 4;
+                        doc.text('Printed Name:', margin + 2, yPosition);
+                        doc.text('Printed Name:', margin + sigBoxWidth + 2, yPosition);
+                        doc.text('Printed Name:', margin + (sigBoxWidth * 2) + 2, yPosition);
+                        doc.text('Printed Name:', margin + (sigBoxWidth * 3) + 2, yPosition);
+
+                        yPosition += 4;
+                        doc.text('Designation:', margin + 2, yPosition);
+                        doc.text('Designation:', margin + sigBoxWidth + 2, yPosition);
+                        doc.text('Designation:', margin + (sigBoxWidth * 2) + 2, yPosition);
+                        doc.text('Designation:', margin + (sigBoxWidth * 3) + 2, yPosition);
+
+                        yPosition += 4;
+                        doc.text('Date:', margin + 2, yPosition);
+                        doc.text('Date:', margin + sigBoxWidth + 2, yPosition);
+                        doc.text('Date:', margin + (sigBoxWidth * 2) + 2, yPosition);
+                        doc.text('Date:', margin + (sigBoxWidth * 3) + 2, yPosition);
+
                         // Generate filename with timestamp
                         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
-                        const filename = `Out_of_Stock_Report_${timestamp}.pdf`;
-                        
+                        const filename = `Requisition_Issue_Slip_${timestamp}.pdf`;
+
                         console.log('Preparing to download:', filename);
-                        
+
                         // Try direct save first (simplest method)
                         try {
                             doc.save(filename);
                             console.log('✓ PDF download triggered successfully');
                         } catch (saveError) {
                             console.error('Direct save failed:', saveError);
-                            
+
                             // Fallback: Use blob method
                             try {
                                 console.log('Trying blob download method...');
                                 const pdfBlob = doc.output('blob');
                                 console.log('Blob created, size:', pdfBlob.size, 'bytes');
-                                
+
                                 // Check browser compatibility
                                 if (window.navigator && window.navigator.msSaveOrOpenBlob) {
                                     // IE11 & Edge Legacy
@@ -2781,19 +3324,19 @@ Replenish/Add New Item
                                     console.log('Using modern browser method');
                                     const url = window.URL.createObjectURL(pdfBlob);
                                     console.log('Blob URL created:', url);
-                                    
+
                                     const downloadLink = document.createElement('a');
                                     downloadLink.href = url;
                                     downloadLink.download = filename;
                                     downloadLink.style.display = 'none';
-                                    
+
                                     document.body.appendChild(downloadLink);
                                     console.log('Download link added to DOM');
-                                    
+
                                     // Force download
                                     downloadLink.click();
                                     console.log('Download link clicked');
-                                    
+
                                     // Clean up after delay
                                     setTimeout(() => {
                                         if (document.body.contains(downloadLink)) {
@@ -2809,16 +3352,16 @@ Replenish/Add New Item
                                 throw new Error('All download methods failed: ' + blobError.message);
                             }
                         }
-                        
+
                         // Save to PDF history
                         savePDFHistory({
                             filename: filename,
-                            type: 'Out of Stock Report',
+                            type: 'Requisition and Issue Slip',
                             itemCount: selectedData.length,
                             timestamp: new Date().toISOString(),
                             date: currentDate
                         });
-                        
+
                     } catch (error) {
                         console.error('PDF Generation Error:', error);
                         console.error('Error stack:', error.stack);
@@ -2841,12 +3384,12 @@ Replenish/Add New Item
         function savePDFHistory(pdfData) {
             let pdfHistory = JSON.parse(localStorage.getItem('pdfDownloadHistory')) || [];
             pdfHistory.unshift(pdfData); // Add to beginning of array
-            
+
             // Keep only last 50 entries
             if (pdfHistory.length > 50) {
                 pdfHistory = pdfHistory.slice(0, 50);
             }
-            
+
             localStorage.setItem('pdfDownloadHistory', JSON.stringify(pdfHistory));
         }
 
@@ -2856,10 +3399,10 @@ Replenish/Add New Item
         }
 
         // Show PDF history when sidebar link is clicked
-        $(document).on('click', '#pdf-history-link', function(e) {
+        $(document).on('click', '#pdf-history-link', function (e) {
             e.preventDefault();
             const history = getPDFHistory();
-            
+
             if (history.length === 0) {
                 Swal.fire({
                     icon: 'info',
@@ -2869,12 +3412,12 @@ Replenish/Add New Item
                 });
                 return;
             }
-            
+
             let historyHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
             historyHTML += '<table class="table table-sm table-bordered" style="font-size: 12px;">';
             historyHTML += '<thead><tr><th style="width: 40%;">Filename</th><th style="width: 25%;">Type</th><th style="width: 15%;">Items</th><th style="width: 20%;">Date</th></tr></thead>';
             historyHTML += '<tbody>';
-            
+
             history.forEach((item, index) => {
                 historyHTML += `
                     <tr>
@@ -2885,9 +3428,9 @@ Replenish/Add New Item
                     </tr>
                 `;
             });
-            
+
             historyHTML += '</tbody></table></div>';
-            
+
             Swal.fire({
                 icon: 'info',
                 title: 'PDF Download History',
@@ -2928,17 +3471,17 @@ Replenish/Add New Item
         });
 
         // Show activity log (combined print and PDF history)
-        $(document).on('click', '#activity-log-link', function(e) {
+        $(document).on('click', '#activity-log-link', function (e) {
             e.preventDefault();
             const pdfHistory = getPDFHistory();
             const printHistory = getPrintHistory();
-            
+
             // Combine and sort by timestamp
             const allActivities = [
-                ...pdfHistory.map(item => ({...item, activity: 'PDF Download'})),
-                ...printHistory.map(item => ({...item, activity: 'Print'}))
+                ...pdfHistory.map(item => ({ ...item, activity: 'PDF Download' })),
+                ...printHistory.map(item => ({ ...item, activity: 'Print' }))
             ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
+
             if (allActivities.length === 0) {
                 Swal.fire({
                     icon: 'info',
@@ -2948,19 +3491,19 @@ Replenish/Add New Item
                 });
                 return;
             }
-            
+
             let activityHTML = '<div style="text-align: left; max-height: 450px; overflow-y: auto;">';
             activityHTML += '<table class="table table-sm table-bordered table-hover" style="font-size: 12px;">';
             activityHTML += '<thead><tr><th style="width: 20%;">Activity</th><th style="width: 35%;">Details</th><th style="width: 15%;">Items</th><th style="width: 30%;">Date & Time</th></tr></thead>';
             activityHTML += '<tbody>';
-            
+
             allActivities.forEach((item, index) => {
-                const activityBadge = item.activity === 'PDF Download' 
-                    ? '<span class="badge badge-danger"><i class="fas fa-file-pdf"></i> PDF</span>' 
+                const activityBadge = item.activity === 'PDF Download'
+                    ? '<span class="badge badge-danger"><i class="fas fa-file-pdf"></i> PDF</span>'
                     : '<span class="badge badge-info"><i class="fas fa-print"></i> Print</span>';
-                
+
                 const details = item.filename ? item.filename.substring(0, 40) + '...' : item.type;
-                
+
                 activityHTML += `
                     <tr>
                         <td>${activityBadge}</td>
@@ -2970,10 +3513,10 @@ Replenish/Add New Item
                     </tr>
                 `;
             });
-            
+
             activityHTML += '</tbody></table></div>';
             activityHTML += `<div class="mt-2 text-center"><small class="text-muted">Total Activities: ${allActivities.length}</small></div>`;
-            
+
             Swal.fire({
                 icon: 'info',
                 title: '<i class="fas fa-clipboard-list"></i> Activity Log',
@@ -3015,9 +3558,9 @@ Replenish/Add New Item
         });
 
         // ========== OUT OF STOCK CHECKBOX AND PRINT FUNCTIONALITY END ==========
-        
+
         // ========== PAGINATION FUNCTIONALITY START ==========
-        
+
         // Pagination configuration
         const paginationConfig = {
             rowsPerPage: 10,
@@ -3025,130 +3568,130 @@ Replenish/Add New Item
             totalRows: 0,
             totalPages: 0
         };
-        
+
         // Initialize pagination for All Items table
         function initializePagination() {
             const rows = $('#all-items-table tr').not('.empty-database-row, .no-matching-row');
             paginationConfig.totalRows = rows.length;
             paginationConfig.totalPages = Math.ceil(paginationConfig.totalRows / paginationConfig.rowsPerPage);
             paginationConfig.currentPage = 1;
-            
+
             renderPagination();
             displayPage(1);
         }
-        
+
         // Display specific page
         function displayPage(pageNumber) {
             paginationConfig.currentPage = pageNumber;
             const rows = $('#all-items-table tr').not('.empty-database-row, .no-matching-row');
-            
+
             // Hide all rows first
             rows.hide();
-            
+
             // Calculate start and end indices
             const start = (pageNumber - 1) * paginationConfig.rowsPerPage;
             const end = start + paginationConfig.rowsPerPage;
-            
+
             // Show only the rows for current page and update row numbers
             const visibleRows = rows.slice(start, end);
-            visibleRows.each(function(index) {
+            visibleRows.each(function (index) {
                 $(this).show();
                 // Update the row number in the first column
                 $(this).find('td:first').text(start + index + 1);
             });
-            
+
             // Update info text
             const displayStart = paginationConfig.totalRows > 0 ? start + 1 : 0;
             const displayEnd = Math.min(end, paginationConfig.totalRows);
             $('#all-items-start').text(displayStart);
             $('#all-items-end').text(displayEnd);
             $('#all-items-total').text(paginationConfig.totalRows);
-            
+
             // Update pagination buttons
             updatePaginationButtons();
         }
-        
+
         // Render pagination buttons
         function renderPagination() {
             const paginationList = $('#all-items-pagination ul');
             const prevButton = $('#all-items-prev');
             const nextButton = $('#all-items-next');
-            
+
             // Remove existing page number buttons
             paginationList.find('.page-number').remove();
-            
+
             // Add page number buttons
             for (let i = 1; i <= paginationConfig.totalPages; i++) {
                 const pageItem = $('<li>')
                     .addClass('paginate_button page-item page-number')
                     .attr('data-page', i);
-                
+
                 const pageLink = $('<a>')
                     .addClass('page-link')
                     .attr('href', '#')
                     .text(i);
-                
+
                 pageItem.append(pageLink);
                 pageItem.insertBefore(nextButton);
             }
-            
+
             updatePaginationButtons();
         }
-        
+
         // Update pagination button states
         function updatePaginationButtons() {
             const prevButton = $('#all-items-prev');
             const nextButton = $('#all-items-next');
             const pageButtons = $('.page-number');
-            
+
             // Update Previous button
             if (paginationConfig.currentPage === 1) {
                 prevButton.addClass('disabled');
             } else {
                 prevButton.removeClass('disabled');
             }
-            
+
             // Update Next button
             if (paginationConfig.currentPage === paginationConfig.totalPages || paginationConfig.totalPages === 0) {
                 nextButton.addClass('disabled');
             } else {
                 nextButton.removeClass('disabled');
             }
-            
+
             // Update page number buttons
             pageButtons.removeClass('active');
             pageButtons.filter('[data-page="' + paginationConfig.currentPage + '"]').addClass('active');
         }
-        
+
         // Event handlers for pagination
-        $(document).on('click', '#all-items-prev', function(e) {
+        $(document).on('click', '#all-items-prev', function (e) {
             e.preventDefault();
             if (paginationConfig.currentPage > 1) {
                 displayPage(paginationConfig.currentPage - 1);
             }
         });
-        
-        $(document).on('click', '#all-items-next', function(e) {
+
+        $(document).on('click', '#all-items-next', function (e) {
             e.preventDefault();
             if (paginationConfig.currentPage < paginationConfig.totalPages) {
                 displayPage(paginationConfig.currentPage + 1);
             }
         });
-        
-        $(document).on('click', '.page-number', function(e) {
+
+        $(document).on('click', '.page-number', function (e) {
             e.preventDefault();
             const pageNumber = parseInt($(this).attr('data-page'));
             displayPage(pageNumber);
         });
-        
+
         // Initialize pagination on page load 
         initializePagination();
-        
+
         // Re-initialize pagination when search is performed
         const originalSearchFunction = $('#search-input').on('keyup');
-        $('#search-input').on('keyup', function() {
+        $('#search-input').on('keyup', function () {
             // Wait for search to complete, then update pagination
-            setTimeout(function() {
+            setTimeout(function () {
                 const visibleRows = $('#all-items-table tr:visible').not('.empty-database-row, .no-matching-row');
                 paginationConfig.totalRows = visibleRows.length;
                 paginationConfig.totalPages = Math.ceil(paginationConfig.totalRows / paginationConfig.rowsPerPage);
@@ -3157,14 +3700,14 @@ Replenish/Add New Item
                 displayPage(1);
             }, 100);
         });
-        
+
         // ========== PAGINATION FUNCTIONALITY END ==========
-        
+
         // Verify PDF library loaded (runs after page loads)
-        setTimeout(function() {
+        setTimeout(function () {
             if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
                 console.log('✓ PDF Library Ready');
-                
+
                 // Test download capability
                 console.log('Browser download support:', {
                     hasDownloadAttribute: 'download' in document.createElement('a'),
@@ -3175,7 +3718,7 @@ Replenish/Add New Item
                 console.error('✗ PDF Library Failed to Load - Please refresh page');
             }
         }, 1500);
-        
+
     });
 </script>
 {% endblock custom_js %}
