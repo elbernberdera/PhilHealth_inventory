@@ -23,6 +23,7 @@ urlpatterns = [
     
     # Requested Supplies
     path('admin/supply/requested/', views.requested_supplies, name='requested_supplies'),
+    path('admin/supply/requested/history/', views.requested_supplies_history, name='requested_supplies_history'),
     
     # Category API endpoints
     path('api/categories/', views.category_list, name='category_list'),
