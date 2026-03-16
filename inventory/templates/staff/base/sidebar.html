@@ -10,8 +10,8 @@
 
 <aside class="main-sidebar sidebar-dark-success elevation-4" style="
   background: 
-    linear-gradient(to right, rgba(34, 139, 34, 0.9), rgba(0, 128, 0, 0.9)),
-    url('{% static "image/bg11.png" %}')!important;
+    linear-gradient(135deg, rgba(24, 160, 135, 0.88) 0%, rgba(26, 140, 110, 0.82) 40%, rgba(126, 184, 138, 0.78) 100%),
+    url('{% static "image/31099699_9.jpg" %}')!important;
   background-size: cover!important;
   background-position: center!important;
   background-repeat: no-repeat!important;
@@ -37,7 +37,7 @@
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <li class="nav-item">
-              <a href="{% url 'staff_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_dashboard' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_dashboard' %}background: #FFD700!important;{% endif %}">
+              <a href="{% url 'staff_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_dashboard' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_dashboard' %}background: #1e5d3f!important;{% endif %}">
                 <i class="nav-icon fas fa-home" style="color: #fbf8f8!important;"></i>
                 <p>Dashboard</p>
               </a>
@@ -45,7 +45,7 @@
 
             <!-- Request Supplies -->
             <li class="nav-item">
-              <a href="{% url 'staff_request_supplies' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_request_supplies' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_request_supplies' %}background: #FFD700!important;{% endif %}">
+              <a href="{% url 'staff_request_supplies' %}" class="nav-link {% if request.resolver_match.url_name == 'staff_request_supplies' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'staff_request_supplies' %}background: #1e5d3f!important;{% endif %}">
                 <i class="nav-icon fas fa-clipboard-list" style="color: #fbf8f8!important;"></i>
                 <p>Request Supplies</p>
               </a>

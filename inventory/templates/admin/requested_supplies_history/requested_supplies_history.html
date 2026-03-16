@@ -1,0 +1,505 @@
+{% extends 'admin/base/base.html' %}
+
+{% block title %}
+Requested Supplies History
+{% endblock title %}
+
+{% block page_title %}
+Requested History
+{% endblock page_title %}
+
+{% block main_content %}
+{% load static %}
+
+<style>
+    /* Custom card styling */
+    .card.card-outline.card-success {
+        border-top: 3px solid #28a745 !important;
+    }
+
+    .card.card-outline.card-success .card-header {
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    /* Filter section styling */
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    /* Date input styling */
+    .date-input-group {
+        display: none;
+    }
+
+    .date-input-group.active {
+        display: block;
+    }
+
+    /* Badge styling */
+    .badge-approved {
+        background-color: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 3px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                {% if message.tags == "error" %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% elif message.tags == "success" %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% elif message.tags == "warning" %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% else %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">Requested Supplies History</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form method="GET" action="{% url 'requested_supplies_history' %}" id="filter-form">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label for="filter-type"><i class="fas fa-filter mr-1"></i> Filter By:</label>
+                        <select class="form-control" id="filter-type" name="filter_type">
+                            <option value="all">All Records</option>
+                            <option value="day">By Day</option>
+                            <option value="month">By Month</option>
+                            <option value="year">By Year </option>
+                        </select>
+                    </div>
+
+                    <!-- Day Range Filter -->
+                    <div class="col-md-8 date-input-group" id="day-filter">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="day-start-input"><i class="far fa-calendar-alt mr-1"></i> Start
+                                    Date:</label>
+                                <input type="date" class="form-control" id="day-start-input" name="start_date"
+                                    value="{{ start_date }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="day-end-input"><i class="far fa-calendar-alt mr-1"></i> End Date:</label>
+                                <input type="date" class="form-control" id="day-end-input" name="end_date"
+                                    value="{{ end_date }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Month Range Filter -->
+                    <div class="col-md-8 date-input-group" id="month-filter">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="month-start-input"><i class="far fa-calendar mr-1"></i> Start Month:</label>
+                                <input type="month" class="form-control" id="month-start-input" name="start_month"
+                                    value="{{ start_month }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="month-end-input"><i class="far fa-calendar mr-1"></i> End Month:</label>
+                                <input type="month" class="form-control" id="month-end-input" name="end_month"
+                                    value="{{ end_month }}">
+                            </div>
+                        </div>
+
+                        <!-- Year Range Filter -->
+                        <div class="col-md-8 date-input-group" id="year-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="year-start-input"><i class="far fa-calendar mr-1"></i> Start
+                                        Year:</label>
+                                    <input type="number" class="form-control" id="year-start-input" name="start_year"
+                                        min="2000" max="2100" placeholder="e.g., 2024" value="{{ start_year }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="year-end-input"><i class="far fa-calendar mr-1"></i> End Year:</label>
+                                    <input type="number" class="form-control" id="year-end-input" name="end_year"
+                                        min="2000" max="2100" placeholder="e.g., 2026" value="{{ end_year }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success mr-2">
+                            <i class="fas fa-search mr-1"></i> Apply
+                        </button>
+                        <a href="{% url 'requested_supplies_history' %}" class="btn btn-secondary">
+                            <i class="fas fa-undo mr-1"></i> Reset
+                        </a>
+                    </div>
+                </div>
+
+                {% if filtered_date %}
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Showing approved requests for: <strong>{{ filtered_date }}</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row mb-3">
+            <div class="col-md-6 ml-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-history"
+                        placeholder="Search by transaction, requester, item...">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Requested Supplies History Table -->
+                <div class="card card-outline card-success">
+                    <div class="card-header">
+                        <!-- <h3 class="card-title">
+                            <i class="fas fa-history mr-2"></i>
+                            Approved Requests History
+                            <span class="badge badge-success ml-2">{{ total_count }}</span>
+                        </h3> -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3 class="card-title">
+                                    <i class="fas fa-history mr-2"></i>
+                                    Approved Requests History
+                                    <span class="badge badge-success ml-2">{{ total_count }}</span>
+                                </h3>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-primary float-right">
+                                    <i class="fas fa-print mr-2"></i> Print
+                                </button>
+                                <button class="btn btn-success float-right mr-2">
+                                    <i class="fas fa-file-pdf mr-2"></i> Save to PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover mb-0"
+                                style="font-size: 0.875rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">No.</th>
+                                        <th>Date</th>
+                                        <th>Transaction No.</th>
+                                        <th>Requester</th>
+                                        <th>Item Code</th>
+                                        <th>Description</th>
+                                        <th style="width: 90px;">Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if requests %}
+                                    {% for req in requests %}
+                                    <tr>
+                                        <td>{{ req.id }}</td>
+                                        <td>{{ req.date|date:"m/d/Y" }}</td>
+                                        <td>{{ req.transaction_no }}</td>
+                                        <td>{{ req.requester_name }}</td>
+                                        <td>{{ req.item_code }}</td>
+                                        <td>{{ req.description }}</td>
+                                        <td class="text-center">{{ req.quantity }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                            <p class="mb-0">No approved requests found{% if filtered_date %} for {{
+                                                filtered_date }}{% endif %}.</p>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+
+                                <!-- Table Footer with Pagination -->
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="7" class="p-0">
+                                            {% if page_obj.paginator.num_pages > 1 or total_count > 10 %}
+                                            <div
+                                                class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
+                                                <!-- Left: Per-page dropdown and info -->
+                                                <div class="d-flex align-items-center">
+                                                    <label for="per-page-select" class="mb-0 mr-2 small">Show:</label>
+                                                    <select class="form-control form-control-sm" id="per-page-select"
+                                                        style="width: auto;">
+                                                        <option value="10" {% if per_page == 0 %}selected{% endif %}>10
+                                                        </option>
+                                                        <option value="20" {% if per_page == 20 %}selected{% endif %}>20
+                                                        </option>
+                                                        <option value="50" {% if per_page == 50 %}selected{% endif %}>50
+                                                        </option>
+                                                        <option value="100" {% if per_page == 100 %}selected{% endif %}>
+                                                            100</option>
+                                                        <option value="200" {% if per_page == 200 %}selected{% endif %}>
+                                                            200</option>
+                                                        <option value="500" {% if per_page == 500 %}selected{% endif %}>
+                                                            500</option>
+                                                    </select>
+                                                    <span class="ml-3 text-muted small">
+                                                        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of
+                                                        {{ total_count }} records
+                                                    </span>
+                                                </div>
+
+                                                <!-- Right: Page navigation -->
+                                                <ul class="pagination pagination-sm mb-0">
+                                                    <!-- First Page -->
+                                                    <li
+                                                        class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                                                        <a class="page-link"
+                                                            href="?{% if filter_type %}filter_type={{ filter_type }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if start_month %}start_month={{ start_month }}&{% endif %}{% if end_month %}end_month={{ end_month }}&{% endif %}{% if start_year %}start_year={{ start_year }}&{% endif %}{% if end_year %}end_year={{ end_year }}&{% endif %}per_page={{ per_page }}&page=1">
+                                                            <i class="fas fa-angle-double-left"></i>
+                                                        </a>
+                                                    </li>
+
+                                                    <!-- Previous Page -->
+                                                    <li
+                                                        class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                                                        <a class="page-link"
+                                                            href="?{% if filter_type %}filter_type={{ filter_type }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if start_month %}start_month={{ start_month }}&{% endif %}{% if end_month %}end_month={{ end_month }}&{% endif %}{% if start_year %}start_year={{ start_year }}&{% endif %}{% if end_year %}end_year={{ end_year }}&{% endif %}per_page={{ per_page }}&page={{ page_obj.previous_page_number }}">
+                                                            <i class="fas fa-angle-left"></i>
+                                                        </a>
+                                                    </li>
+
+                                                    <!-- Page Numbers -->
+                                                    {% for num in page_obj.paginator.page_range %}
+                                                    {% if page_obj.number == num %}
+                                                    <li class="page-item active"><span class="page-link">{{ num
+                                                            }}</span></li>
+                                                    {% elif num > page_obj.number|add:'-3' and num <
+                                                        page_obj.number|add:'3' %} <li class="page-item">
+                                                        <a class="page-link"
+                                                            href="?{% if filter_type %}filter_type={{ filter_type }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if start_month %}start_month={{ start_month }}&{% endif %}{% if end_month %}end_month={{ end_month }}&{% endif %}{% if start_year %}start_year={{ start_year }}&{% endif %}{% if end_year %}end_year={{ end_year }}&{% endif %}per_page={{ per_page }}&page={{ num }}">{{
+                                                            num }}</a>
+                                                        </li>
+                                                        {% endif %}
+                                                        {% endfor %}
+
+                                                        <!-- Next Page -->
+                                                        <li
+                                                            class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                                                            <a class="page-link"
+                                                                href="?{% if filter_type %}filter_type={{ filter_type }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if start_month %}start_month={{ start_month }}&{% endif %}{% if end_month %}end_month={{ end_month }}&{% endif %}{% if start_year %}start_year={{ start_year }}&{% endif %}{% if end_year %}end_year={{ end_year }}&{% endif %}per_page={{ per_page }}&page={{ page_obj.next_page_number }}">
+                                                                <i class="fas fa-angle-right"></i>
+                                                            </a>
+                                                        </li>
+
+                                                        <!-- Last Page -->
+                                                        <li
+                                                            class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                                                            <a class="page-link"
+                                                                href="?{% if filter_type %}filter_type={{ filter_type }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if start_month %}start_month={{ start_month }}&{% endif %}{% if end_month %}end_month={{ end_month }}&{% endif %}{% if start_year %}start_year={{ start_year }}&{% endif %}{% if end_year %}end_year={{ end_year }}&{% endif %}per_page={{ per_page }}&page={{ page_obj.paginator.num_pages }}">
+                                                                <i class="fas fa-angle-double-right"></i>
+                                                            </a>
+                                                        </li>
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    // Display current date
+    $(document).ready(function () {
+        var today = new Date();
+        var options = { year: 'numeric', month: 'long', day: 'numeric' };
+        var dateElement = document.getElementById('current-date');
+        if (dateElement) {
+            dateElement.textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Set the selected filter type based on URL parameter or view context
+        var filterType = '{{ filter_type }}' || 'all';
+        $('#filter-type').val(filterType);
+
+        // Show appropriate date input on page load
+        showFilterInput(filterType);
+    });
+
+    // Function to show the appropriate filter input
+    function showFilterInput(filterType) {
+        // Hide all date input groups
+        $('.date-input-group').removeClass('active').hide();
+
+        // Show the appropriate one
+        if (filterType === 'day') {
+            $('#day-filter').addClass('active').show();
+        } else if (filterType === 'month') {
+            $('#month-filter').addClass('active').show();
+        } else if (filterType === 'year') {
+            $('#year-filter').addClass('active').show();
+        }
+    }
+
+    // Filter type change handler - only clear OTHER filter type inputs
+    $('#filter-type').on('change', function () {
+        var filterType = $(this).val();
+        showFilterInput(filterType);
+
+        // Clear inputs from OTHER filter types only (preserve current filter type values)
+        if (filterType === 'day') {
+            // Clear month and year inputs only
+            $('#month-start-input').val('');
+            $('#month-end-input').val('');
+            $('#year-start-input').val('');
+            $('#year-end-input').val('');
+        } else if (filterType === 'month') {
+            // Clear day and year inputs only
+            $('#day-start-input').val('');
+            $('#day-end-input').val('');
+            $('#year-start-input').val('');
+            $('#year-end-input').val('');
+        } else if (filterType === 'year') {
+            // Clear day and month inputs only
+            $('#day-start-input').val('');
+            $('#day-end-input').val('');
+            $('#month-start-input').val('');
+            $('#month-end-input').val('');
+        } else {
+            // If 'all' is selected, clear all inputs
+            $('#day-start-input').val('');
+            $('#day-end-input').val('');
+            $('#month-start-input').val('');
+            $('#month-end-input').val('');
+            $('#year-start-input').val('');
+            $('#year-end-input').val('');
+        }
+    });
+
+    // Per-page dropdown change handler - preserves all filter parameters
+    $('#per-page-select').on('change', function () {
+        var perPage = $(this).val();
+        var currentUrl = new URL(window.location.href);
+
+        // Update or add per_page parameter
+        currentUrl.searchParams.set('per_page', perPage);
+
+        // Reset to page 1 when changing page size
+        currentUrl.searchParams.set('page', '1');
+
+        // Reload the page with the new per_page value
+        window.location.href = currentUrl.toString();
+    });
+
+    // Search functionality - Filter table rows
+    $('#search-history').on('keyup', function () {
+        var searchTerm = $(this).val().toLowerCase();
+        var table = $('table tbody');
+
+        // Remove any existing "no results" row
+        table.find('.no-results-row').remove();
+
+        // Filter rows
+        var hasVisibleRows = false;
+        table.find('tr').each(function () {
+            var row = $(this);
+
+            // Skip empty state rows (colspan rows)
+            if (row.find('td[colspan]').length > 0) {
+                // Hide empty state rows when searching
+                if (searchTerm) {
+                    row.hide();
+                } else {
+                    row.show();
+                }
+                return;
+            }
+
+            var rowText = '';
+
+            // Get text from all columns
+            row.find('td').each(function () {
+                rowText += $(this).text().toLowerCase() + ' ';
+            });
+
+            // Show/hide row based on search term
+            if (!searchTerm || rowText.indexOf(searchTerm) > -1) {
+                row.show();
+                hasVisibleRows = true;
+            } else {
+                row.hide();
+            }
+        });
+
+        // Show "No results" message if searching and no rows are visible
+        if (searchTerm && !hasVisibleRows) {
+            var colspan = $('table thead th').length;
+            table.append('<tr class="no-results-row"><td colspan="' + colspan + '" class="text-center text-muted py-4"><i class="fas fa-search fa-2x mb-2 d-block"></i>No matching results found.</td></tr>');
+        }
+    });
+</script>
+{% endblock custom_js %}

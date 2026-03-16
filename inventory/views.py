@@ -504,6 +504,44 @@ def requested_supplies(request):
     }
     return render(request, 'admin/requested_supplies/requested_supplies.html', context)
 
+
+@login_required
+def requested_supplies_history(request):
+    """Requested Supplies history view with pagination and filters."""
+    from .models import RequestSupply
+    from django.db.models import Q
+
+    status_filter = request.GET.get('status', '').strip().lower()
+    search_query = request.GET.get('search', '').strip()
+
+    qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
+
+    if status_filter in ['approved', 'pending', 'rejected', 'out of stocks', 'Out of Stocks']:
+        if status_filter.lower() == 'out of stocks':
+            qs = qs.filter(status='Out of Stocks')
+        else:
+            qs = qs.filter(status=status_filter)
+
+    if search_query:
+        qs = qs.filter(
+            Q(transaction_no__icontains=search_query) |
+            Q(requester_name__icontains=search_query) |
+            Q(item_code__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_title': 'Requested Supplies History',
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'search_query': search_query,
+    }
+    return render(request, 'admin/requested_supplies_history/requested_supplies_history.html', context)
+
 @login_required
 @require_http_methods(["POST"])
 def request_supply_update_status(request, request_id):

@@ -11,7 +11,14 @@ PhilHealth Inventory Management - Staff Dashboard
 {% block main_content %}
 {% load static %}
 
-<section class="content">
+<section class="content" style="
+    background-image: linear-gradient(135deg, rgba(59, 255, 255, 0.20) 0%, rgba(66, 228, 160, 0.20) 100%), url('{% static "image/bg_ph.avif" %}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 16px;
+    padding: 20px;
+">
     <div class="container-fluid">
         
         <!-- Display Messages -->
@@ -56,7 +63,7 @@ PhilHealth Inventory Management - Staff Dashboard
         <!-- Welcome Card -->
         <div class="row">
             <div class="col-12">
-                <div class="card card-primary card-outline">
+                <div class="card card-primary card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-8">
@@ -147,7 +154,7 @@ PhilHealth Inventory Management - Staff Dashboard
         <div class="row">
             <!-- Low Stock Alerts -->
             <div class="col-lg-6">
-                <div class="card card-warning card-outline">
+                <div class="card card-warning card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -195,7 +202,7 @@ PhilHealth Inventory Management - Staff Dashboard
 
             <!-- Recent Transactions -->
             <div class="col-lg-6">
-                <div class="card card-primary card-outline">
+                <div class="card card-primary card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-exchange-alt mr-1"></i>
@@ -252,7 +259,7 @@ PhilHealth Inventory Management - Staff Dashboard
         <div class="row">
             <!-- Quick Actions -->
             <div class="col-lg-6">
-                <div class="card card-success card-outline">
+                <div class="card card-success card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-bolt mr-1"></i>
@@ -304,7 +311,7 @@ PhilHealth Inventory Management - Staff Dashboard
 
             <!-- Recent Items Added -->
             <div class="col-lg-6">
-                <div class="card card-info card-outline">
+                <div class="card card-info card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-clock mr-1"></i>
@@ -354,7 +361,7 @@ PhilHealth Inventory Management - Staff Dashboard
         <!-- Activity Summary -->
         <div class="row">
             <div class="col-lg-12">
-                <div class="card card-primary card-outline">
+                <div class="card card-primary card-outline" style="background: rgba(255, 255, 255, 0.94); border-radius: 14px;">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-bar mr-1"></i>
