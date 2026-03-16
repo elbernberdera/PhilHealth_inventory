@@ -891,20 +891,7 @@
                 return;
             }
 
-            // Check available stock before submitting
-            var details = descriptionDetails[description];
-            if (details && details.available !== undefined) {
-                if (quantity > details.available) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Insufficient Stock!',
-                        text: 'Requested quantity (' + quantity + ') exceeds available stock (' + details.available + ').',
-                        confirmButtonColor: '#3085d6'
-                    });
-                    return;
-                }
-            }
-
+            // Allow request to proceed even when quantity exceeds available stock (admin will handle it)
             $.ajax({
                 url: '{% url "request_supply_create" %}',
                 method: 'POST',

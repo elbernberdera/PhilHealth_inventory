@@ -2918,69 +2918,32 @@ Replenish/Add New Item
                 if (result.isConfirmed || result.value === true) {
                     console.log('User confirmed - starting PDF generation...');
 
+                    var logoUrl = "{% static 'image/logo.png' %}";
+                    if (logoUrl && logoUrl.indexOf('http') !== 0) {
+                        logoUrl = window.location.origin + (logoUrl.charAt(0) === '/' ? '' : '/') + logoUrl;
+                    }
+
+                    function doGeneratePdf(logoDataUrl) {
                     try {
-                        // Check if jsPDF is available
                         if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
-                            console.error('jsPDF not available!');
                             throw new Error('PDF library not loaded');
                         }
 
-                        console.log('jsPDF is available');
-
-                        // Generate PDF using jsPDF (A4 Portrait)
                         const { jsPDF } = window.jspdf;
-                        console.log('jsPDF constructor loaded');
                         const doc = new jsPDF('portrait', 'mm', 'a4');
 
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
                         const margin = 10;
+                        const contentLeft = margin;
+                        const contentRight = pageWidth - margin;
 
-                        // Get current date
                         const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
-                        // Header - PhilHealth (legacy format)
-                        doc.setFontSize(12);
-                        doc.setFont('helvetica', 'bold');
-                        doc.text('PhilHealth', margin, 15);
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('Your Partner in Health.', margin, 19);
-
-                        // Title (legacy: single line right-aligned)
-                        doc.setFontSize(9);
-                        doc.setFont('helvetica', 'bold');
-                        doc.text('Requisition and Issue Slip (Supplies and Materials)', pageWidth - margin, 16, { align: 'right' });
-
-                        // Border around the entire document
-                        doc.setLineWidth(0.5);
-                        doc.rect(margin - 5, 25, pageWidth - (2 * margin) + 10, pageHeight - 35);
-
-                        let yPosition = 32;
-
-                        // Office-End User Info (legacy format)
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('Office-End User:', margin, yPosition);
-                        doc.setFont('helvetica', 'bold');
-                        doc.text('LHIO BUTUAN CITY', margin + 32, yPosition);
-
-                        // RIS # and Date (aligned right, legacy format XXX-XX-XXX)
-                        doc.setFont('helvetica', 'normal');
-                        const risNumber = `RIS #: 023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-                        doc.text(risNumber, pageWidth - margin - 5, yPosition, { align: 'right' });
-                        doc.text(`Date: ${currentDate}`, pageWidth - margin - 5, yPosition + 4, { align: 'right' });
-
-                        yPosition += 10;
-
-                        // Table Headers
-                        const tableStartY = yPosition;
-
-                        // Column widths - adjusted to match print format
                         const colWidths = {
-                            balanceOnHand: 18,
+                            balanceOnHand: 24,
                             unit: 15,
-                            requisition: 60,
+                            requisition: 55,
                             qty: 12,
                             unit2: 15,
                             qty2: 12,
@@ -2988,49 +2951,98 @@ Replenish/Add New Item
                             cost: 18,
                             totalCost: 24
                         };
-
-                        // SECTION HEADER ROW (legacy: Balance on Hand, REQUISITION, ISSUANCE)
-                        doc.setFillColor(240, 240, 240);
-                        doc.rect(margin, yPosition, pageWidth - (2 * margin), 7, 'F');
-
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'bold');
-
-                        // Calculate section widths
                         const balanceWidth = colWidths.balanceOnHand;
                         const requisitionWidth = colWidths.unit + colWidths.requisition + colWidths.qty + colWidths.unit2;
                         const issuanceWidth = colWidths.qty2 + colWidths.unit3 + colWidths.cost + colWidths.totalCost;
 
-                        // Section headers (legacy format)
-                        let xPos = margin;
+                        doc.setLineWidth(0.6);
+                        doc.setDrawColor(0);
+                        const borderTop = 12;
+                        const borderHeight = pageHeight - 22;
+                        doc.rect(margin - 5, borderTop, contentRight - margin + 10, borderHeight);
+
+                        // ----- HEADER (inside border) -----
+                        // More space at top: header line lower so logo can be larger and have padding
+                        const headerLineY = 32;
+                        const logoWidth = 16;
+                        const logoHeight = 16;
+                        const logoLeft = contentLeft + 1;
+                        const logoTop = borderTop + 2;
+                        const textLeft = logoDataUrl ? (logoLeft + logoWidth + 2) : contentLeft;
+                        const textTopOffset = logoDataUrl ? (logoTop + (logoHeight / 2)) - 2 : 22;
+                        if (logoDataUrl) {
+                            try {
+                                doc.addImage(logoDataUrl, 'PNG', logoLeft, logoTop, logoWidth, logoHeight);
+                            } catch (e) {
+                                console.warn('Could not add logo image', e);
+                            }
+                        }
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('PhilHealth', textLeft, textTopOffset);
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Your Partner in Health.', textLeft, textTopOffset + 4);
+
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Requisition and Issue Slip (Supplies and Materials)', contentRight, 23, { align: 'right' });
+
+                        doc.setLineWidth(0.25);
+                        doc.line(contentLeft, headerLineY, contentRight, headerLineY);
+
+                        // ----- OFFICE / REFERENCE SECTION -----
+                        // Left: Office-End User: (bold) LHIO BUTUAN CITY (regular), 8-9pt
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Office-End User:', contentLeft, 36);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('LHIO BUTUAN CITY', contentLeft + 32, 36);
+
+                        // Right: RIS # (bold) on first line; Date (regular) on second line with ~4mm gap
+                        const risNum = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('RIS #: ' + risNum, contentRight, 36, { align: 'right' });
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('Date: ' + currentDate, contentRight, 41, { align: 'right' });
+
+                        // ----- MAIN TABLE HEADER -----
+                        let yPosition = 44;
+                        const tableStartY = yPosition;
+
+                        // Grey strip - top horizontal line
+                        doc.setLineWidth(0.3);
+                        doc.line(contentLeft, yPosition, contentRight, yPosition);
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(contentLeft, yPosition, contentRight - contentLeft, 7, 'F');
+
+                        // Section headers (bold, centered, ~8pt): Balance on Hand | REQUISITION | ISSUANCE
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'bold');
+                        let xPos = contentLeft;
                         doc.text('Balance on Hand', xPos + (balanceWidth / 2), yPosition + 5, { align: 'center' });
                         xPos += balanceWidth;
-
                         doc.text('REQUISITION', xPos + (requisitionWidth / 2), yPosition + 5, { align: 'center' });
                         xPos += requisitionWidth;
-
                         doc.text('ISSUANCE', xPos + (issuanceWidth / 2), yPosition + 5, { align: 'center' });
 
-                        // Draw horizontal line after section headers
-                        yPosition += 7;
-                        doc.setLineWidth(0.5);
-                        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                        // Vertical lines separating the three grey sections
+                        doc.setDrawColor(0);
+                        doc.line(contentLeft + balanceWidth, yPosition, contentLeft + balanceWidth, yPosition + 7);
+                        doc.line(contentLeft + balanceWidth + requisitionWidth, yPosition, contentLeft + balanceWidth + requisitionWidth, yPosition + 7);
+                        // Bottom line of grey strip
+                        doc.line(contentLeft, yPosition + 7, contentRight, yPosition + 7);
 
-                        // COLUMN HEADER ROW
+                        yPosition += 7;
+
+                        // Second-level column headers (white background, bold, centered, ~7pt)
                         doc.setFillColor(255, 255, 255);
                         doc.setFontSize(7);
                         doc.setFont('helvetica', 'bold');
 
-                        yPosition += 0.5;
-                        const columnHeaderY = yPosition;
-
-                        xPos = margin + 2;
-
-                        // Balance on Hand
-                        doc.text('on Hand', xPos + (colWidths.balanceOnHand / 2) - 2, yPosition + 5, { align: 'center' });
+                        xPos = contentLeft;
+                        // First column under "Balance on Hand" - empty (no "on Hand" text)
                         xPos += colWidths.balanceOnHand;
-
-                        // Unit
                         doc.text('Unit', xPos + (colWidths.unit / 2), yPosition + 5, { align: 'center' });
                         xPos += colWidths.unit;
 
@@ -3063,98 +3075,83 @@ Replenish/Add New Item
 
                         yPosition += 7;
 
-                        // Draw table grid
+                        // Draw table grid - thin vertical lines for all 9 columns, horizontal lines top and bottom of header
                         doc.setLineWidth(0.3);
                         doc.setDrawColor(0);
 
-                        // Vertical lines for headers
-                        let currentX = margin;
+                        let currentX = contentLeft;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.balanceOnHand;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.unit;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.requisition;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.qty;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.unit2;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.qty2;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.unit3;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.cost;
                         doc.line(currentX, tableStartY, currentX, yPosition);
-
                         currentX += colWidths.totalCost;
                         doc.line(currentX, tableStartY, currentX, yPosition);
 
-                        // Horizontal line
-                        doc.line(margin, tableStartY, pageWidth - margin, tableStartY);
-                        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                        doc.line(contentLeft, tableStartY, contentRight, tableStartY);
+                        doc.line(contentLeft, yPosition, contentRight, yPosition);
 
-                        // Data rows
+                        // Data rows - fill all space from header to "Nothing follows" (no blank gap)
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(7);
 
-                        const rowHeight = 6;
-                        const maxRows = 25; // Maximum rows that fit on page
+                        const dataAreaTop = yPosition;
+                        const nothingFollowsYFixed = 218;
+                        const availableHeight = nothingFollowsYFixed - dataAreaTop;
+                        const maxRows = 24;
+                        const rowHeight = availableHeight / maxRows;
 
-                        for (let i = 0; i < Math.min(selectedData.length, maxRows); i++) {
-                            const item = selectedData[i];
+                        for (let i = 0; i < maxRows; i++) {
+                            const item = i < selectedData.length ? selectedData[i] : null;
                             const rowY = yPosition + (i * rowHeight);
 
-                            // Draw row
                             xPos = margin + 2;
 
-                            // Balance on Hand (Real-time balance)
-                            doc.text(item.real_time_balance, xPos + (colWidths.balanceOnHand / 2), rowY + 4, { align: 'center' });
+                            if (item) {
+                                doc.text(String(item.real_time_balance), xPos + (colWidths.balanceOnHand / 2), rowY + (rowHeight * 0.65), { align: 'center' });
+                            }
                             xPos += colWidths.balanceOnHand;
 
-                            // Unit
-                            doc.text(item.unit, xPos + (colWidths.unit / 2), rowY + 4, { align: 'center' });
+                            if (item) {
+                                doc.text(item.unit || '', xPos + (colWidths.unit / 2), rowY + (rowHeight * 0.65), { align: 'center' });
+                            }
                             xPos += colWidths.unit;
 
-                            // Requisition (Description)
-                            const description = item.description.substring(0, 50);
-                            doc.text(description, xPos + 2, rowY + 4);
+                            if (item) {
+                                const description = (item.description || '').substring(0, 50);
+                                doc.text(description, xPos + 2, rowY + (rowHeight * 0.65));
+                            }
                             xPos += colWidths.requisition;
 
-                            // Qty (Stock In)
-                            doc.text(item.stock_in, xPos + (colWidths.qty / 2), rowY + 4, { align: 'center' });
+                            if (item) {
+                                doc.text(String(item.stock_in || ''), xPos + (colWidths.qty / 2), rowY + (rowHeight * 0.65), { align: 'center' });
+                            }
                             xPos += colWidths.qty;
 
-                            // Unit (repeat)
-                            doc.text(item.unit, xPos + (colWidths.unit2 / 2), rowY + 4, { align: 'center' });
+                            if (item) {
+                                doc.text(item.unit || '', xPos + (colWidths.unit2 / 2), rowY + (rowHeight * 0.65), { align: 'center' });
+                            }
                             xPos += colWidths.unit2;
 
-                            // Qty (ISSUANCE - empty)
-                            xPos += colWidths.qty2;
+                            xPos += colWidths.qty2 + colWidths.unit3 + colWidths.cost + colWidths.totalCost;
 
-                            // Unit (ISSUANCE - empty)
-                            xPos += colWidths.unit3;
-
-                            // Cost (ISSUANCE - empty)
-                            xPos += colWidths.cost;
-
-                            // Total Cost (ISSUANCE - empty)
-                            xPos += colWidths.totalCost;
-
-                            // Draw horizontal line
-                            doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight);
+                            doc.line(contentLeft, rowY + rowHeight, contentRight, rowY + rowHeight);
                         }
 
                         // Draw vertical lines for data rows
-                        const dataEndY = yPosition + (Math.min(selectedData.length, maxRows) * rowHeight);
+                        const dataEndY = yPosition + (maxRows * rowHeight);
                         currentX = margin;
                         doc.line(currentX, yPosition, currentX, dataEndY);
 
@@ -3185,115 +3182,121 @@ Replenish/Add New Item
                         currentX += colWidths.totalCost;
                         doc.line(currentX, yPosition, currentX, dataEndY);
 
-                        // Add empty rows to fill page
-                        const emptyRowsNeeded = maxRows - selectedData.length;
-                        for (let i = 0; i < emptyRowsNeeded; i++) {
-                            const rowY = dataEndY + (i * rowHeight);
-                            doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight);
-                        }
+                        const finalRowY = dataEndY;
 
-                        const finalRowY = dataEndY + (emptyRowsNeeded * rowHeight);
+                        // "Nothing follows" (no box) + TOTAL AMOUNT in its own box; dashed line below row
+                        const nothingFollowsY = finalRowY;
+                        const nothingFollowsRowHeight = 6;
+                        const nothingFollowsRowBottom = nothingFollowsY + nothingFollowsRowHeight;
 
-                        // Legacy: "--------Nothing follows---------" row + TOTAL AMOUNT box
-                        const nothingFollowsY = finalRowY + rowHeight;
-                        doc.setDrawColor(100, 100, 100);
-                        doc.setLineDashPattern([1, 1], 0);
-                        doc.line(margin, nothingFollowsY + 3, margin + (pageWidth - (2 * margin)) - colWidths.totalCost - 2, nothingFollowsY + 3);
+                        doc.setDrawColor(0);
+                        doc.setLineDashPattern([], 0);
+
+                        // "--------Nothing follows---------" text only - NOT in a box (no left/bottom border around it)
+                        doc.setFontSize(6);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text('--------Nothing follows---------', contentLeft + 3, nothingFollowsY + 4);
+
+                        // TOTAL AMOUNT in its own bordered box (right side only)
+                        const totalAmountLeft = contentRight - colWidths.totalCost;
+                        doc.setFont('helvetica', 'bold');
+                        doc.rect(totalAmountLeft, nothingFollowsY, colWidths.totalCost, nothingFollowsRowHeight, 'S');
+                        doc.text('TOTAL AMOUNT', totalAmountLeft + (colWidths.totalCost / 2), nothingFollowsY + (nothingFollowsRowHeight / 2) + 1, { align: 'center' });
+
+                        // Divider between "Nothing follows" area and TOTAL AMOUNT box only (no box around "Nothing follows")
+                        doc.line(totalAmountLeft, nothingFollowsY, totalAmountLeft, nothingFollowsRowBottom);
+
+                        // Single dashed line below the entire row (separator before footer)
+                        doc.setDrawColor(120, 120, 120);
+                        doc.setLineDashPattern([2, 2], 0);
+                        doc.line(contentLeft, nothingFollowsRowBottom, contentRight, nothingFollowsRowBottom);
                         doc.setLineDashPattern([], 0);
                         doc.setDrawColor(0);
-                        doc.setFontSize(6);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('--------Nothing follows---------', margin + 2, nothingFollowsY + 4);
-                        doc.setFont('helvetica', 'bold');
-                        doc.rect(pageWidth - margin - colWidths.totalCost, nothingFollowsY, colWidths.totalCost, rowHeight, 'S');
-                        doc.text('TOTAL AMOUNT', pageWidth - margin - (colWidths.totalCost / 2), nothingFollowsY + 4, { align: 'center' });
 
-                        // Draw remaining vertical lines
-                        currentX = margin;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
+                        // Footer Section - exact match to reference: bordered table with Purpose row + 4-column signature block
+                        const footerTop = nothingFollowsRowBottom + 6;
 
-                        currentX += colWidths.balanceOnHand;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
+                        const rightEdge = pageWidth - margin;
+                        const sigBoxWidth = (rightEdge - margin) / 4;
+                        const purposeRowHeight = 8;
+                        const sigRowHeight = 7;
+                        const sigBlockHeight = sigRowHeight * 5;
+                        const footerHeight = purposeRowHeight + sigBlockHeight;
 
-                        currentX += colWidths.unit;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
+                        // Draw outer border (single continuous frame around entire footer)
+                        doc.setLineWidth(0.5);
+                        doc.rect(margin, footerTop, rightEdge - margin, footerHeight);
 
-                        currentX += colWidths.requisition;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.qty;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.unit2;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.qty2;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.unit3;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.cost;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        currentX += colWidths.totalCost;
-                        doc.line(currentX, dataEndY, currentX, finalRowY);
-
-                        // Footer Section (after "Nothing follows" row)
-                        yPosition = nothingFollowsY + rowHeight + 5;
-
-                        // Purpose
+                        // Purpose row - full width cell with borders; "Purpose:" bold, "Operational Use" regular
                         doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('Purpose: Operational Use', margin, yPosition);
-
-                        yPosition += 8;
-
-                        // Signature section
-                        const sigBoxWidth = (pageWidth - (2 * margin)) / 4;
-
-                        // Headers
-                        doc.setFontSize(7);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('Requested by:', margin + 5, yPosition);
-                        doc.text('Approved by:', margin + sigBoxWidth + 5, yPosition);
-                        doc.text('Issued by:', margin + (sigBoxWidth * 2) + 5, yPosition);
-                        doc.text('Received by:', margin + (sigBoxWidth * 3) + 5, yPosition);
-
-                        yPosition += 15;
-
-                        // Signature lines and names
                         doc.setFont('helvetica', 'bold');
-                        doc.text('_________________', margin + 2, yPosition);
-                        doc.text('_________________', margin + sigBoxWidth + 2, yPosition);
-                        doc.text('_________________', margin + (sigBoxWidth * 2) + 2, yPosition);
-                        doc.text('_________________', margin + (sigBoxWidth * 3) + 2, yPosition);
-
-                        yPosition += 4;
-                        doc.setFontSize(6);
+                        doc.text('Purpose:', margin + 4, footerTop + 5.5);
                         doc.setFont('helvetica', 'normal');
-                        doc.text('Signature', margin + 10, yPosition);
-                        doc.text('Signature', margin + sigBoxWidth + 10, yPosition);
-                        doc.text('Signature', margin + (sigBoxWidth * 2) + 10, yPosition);
-                        doc.text('Signature', margin + (sigBoxWidth * 3) + 10, yPosition);
+                        doc.text('Operational Use', margin + 26, footerTop + 5.5);
+                        doc.setLineWidth(0.3);
+                        doc.line(margin, footerTop + purposeRowHeight, rightEdge, footerTop + purposeRowHeight);
 
-                        yPosition += 4;
-                        doc.text('Printed Name:', margin + 2, yPosition);
-                        doc.text('Printed Name:', margin + sigBoxWidth + 2, yPosition);
-                        doc.text('Printed Name:', margin + (sigBoxWidth * 2) + 2, yPosition);
-                        doc.text('Printed Name:', margin + (sigBoxWidth * 3) + 2, yPosition);
+                        const sigBlockTop = footerTop + purposeRowHeight;
 
-                        yPosition += 4;
-                        doc.text('Designation:', margin + 2, yPosition);
-                        doc.text('Designation:', margin + sigBoxWidth + 2, yPosition);
-                        doc.text('Designation:', margin + (sigBoxWidth * 2) + 2, yPosition);
-                        doc.text('Designation:', margin + (sigBoxWidth * 3) + 2, yPosition);
+                        // Draw full grid: vertical lines (5 lines for 4 columns)
+                        doc.setDrawColor(0);
+                        for (let c = 0; c <= 4; c++) {
+                            const x = margin + (c * sigBoxWidth);
+                            doc.line(x, sigBlockTop, x, sigBlockTop + sigBlockHeight);
+                        }
+                        // Horizontal lines between each row (5 rows = 6 horizontal lines; top already drawn)
+                        for (let r = 1; r <= 5; r++) {
+                            const y = sigBlockTop + (r * sigRowHeight);
+                            doc.line(margin, y, rightEdge, y);
+                        }
 
-                        yPosition += 4;
-                        doc.text('Date:', margin + 2, yPosition);
-                        doc.text('Date:', margin + sigBoxWidth + 2, yPosition);
-                        doc.text('Date:', margin + (sigBoxWidth * 2) + 2, yPosition);
-                        doc.text('Date:', margin + (sigBoxWidth * 3) + 2, yPosition);
+                        // Row 1: Requested by / Approved by / Issued by / Received by (all BOLD)
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'bold');
+                        const row1Y = sigBlockTop + 4.5;
+                        doc.text('Requested by:', margin + 4, row1Y);
+                        doc.text('Approved by:', margin + sigBoxWidth + 4, row1Y);
+                        doc.text('Issued by:', margin + (sigBoxWidth * 2) + 4, row1Y);
+                        doc.text('Received by:', margin + (sigBoxWidth * 3) + 4, row1Y);
+
+                        // Row 2: "Signature" label first, then line drawn under the signature
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7);
+                        const row2Top = sigBlockTop + sigRowHeight;
+                        const sigLabelY = row2Top + 3.5;
+                        const sigLineY = row2Top + 6;
+                        doc.text('Signature', margin + 4, sigLabelY);
+                        doc.line(margin + 4, sigLineY, margin + sigBoxWidth - 4, sigLineY);
+                        doc.text('Signature', margin + sigBoxWidth + 4, sigLabelY);
+                        doc.line(margin + sigBoxWidth + 4, sigLineY, margin + (sigBoxWidth * 2) - 4, sigLineY);
+                        doc.text('Signature', margin + (sigBoxWidth * 2) + 4, sigLabelY);
+                        doc.line(margin + (sigBoxWidth * 2) + 4, sigLineY, margin + (sigBoxWidth * 3) - 4, sigLineY);
+                        doc.text('Signature', margin + (sigBoxWidth * 3) + 4, sigLabelY);
+                        doc.line(margin + (sigBoxWidth * 3) + 4, sigLineY, rightEdge - 4, sigLineY);
+
+                        // Row 3: Printed Name:
+                        const row3Y = sigBlockTop + (sigRowHeight * 2) + 4.5;
+                        doc.text('Printed Name:', margin + 4, row3Y);
+                        doc.text('Printed Name:', margin + sigBoxWidth + 4, row3Y);
+                        doc.text('Printed Name:', margin + (sigBoxWidth * 2) + 4, row3Y);
+                        doc.text('Printed Name:', margin + (sigBoxWidth * 3) + 4, row3Y);
+
+                        // Row 4: Designation:
+                        const row4Y = sigBlockTop + (sigRowHeight * 3) + 4.5;
+                        doc.text('Designation:', margin + 4, row4Y);
+                        doc.text('Designation:', margin + sigBoxWidth + 4, row4Y);
+                        doc.text('Designation:', margin + (sigBoxWidth * 2) + 4, row4Y);
+                        doc.text('Designation:', margin + (sigBoxWidth * 3) + 4, row4Y);
+
+                        // Row 5: Date:
+                        const row5Y = sigBlockTop + (sigRowHeight * 4) + 4.5;
+                        doc.text('Date:', margin + 4, row5Y);
+                        doc.text('Date:', margin + sigBoxWidth + 4, row5Y);
+                        doc.text('Date:', margin + (sigBoxWidth * 2) + 4, row5Y);
+                        doc.text('Date:', margin + (sigBoxWidth * 3) + 4, row5Y);
+
+                        // Reset line width for rest of document
+                        doc.setLineWidth(0.3);
 
                         // Generate filename with timestamp
                         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
@@ -3371,6 +3374,26 @@ Replenish/Add New Item
                             html: `Unable to generate PDF.<br><br><small>Error: ${error.message}</small><br><br>Please try refreshing the page.`,
                             confirmButtonColor: '#dc3545'
                         });
+                    }
+                    }
+
+                    if (logoUrl) {
+                        var img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.onload = function() {
+                            var canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            var ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            doGeneratePdf(canvas.toDataURL('image/png'));
+                        };
+                        img.onerror = function() {
+                            doGeneratePdf(null);
+                        };
+                        img.src = logoUrl;
+                    } else {
+                        doGeneratePdf(null);
                     }
                 } else {
                     console.log('User cancelled or dismissed dialog');

@@ -847,11 +847,11 @@ def supply_list(request):
 def request_supply_create(request):
     """
     Create a new RequestSupply from the staff Request Supplies modal.
-    - FIFO (First In First Out): Finds oldest available supply by description
+    - FIFO (First In First Out): Finds oldest supply by description (even if out of stock)
     - Links to a Supply record in supplies_tbl (via supply_id or description)
     - Copies item details from Supply
     - Uses the logged-in user's name as requester_name
-    - Checks stock availability before creating request
+    - Requests are allowed even when quantity exceeds available stock; admin handles approval.
     """
     try:
         from .models import RequestSupply, Supply
@@ -877,31 +877,18 @@ def request_supply_create(request):
         if supply_id:
             supply = Supply.objects.filter(id=supply_id, is_active=True).first()
         elif description:
-            # FIFO: Find oldest available supply with matching description and stock
-            # Order by date (oldest first), then item_code, then created_at
+            # FIFO: Find oldest supply with matching description (allow even with 0 stock so request can go to admin)
             supply = Supply.objects.filter(
                 Q(description__iexact=description) | Q(description__icontains=description),
-                is_active=True,
-                real_time_balance__gt=0  # Must have available stock
+                is_active=True
             ).order_by('date', 'item_code', 'created_at').first()
         
-        # Check if supply found and has stock
+        # Check if supply record exists (item must exist in catalog)
         if not supply:
             return JsonResponse({
                 'success': False,
-                'error': 'No supply available for this item. Item is out of stock.',
-                'out_of_stock': True
-            }, status=400)
-        
-        # Check if requested quantity is available
-        available_balance = int(supply.real_time_balance or 0)
-        if quantity > available_balance:
-            return JsonResponse({
-                'success': False,
-                'error': f'Insufficient stock. Available: {available_balance}, Requested: {quantity}',
-                'out_of_stock': True,
-                'available_balance': available_balance,
-                'requested_quantity': quantity
+                'error': 'No supply found for this item. Please select an item from the search list.',
+                'out_of_stock': False
             }, status=400)
 
         # Build requester name from logged-in user
