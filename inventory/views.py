@@ -1,3 +1,4 @@
+from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
@@ -493,24 +494,74 @@ def master_inventory(request):
 @login_required
 def bin_card(request):
     """Bin Card history by item, with option to print selected or all."""
-    from .models import Supply, RequestSupply
-    from django.db.models import Q
+    from .models import BinCardNotedBy, BinCardPreparedBy, Category, RequestSupply
 
-    supplies = Supply.objects.filter(is_active=True).order_by('description', 'item_code')
-    selected_item_id = (request.GET.get('item_id') or '').strip()
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'noted'):
+            role = 'prepared'
+        SignModel = BinCardNotedBy if role == 'noted' else BinCardPreparedBy
+        label = 'Noted by' if role == 'noted' else 'Prepared by'
 
-    tx_qs = RequestSupply.objects.filter(is_active=True).select_related('supply').order_by('-date', '-created_at')
-    selected_supply = None
-    if selected_item_id:
-        selected_supply = Supply.objects.filter(is_active=True, id=selected_item_id).first()
-        if selected_supply:
-            tx_qs = tx_qs.filter(
-                Q(supply_id=selected_supply.id) |
-                Q(item_code=selected_supply.item_code) |
-                Q(description=selected_supply.description)
-            )
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                SignModel.objects.create(
+                    name=name, position=position, sort_order=next_order
+                )
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = SignModel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except SignModel.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = SignModel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        return redirect('bin_card')
+
+    categories = Category.objects.filter(is_active=True).order_by('name')
+
+    all_rows_qs = (
+        RequestSupply.objects.filter(is_active=True)
+        .select_related('main_category', 'supply')
+        .order_by('-date', '-created_at')
+    )
 
     def _row(r):
+        cat_name = r.main_category.name if r.main_category else ''
+        blob_parts = [
+            r.item_code or '',
+            r.description or '',
+            r.unit or '',
+            r.transaction_no or '',
+            cat_name,
+        ]
+        search_blob = ' '.join(blob_parts).lower()
         return {
             'date': r.date.strftime('%m/%d/%Y') if r.date else '',
             'transaction_no': r.transaction_no or '',
@@ -521,19 +572,23 @@ def bin_card(request):
             'quantity': int(r.quantity or 0),
             'status': r.status or '',
             'conforme_by': r.conforme_by or '',
+            'main_category_id': r.main_category_id,
+            'main_category_name': cat_name,
+            'search_blob': search_blob,
         }
 
-    all_rows_qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
     all_rows = [_row(r) for r in all_rows_qs]
-    filtered_rows = [_row(r) for r in tx_qs]
+
+    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    noted_by_signatories = list(BinCardNotedBy.objects.all())
 
     context = {
         'page_title': 'Bin Card',
-        'supplies': supplies,
-        'selected_item_id': selected_item_id,
-        'selected_supply': selected_supply,
-        'rows': filtered_rows,
+        'categories': categories,
+        'rows': all_rows,
         'all_rows': all_rows,
+        'prepared_by_signatories': prepared_by_signatories,
+        'noted_by_signatories': noted_by_signatories,
     }
     return render(request, 'admin/Bin Card/bin_card.html', context)
 

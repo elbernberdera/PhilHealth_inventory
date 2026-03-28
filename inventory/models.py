@@ -334,3 +334,37 @@ class RequestSupply(models.Model):
             supply.running_cost = supply.cost_per_item * supply.running_count
             supply.total_cost = supply.cost_per_item * supply.stock_in
             supply.save()
+
+
+class BinCardPreparedBy(models.Model):
+    """Signatories for Bin Card printout (Prepared by line)."""
+
+    name = models.CharField(max_length=200, verbose_name="Name")
+    position = models.CharField(max_length=200, blank=True, verbose_name="Position / Title")
+    sort_order = models.PositiveIntegerField(default=0, verbose_name="Sort order")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+        verbose_name = "Bin Card Prepared By"
+        verbose_name_plural = "Bin Card Prepared By"
+
+    def __str__(self):
+        return self.name
+
+
+class BinCardNotedBy(models.Model):
+    """Signatories for Bin Card printout (Noted by line)."""
+
+    name = models.CharField(max_length=200, verbose_name="Name")
+    position = models.CharField(max_length=200, blank=True, verbose_name="Position / Title")
+    sort_order = models.PositiveIntegerField(default=0, verbose_name="Sort order")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+        verbose_name = "Bin Card Noted By"
+        verbose_name_plural = "Bin Card Noted By"
+
+    def __str__(self):
+        return self.name

@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'philhealth_inventory.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "philhealth_inventory",
+        "NAME": "philhealth",
         "USER": "root",
         "PASSWORD": "",
         "HOST": "localhost",
