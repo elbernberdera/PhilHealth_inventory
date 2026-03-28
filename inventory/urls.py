@@ -20,7 +20,10 @@ urlpatterns = [
     
     # Replenish/Add New Item
     path('admin/supply/replenish/', views.replenish_item, name='replenish_item'),
-    
+    path('admin/supply/bin-card/', views.bin_card, name='bin_card'),
+    # Master Inventory (all stocks including out-of-stock)
+    path('admin/supply/master-inventory/', views.master_inventory, name='master_inventory'),
+
     # Requested Supplies
     path('admin/supply/requested/', views.requested_supplies, name='requested_supplies'),
     path('admin/supply/requested/history/', views.requested_supplies_history, name='requested_supplies_history'),

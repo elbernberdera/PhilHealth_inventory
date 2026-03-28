@@ -477,6 +477,67 @@ def replenish_item(request):
     }
     return render(request, 'admin/Replenish/Replenish.html', context)
 
+
+@login_required
+def master_inventory(request):
+    """Master Inventory: view all stocks including out-of-stock (no balance filter)."""
+    from .models import Category
+    categories = Category.objects.filter(is_active=True).order_by('name')
+    context = {
+        'page_title': 'Master Inventory',
+        'categories': categories,
+    }
+    return render(request, 'admin/Master_Inventory/master_inventory.html', context)
+
+
+@login_required
+def bin_card(request):
+    """Bin Card history by item, with option to print selected or all."""
+    from .models import Supply, RequestSupply
+    from django.db.models import Q
+
+    supplies = Supply.objects.filter(is_active=True).order_by('description', 'item_code')
+    selected_item_id = (request.GET.get('item_id') or '').strip()
+
+    tx_qs = RequestSupply.objects.filter(is_active=True).select_related('supply').order_by('-date', '-created_at')
+    selected_supply = None
+    if selected_item_id:
+        selected_supply = Supply.objects.filter(is_active=True, id=selected_item_id).first()
+        if selected_supply:
+            tx_qs = tx_qs.filter(
+                Q(supply_id=selected_supply.id) |
+                Q(item_code=selected_supply.item_code) |
+                Q(description=selected_supply.description)
+            )
+
+    def _row(r):
+        return {
+            'date': r.date.strftime('%m/%d/%Y') if r.date else '',
+            'transaction_no': r.transaction_no or '',
+            'requester_name': r.requester_name or '',
+            'item_code': r.item_code or '',
+            'description': r.description or '',
+            'unit': r.unit or '',
+            'quantity': int(r.quantity or 0),
+            'status': r.status or '',
+            'conforme_by': r.conforme_by or '',
+        }
+
+    all_rows_qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
+    all_rows = [_row(r) for r in all_rows_qs]
+    filtered_rows = [_row(r) for r in tx_qs]
+
+    context = {
+        'page_title': 'Bin Card',
+        'supplies': supplies,
+        'selected_item_id': selected_item_id,
+        'selected_supply': selected_supply,
+        'rows': filtered_rows,
+        'all_rows': all_rows,
+    }
+    return render(request, 'admin/Bin Card/bin_card.html', context)
+
+
 @login_required
 def requested_supplies(request):
     """Requested Supplies view - FIFO (First In First Out) ordering"""
@@ -507,20 +568,66 @@ def requested_supplies(request):
 
 @login_required
 def requested_supplies_history(request):
-    """Requested Supplies history view with pagination and filters."""
+    """All requested supplies (all statuses) with date filters, search, and pagination."""
+    from datetime import date as date_class
+    from calendar import monthrange
     from .models import RequestSupply
     from django.db.models import Q
 
-    status_filter = request.GET.get('status', '').strip().lower()
-    search_query = request.GET.get('search', '').strip()
-
+    # All active request records (pending, approved, rejected, out of stock, etc.)
     qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
 
-    if status_filter in ['approved', 'pending', 'rejected', 'out of stocks', 'Out of Stocks']:
-        if status_filter.lower() == 'out of stocks':
-            qs = qs.filter(status='Out of Stocks')
-        else:
-            qs = qs.filter(status=status_filter)
+    filter_type = request.GET.get('filter_type', 'all').strip() or 'all'
+    start_date = request.GET.get('start_date', '').strip()
+    end_date = request.GET.get('end_date', '').strip()
+    start_month = request.GET.get('start_month', '').strip()
+    end_month = request.GET.get('end_month', '').strip()
+    start_year = request.GET.get('start_year', '').strip()
+    end_year = request.GET.get('end_year', '').strip()
+    search_query = request.GET.get('search', '').strip()
+
+    filtered_date = ''
+
+    if filter_type == 'day':
+        if start_date:
+            try:
+                d0 = date_class.fromisoformat(start_date)
+                qs = qs.filter(date__gte=d0)
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                d1 = date_class.fromisoformat(end_date)
+                qs = qs.filter(date__lte=d1)
+            except ValueError:
+                pass
+        if start_date or end_date:
+            filtered_date = f"{start_date or '…'} to {end_date or '…'}"
+
+    elif filter_type == 'month':
+        if start_month and len(start_month) >= 7:
+            try:
+                y, m = map(int, start_month.split('-')[:2])
+                qs = qs.filter(date__gte=date_class(y, m, 1))
+            except (ValueError, TypeError):
+                pass
+        if end_month and len(end_month) >= 7:
+            try:
+                y, m = map(int, end_month.split('-')[:2])
+                last_d = monthrange(y, m)[1]
+                qs = qs.filter(date__lte=date_class(y, m, last_d))
+            except (ValueError, TypeError):
+                pass
+        if start_month or end_month:
+            filtered_date = f"{start_month or '…'} to {end_month or '…'}"
+
+    elif filter_type == 'year':
+        if start_year.isdigit():
+            qs = qs.filter(date__year__gte=int(start_year))
+        if end_year.isdigit():
+            qs = qs.filter(date__year__lte=int(end_year))
+        if start_year or end_year:
+            filtered_date = f"{start_year or '…'} to {end_year or '…'}"
 
     if search_query:
         qs = qs.filter(
@@ -530,14 +637,31 @@ def requested_supplies_history(request):
             Q(description__icontains=search_query)
         )
 
-    paginator = Paginator(qs, 10)
-    page_number = request.GET.get('page')
+    try:
+        per_page = int(request.GET.get('per_page', '10'))
+    except (TypeError, ValueError):
+        per_page = 10
+    if per_page not in (10, 20, 50, 100, 200, 500):
+        per_page = 10
+
+    paginator = Paginator(qs, per_page)
+    page_number = request.GET.get('page') or 1
     page_obj = paginator.get_page(page_number)
 
     context = {
         'page_title': 'Requested Supplies History',
         'page_obj': page_obj,
-        'status_filter': status_filter,
+        'requests': page_obj.object_list,
+        'total_count': paginator.count,
+        'filter_type': filter_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'start_month': start_month,
+        'end_month': end_month,
+        'start_year': start_year,
+        'end_year': end_year,
+        'filtered_date': filtered_date,
+        'per_page': per_page,
         'search_query': search_query,
     }
     return render(request, 'admin/requested_supplies_history/requested_supplies_history.html', context)

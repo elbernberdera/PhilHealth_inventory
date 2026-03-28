@@ -2661,7 +2661,7 @@ Replenish/Add New Item
                             </div>
                         </div>
                         
-                        <!-- Data Table -->
+                        <!-- Data Table - structure mirrors the Save as PDF layout -->
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -2670,7 +2670,8 @@ Replenish/Add New Item
                                     <th colspan="4" style="background-color: #f0f0f0;">ISSUANCE</th>
                                 </tr>
                                 <tr>
-                                    <th class="col-balance"></th>
+                                    <!-- Second header row matches PDF: On Hand | Unit | Item Description | Qty | Unit | Qty | Unit | Cost | Total Cost -->
+                                    <th class="col-balance">On Hand</th>
                                     <th class="col-unit">Unit</th>
                                     <th class="col-requisition">Item Description</th>
                                     <th class="col-qty">Qty</th>
@@ -2683,8 +2684,9 @@ Replenish/Add New Item
                             </thead>
                             <tbody>`;
 
-            // Add data rows (limit so content + border fit on one page)
-            const maxRows = 15;
+            // Add data rows - use slightly more rows in print so the HTML table visually reaches the bottom of A4
+            // (print CSS row height is a bit smaller than the PDF's mm-based rows)
+            const maxRows = 34;
             for (let i = 0; i < maxRows; i++) {
                 if (i < selectedData.length) {
                     const item = selectedData[i];
@@ -3026,7 +3028,7 @@ Replenish/Add New Item
                         xPos += requisitionWidth;
                         doc.text('ISSUANCE', xPos + (issuanceWidth / 2), yPosition + 5, { align: 'center' });
 
-                        // Vertical lines separating the three grey sections
+                        // Vertical lines separating the three grey sections (only for the grey band)
                         doc.setDrawColor(0);
                         doc.line(contentLeft + balanceWidth, yPosition, contentLeft + balanceWidth, yPosition + 7);
                         doc.line(contentLeft + balanceWidth + requisitionWidth, yPosition, contentLeft + balanceWidth + requisitionWidth, yPosition + 7);
@@ -3041,7 +3043,8 @@ Replenish/Add New Item
                         doc.setFont('helvetica', 'bold');
 
                         xPos = contentLeft;
-                        // First column under "Balance on Hand" - empty (no "on Hand" text)
+                        // First column under "Balance on Hand" - show \"On Hand\"
+                        doc.text('On Hand', xPos + (colWidths.balanceOnHand / 2), yPosition + 5, { align: 'center' });
                         xPos += colWidths.balanceOnHand;
                         doc.text('Unit', xPos + (colWidths.unit / 2), yPosition + 5, { align: 'center' });
                         xPos += colWidths.unit;
@@ -3079,25 +3082,31 @@ Replenish/Add New Item
                         doc.setLineWidth(0.3);
                         doc.setDrawColor(0);
 
+                        // For column grid lines, start BELOW the grey band so REQUISITION and ISSUANCE each appear as a single cell in the first header row
+                        const headerBottomY = tableStartY + 7;
+
                         let currentX = contentLeft;
+                        // Left outer border goes from top of grey band to bottom of second header row
                         doc.line(currentX, tableStartY, currentX, yPosition);
                         currentX += colWidths.balanceOnHand;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        // Inner grid lines start below grey band so REQUISITION header appears as single cell
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.unit;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.requisition;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.qty;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.unit2;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.qty2;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.unit3;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.cost;
-                        doc.line(currentX, tableStartY, currentX, yPosition);
+                        doc.line(currentX, headerBottomY, currentX, yPosition);
                         currentX += colWidths.totalCost;
+                        // Right outer border goes from top of grey band to bottom of second header row
                         doc.line(currentX, tableStartY, currentX, yPosition);
 
                         doc.line(contentLeft, tableStartY, contentRight, tableStartY);

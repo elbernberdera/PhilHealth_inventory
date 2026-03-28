@@ -21,6 +21,35 @@
     .open-label { font-size: 8pt; font-weight: 700; text-align: center; }
     .total-row td { font-weight: 700; }
     .total-label { text-align: center; }
+    .dataTables_info {
+        padding-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .dataTables_paginate { padding-top: 0.25rem; }
+    .pagination { margin-bottom: 0; }
+    .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        color: #28a745;
+        border-color: #dee2e6;
+    }
+    .pagination .page-link:hover {
+        color: #1e7e34;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: #ffffff;
+    }
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
 </style>
 
 <section class="content">
@@ -46,9 +75,9 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover mb-0" style="font-size: 0.875rem;" id="bin-card-page-table">
+                    <table class="table table-bordered table-striped table-hover mb-0" style="font-size: 0.875rem;" id="bin-card-page-table">
                         <thead>
-                            <tr>
+                            <tr class="opening-row">
                                 <th style="width:40px;" class="text-center"><input type="checkbox" id="check-all-items"></th>
                                 <th style="width:60px;">No.</th>
                                 <th style="width:160px;">Date Received/Issued</th>
@@ -59,18 +88,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            <tr class="bin-data-row">
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td class="font-weight-bold text-center">OPENING BALANCE</td>
+                                <td class="font-weight-normal text-center">OPENING BALANCE</td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
                             </tr>
                             {% for r in rows %}
                             <tr>
-                                <td class="text-center">
+                                <td class="text-center">     
                                     <input type="checkbox" class="item-check"
                                            data-item-code="{{ r.item_code }}"
                                            data-description="{{ r.description }}"
@@ -91,7 +120,7 @@
                                 </td>
                             </tr>
                             {% endfor %}
-                            <tr class="font-weight-bold">
+                            <tr class="font-weight-bold total-row-main">
                                 <td class="text-center">TOTAL</td>
                                 <td></td>
                                 <td></td>
@@ -102,6 +131,25 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="row mt-3 px-3 pb-3">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info" id="bin-card-info" role="status" aria-live="polite">
+                            Showing <span id="bin-card-start">0</span> to <span id="bin-card-end">0</span> of <span id="bin-card-total">0</span> entries
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <div class="dataTables_paginate paging_simple_numbers float-right" id="bin-card-pagination">
+                            <ul class="pagination">
+                                <li class="paginate_button page-item previous disabled" id="bin-card-prev">
+                                    <a href="#" class="page-link">Previous</a>
+                                </li>
+                                <li class="paginate_button page-item next disabled" id="bin-card-next">
+                                    <a href="#" class="page-link">Next</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,31 +240,29 @@
 
     function renderBinCardSheet(card) {
         const entries = toBinCardEntries(card.rows || []);
-        const bodyRows = buildBinCardRows(entries, 24);
+        const bodyRows = buildBinCardRows(entries, 34);
         return '' +
-            '<div class="sheet">' +
-                '<table class="bin-form">' +
-                    '<tr>' +
-                        '<td colspan="6" class="header-cell">' +
-                            '<div class="head-wrap">' +
-                                '<img src="/static/image/logo.png" alt="logo" class="logo">' +
-                                '<div class="title">BIN CARD</div>' +
-                            '</div>' +
-                        '</td>' +
-                    '</tr>' +
-                    '<tr><td class="label" colspan="1">ARTICLE:</td><td colspan="5">' + escapeHtml(card.article) + '</td></tr>' +
-                    '<tr><td class="label" colspan="1">DESCRIPTION:</td><td colspan="5">' + escapeHtml(card.description) + '</td></tr>' +
-                    '<tr class="hdr">' +
-                        '<th style="width:8%;">NO.</th>' +
-                        '<th style="width:22%;">DATE RECEIVED/ISSUED</th>' +
-                        '<th style="width:30%;">R.I.S / TRANSACTION NO.</th>' +
-                        '<th style="width:13%;">RECEIVED</th>' +
-                        '<th style="width:13%;">ISSUED</th>' +
-                        '<th style="width:14%;">ON HAND</th>' +
-                    '</tr>' +
-                    bodyRows +
-                '</table>' +
-            '</div>';
+            '<table class="bin-form">' +
+                '<tr>' +
+                    '<td colspan="6" class="header-cell">' +
+                        '<div class="head-wrap">' +
+                            '<img src="/static/image/logo.png" alt="logo" class="logo">' +
+                            '<div class="title">BIN CARD</div>' +
+                        '</div>' +
+                    '</td>' +
+                '</tr>' +
+                '<tr><td class="label" colspan="1">ARTICLE:</td><td colspan="5">' + escapeHtml(card.article) + '</td></tr>' +
+                '<tr><td class="label" colspan="1">DESCRIPTION:</td><td colspan="5">' + escapeHtml(card.description) + '</td></tr>' +
+                '<tr class="hdr">' +
+                    '<th style="width:8%;">NO.</th>' +
+                    '<th style="width:22%;">DATE RECEIVED/ISSUED</th>' +
+                    '<th style="width:30%;">R.I.S / TRANSACTION NO.</th>' +
+                    '<th style="width:13%;">RECEIVED</th>' +
+                    '<th style="width:13%;">ISSUED</th>' +
+                    '<th style="width:14%;">ON HAND</th>' +
+                '</tr>' +
+                bodyRows +
+            '</table>';
     }
 
     function groupRowsByItem(rows) {
@@ -225,7 +271,7 @@
             const key = [r.item_code || '', r.description || '', r.unit || ''].join('||');
             if (!map[key]) {
                 map[key] = {
-                    article: [r.item_code || '', r.description || ''].filter(Boolean).join(' - '),
+                    article: (r.description || r.item_code || ''),
                     description: r.unit || '',
                     rows: [],
                 };
@@ -240,26 +286,38 @@
             alert('No records to print.');
             return;
         }
-        const sheets = cards.map(renderBinCardSheet).join('');
+        const pages = [];
+        for (let i = 0; i < cards.length; i += 2) {
+            const leftCard = '<div class="card-slot">' + renderBinCardSheet(cards[i]) + '</div>';
+            const rightCard = cards[i + 1]
+                ? '<div class="card-slot">' + renderBinCardSheet(cards[i + 1]) + '</div>'
+                : '<div class="card-slot empty-slot"></div>';
+            pages.push('<div class="print-page">' + leftCard + rightCard + '</div>');
+        }
+        const sheets = pages.join('');
         const html = '<!doctype html><html><head><title>Bin Card</title>' +
             '<style>' +
             '@page{size:A4 portrait;margin:8mm;}' +
             'body{font-family:Arial,sans-serif;margin:0;padding:0;}' +
-            '.sheet{page-break-after:always;display:flex;justify-content:center;}' +
-            '.sheet:last-child{page-break-after:auto;}' +
-            '.bin-form{border-collapse:collapse;width:180mm;font-size:9pt;}' +
-            '.bin-form td,.bin-form th{border:1px solid #000;padding:3px 4px;vertical-align:middle;}' +
-            '.header-cell{height:28px;}' +
-            '.head-wrap{display:flex;align-items:center;gap:8px;}' +
-            '.logo{width:38px;height:22px;object-fit:contain;}' +
-            '.title{font-size:18px;font-weight:700;letter-spacing:0.5px;}' +
-            '.label{font-weight:700;white-space:nowrap;}' +
-            '.hdr th{text-align:center;font-size:8.5pt;}' +
+            '.print-page{display:flex;gap:4mm;align-items:stretch;height:281mm;page-break-after:always;}' +
+            '.print-page:last-child{page-break-after:auto;}' +
+            '.card-slot{width:91mm;height:100%;}' +
+            '.empty-slot{border:0;}' +
+            '.bin-form{border-collapse:collapse;width:100%;height:100%;font-size:6.8pt;table-layout:fixed;}' +
+            '.bin-form td,.bin-form th{border:1px solid #000;padding:2px 3px;vertical-align:middle;line-height:1.1;}' +
+            '.header-cell{height:20px;}' +
+            '.head-wrap{display:flex;align-items:center;gap:6px;}' +
+            '.logo{width:28px;height:16px;object-fit:contain;}' +
+            '.title{font-size:12px;font-weight:700;letter-spacing:0.3px;}' +
+            '.label{font-weight:700;font-size:6.1pt;white-space:nowrap;line-height:1.05;word-break:normal;overflow-wrap:normal;}' +
+            '.hdr th{text-align:center;font-size:5.9pt;line-height:1.05;white-space:normal;word-break:break-word;overflow-wrap:anywhere;}' +
+            '.bin-form tr:nth-child(2) td,.bin-form tr:nth-child(3) td{font-size:6.4pt;line-height:1.05;padding-top:3px;padding-bottom:3px;}' +
+            '.bin-form tr:nth-child(2) td:first-child,.bin-form tr:nth-child(3) td:first-child{width:16mm;}' +
             '.num{text-align:right;}' +
-            '.open-label{font-size:8pt;font-weight:700;text-align:center;}' +
+            '.open-label{font-size:5.8pt;font-weight:700;text-align:center;line-height:1.05;}' +
             '.total-row td{font-weight:700;}' +
             '.total-label{text-align:center;}' +
-            'tr{height:22px;}' +
+            'tr{height:15px;}' +
             '</style></head><body>' +
             sheets +
             '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script></body></html>';
@@ -270,6 +328,89 @@
         }
         w.document.write(html);
         w.document.close();
+    }
+
+    function initPageTablePagination() {
+        if (!pageTable) return;
+        const tbody = pageTable.querySelector('tbody');
+        if (!tbody) return;
+
+        const dataRows = Array.prototype.slice.call(tbody.querySelectorAll('tr.bin-data-row'));
+        const openingRow = tbody.querySelector('tr.opening-row');
+        const totalRow = tbody.querySelector('tr.total-row-main');
+        const rowsPerPage = 10;
+        const totalRows = dataRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+        let currentPage = 1;
+
+        const infoStart = document.getElementById('bin-card-start');
+        const infoEnd = document.getElementById('bin-card-end');
+        const infoTotal = document.getElementById('bin-card-total');
+        const prevBtn = document.getElementById('bin-card-prev');
+        const nextBtn = document.getElementById('bin-card-next');
+        const paginationList = document.querySelector('#bin-card-pagination ul');
+        if (!infoStart || !infoEnd || !infoTotal || !prevBtn || !nextBtn || !paginationList) return;
+
+        function renderPageButtons() {
+            const existing = paginationList.querySelectorAll('.page-number');
+            existing.forEach(function(el) { el.remove(); });
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = 'paginate_button page-item page-number';
+                pageItem.setAttribute('data-page', String(i));
+                pageItem.innerHTML = '<a href="#" class="page-link">' + i + '</a>';
+                paginationList.insertBefore(pageItem, nextBtn);
+            }
+        }
+
+        function updateButtons() {
+            prevBtn.classList.toggle('disabled', currentPage === 1);
+            nextBtn.classList.toggle('disabled', currentPage === totalPages || totalRows === 0);
+            const pageButtons = paginationList.querySelectorAll('.page-number');
+            pageButtons.forEach(function(btn) {
+                btn.classList.toggle('active', Number(btn.getAttribute('data-page')) === currentPage);
+            });
+        }
+
+        function displayPage(page) {
+            currentPage = page;
+            if (openingRow) openingRow.style.display = '';
+            if (totalRow) totalRow.style.display = '';
+
+            dataRows.forEach(function(row) { row.style.display = 'none'; });
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = Math.min(start + rowsPerPage, totalRows);
+
+            for (let i = start; i < end; i++) {
+                dataRows[i].style.display = '';
+                const noCell = dataRows[i].querySelector('td:nth-child(2)');
+                if (noCell) noCell.textContent = String(i + 1);
+            }
+
+            infoStart.textContent = totalRows ? String(start + 1) : '0';
+            infoEnd.textContent = totalRows ? String(end) : '0';
+            infoTotal.textContent = String(totalRows);
+            updateButtons();
+        }
+
+        renderPageButtons();
+        displayPage(1);
+
+        prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentPage > 1) displayPage(currentPage - 1);
+        });
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentPage < totalPages) displayPage(currentPage + 1);
+        });
+        paginationList.addEventListener('click', function(e) {
+            const pageBtn = e.target.closest('.page-number');
+            if (!pageBtn) return;
+            e.preventDefault();
+            const page = Number(pageBtn.getAttribute('data-page') || '1');
+            if (page >= 1 && page <= totalPages) displayPage(page);
+        });
     }
 
     if (checkAllItems) {
@@ -294,7 +435,7 @@
                     return (r.item_code === code) || (r.description === desc && r.unit === unit);
                 });
                 return {
-                    article: [code, desc].filter(Boolean).join(' - '),
+                    article: (desc || code || ''),
                     description: unit,
                     rows: rows
                 };
@@ -303,7 +444,7 @@
         });
     }
 
-    appendBlankRowsForFormLook(26);
+    initPageTablePagination();
 })();
 </script>
 {% endblock main_content %}

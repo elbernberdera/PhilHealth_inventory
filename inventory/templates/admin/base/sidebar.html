@@ -61,9 +61,17 @@
 
             <!-- Bin Card -->
             <li class="nav-item">
-              <a href="#" class="nav-link" style="color: #fdfafa!important;">
+              <a href="{% url 'bin_card' %}" class="nav-link {% if request.resolver_match.url_name == 'bin_card' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'bin_card' %}background: #1e5d3f!important;{% endif %}">
                 <i class="nav-icon fas fa-id-card" style="color: #fbf8f8!important;"></i>
                 <p>Bin Card</p>
+              </a>
+            </li>
+
+            <!-- Master Inventory (all stocks including out-of-stock) -->
+            <li class="nav-item">
+              <a href="{% url 'master_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'master_inventory' %}text-dark{% endif %}" style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'master_inventory' %}background: #1e5d3f!important;{% endif %}">
+                <i class="nav-icon fas fa-boxes" style="color: #fbf8f8!important;"></i>
+                <p>Master Inventory</p>
               </a>
             </li>
              <!-- history -->
@@ -99,9 +107,6 @@
                     </li>
                   </ul>
                 </li>
-
-              </ul>
-            </li>
 
             <li class="nav-item">
               <a href="{% url 'users' %}" class="nav-link {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' %}text-dark{% endif %}" style="color: #fcfbfb!important; {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' %}background: #1e5d3f!important;{% endif %}">
