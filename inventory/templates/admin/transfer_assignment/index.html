@@ -5,30 +5,436 @@
 {% block page_title %}IT Equipments — Transfer/Assignment of Unit{% endblock page_title %}
 
 {% block main_content %}
-<section class="content" style="
-    background-image: linear-gradient(135deg, rgba(59,255,255,0.20) 0%, rgba(66,228,160,0.20) 100%), url('{% static "image/bg_ph.avif" %}');
-    background-size: cover; background-position: center; background-repeat: no-repeat;
-    border-radius: 16px; padding: 20px;">
+<style>
+    .transfer-hero {
+        background: linear-gradient(135deg, #1e5d3f 0%, #28a745 100%);
+        border-radius: 12px;
+        padding: 28px 32px;
+        color: #fff;
+        margin-bottom: 24px;
+    }
+    .transfer-hero h3 { font-weight: 700; margin-bottom: 4px; }
+    .transfer-hero p  { opacity: 0.85; margin-bottom: 0; font-size: 0.95rem; }
+    .transfer-hero .hero-icon {
+        font-size: 3rem;
+        opacity: 0.25;
+    }
 
-  <div class="container-fluid">
-    <div class="row justify-content-center" style="min-height: 60vh; align-items: center;">
-      <div class="col-md-6 text-center">
-        <div class="card" style="border-radius: 20px; background: rgba(255,255,255,0.95); padding: 60px 40px;">
-          <div class="mb-4">
-            <i class="fas fa-exchange-alt" style="font-size: 5rem; color: #1e5d3f; opacity: 0.8;"></i>
-          </div>
-          <h2 class="font-weight-bold mb-2" style="color: #1e5d3f;">Transfer/Assignment of Unit</h2>
-          <p class="text-muted mb-4" style="font-size: 1.1rem;">
-            This feature is currently under development.<br>
-            <strong>Available Soon!</strong>
-          </p>
-          <span class="badge px-4 py-2" style="background:#1e5d3f; color:#fff; font-size: 1rem; border-radius: 20px;">
-            <i class="fas fa-tools mr-2"></i> Coming Soon
-          </span>
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        background: #28a745;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+    .step-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #343a40;
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .asset-detail-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #28a745;
+        border-radius: 8px;
+        padding: 16px 20px;
+    }
+    .asset-detail-card .label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; }
+    .asset-detail-card .value { font-weight: 600; color: #212529; font-size: 0.95rem; }
+
+    .transfer-arrow-box {
+        background: #e9f5ec;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 12px 18px;
+        color: #155724;
+        font-size: 0.9rem;
+    }
+    .transfer-arrow-box .arrow-icon { font-size: 1.1rem; margin: 0 8px; }
+
+    .main-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .main-card .card-header {
+        background: #fff;
+        border-bottom: 2px solid #28a745;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 16px 24px;
+    }
+    .main-card .card-body { padding: 28px 32px; }
+
+    #search-ics {
+        border-right: none;
+        font-size: 0.95rem;
+        height: 42px;
+    }
+    #search-btn {
+        height: 42px;
+        padding: 0 20px;
+        font-weight: 600;
+        border-radius: 0 6px 6px 0 !important;
+    }
+    .form-control:focus { border-color: #28a745; box-shadow: 0 0 0 0.15rem rgba(40,167,69,.2); }
+    select.form-control { height: 42px; }
+
+    #confirm-btn {
+        height: 44px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        letter-spacing: 0.02em;
+    }
+
+    .divider { border-top: 1px dashed #dee2e6; margin: 24px 0; }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Header -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">Transfer / Assign Unit</h2>
+                <p class="mb-0 text-muted">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.05rem; font-weight: bold;" id="current-date"></p>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Hero Banner -->
+        <div class="transfer-hero d-flex justify-content-between align-items-center">
+            <div>
+                <h3><i class="fas fa-exchange-alt mr-2"></i>Asset Transfer & Assignment</h3>
+                <p>Search an asset by ICS number, then assign or transfer it to a new end user.</p>
+            </div>
+            <div class="hero-icon d-none d-md-block">
+                <i class="fas fa-laptop"></i>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="card main-card">
+                    <div class="card-header">
+                        <h5 class="mb-0 font-weight-bold">
+                            <i class="fas fa-search mr-2 text-success"></i>Find & Transfer Asset
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Hidden CSRF token so Django accepts AJAX POST requests -->
+                        {% csrf_token %}
+
+                        <!-- Step 1 -->
+                        <div class="step-label">
+                            <span class="step-badge">1</span> Search Asset by ICS Number
+                        </div>
+                        <div class="input-group mb-1">
+                            <input type="text" id="search-ics" class="form-control"
+                                   placeholder="e.g. ICS-2026-001"
+                                   list="ics-datalist" autocomplete="off">
+                            <datalist id="ics-datalist">
+                                {% for asset in assets %}
+                                <option value="{{ asset.ics_number }}">{{ asset.asset_name }}</option>
+                                {% endfor %}
+                            </datalist>
+                            <div class="input-group-append">
+                                <button class="btn btn-success" type="button" id="search-btn">
+                                    <i class="fas fa-search mr-1"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                        <small id="search-error" class="text-danger d-none mb-2 d-block"></small>
+
+                        <!-- Asset Details (hidden until search) -->
+                        <div id="asset-details-section" style="display: none;">
+                            <div class="divider"></div>
+
+                            <!-- Step 2 -->
+                            <div class="step-label mb-3">
+                                <span class="step-badge">2</span> Asset Details
+                            </div>
+                            <div class="asset-detail-card mb-4">
+                                <div class="row">
+                                    <div class="col-sm-4 mb-3">
+                                        <div class="label">ICS Number</div>
+                                        <div class="value" id="detail-ics">—</div>
+                                    </div>
+                                    <div class="col-sm-4 mb-3">
+                                        <div class="label">Asset Name</div>
+                                        <div class="value" id="detail-name">—</div>
+                                    </div>
+                                    <div class="col-sm-4 mb-3">
+                                        <div class="label">Category</div>
+                                        <div class="value" id="detail-category">—</div>
+                                    </div>
+                                    <div class="col-sm-4 mb-0">
+                                        <div class="label">Current End User</div>
+                                        <div class="value">
+                                            <span id="detail-end-user" class="badge badge-secondary" style="font-size:0.85rem; padding: 5px 10px;">—</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 mb-0">
+                                        <div class="label">Location</div>
+                                        <div class="value" id="detail-location">—</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="step-label mb-3">
+                                <span class="step-badge">3</span> Assignment Details
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label class="font-weight-600">Assign To <span class="text-danger">*</span></label>
+                                        <select id="assign-to" class="form-control">
+                                            <option value="">— Select user —</option>
+                                            {% for user in users %}
+                                            <option value="{{ user.get_full_name|default:user.username }}">
+                                                {{ user.get_full_name|default:user.username }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="font-weight-600">Action</label>
+                                        <select id="action-type" class="form-control">
+                                            <option value="Transfer">Transfer</option>
+                                            <option value="Assign">Assign</option>
+                                            <option value="Return">Return</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>New Location <small class="text-muted">(optional)</small></label>
+                                        <input type="text" id="new-location" class="form-control"
+                                               placeholder="Keep current if blank">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transfer Preview -->
+                            <div id="transfer-preview" class="transfer-arrow-box mb-4 d-none">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <strong id="preview-action">Transfer</strong>:
+                                <span id="preview-from" class="mx-1">—</span>
+                                <i class="fas fa-long-arrow-alt-right arrow-icon"></i>
+                                <span id="preview-to" class="font-weight-bold">—</span>
+                            </div>
+
+                            <!-- Confirm -->
+                            <button type="button" id="confirm-btn" class="btn btn-success btn-block">
+                                <i class="fas fa-check-circle mr-2"></i>Confirm Transfer
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </section>
 {% endblock main_content %}
+
+{% block custom_js %}
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script>
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    $(document).ready(function () {
+        $('#current-date').text(new Date().toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        }));
+
+        let currentAssetId = null;
+        let currentEndUser = '';
+
+        function updatePreview() {
+            const assignTo   = $('#assign-to').val();
+            const actionType = $('#action-type').val();
+            if (assignTo) {
+                $('#preview-action').text(actionType);
+                $('#preview-from').text(currentEndUser || 'Unassigned');
+                $('#preview-to').text(assignTo);
+                $('#transfer-preview').removeClass('d-none');
+            } else {
+                $('#transfer-preview').addClass('d-none');
+            }
+        }
+
+        $('#assign-to, #action-type').on('change', updatePreview);
+
+        function doSearch() {
+            const ics = $('#search-ics').val().trim();
+            if (!ics) {
+                $('#search-error').text('Please enter an ICS number.').removeClass('d-none');
+                return;
+            }
+            $('#search-error').addClass('d-none');
+            $('#search-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Searching...');
+
+            $.ajax({
+                url: '{% url 'ppe_asset_search' %}',
+                method: 'GET',
+                data: { ics_number: ics },
+                success: function (response) {
+                    $('#search-btn').prop('disabled', false).html('<i class="fas fa-search mr-1"></i>Search');
+                    if (response.success) {
+                        const a = response.asset;
+                        currentAssetId = a.id;
+                        currentEndUser = a.end_user;
+
+                        $('#detail-ics').text(a.ics_number);
+                        $('#detail-name').text(a.asset_name);
+                        $('#detail-category').text(a.category);
+                        $('#detail-end-user').text(a.end_user || 'Unassigned')
+                            .removeClass('badge-secondary badge-success')
+                            .addClass(a.end_user ? 'badge-success' : 'badge-secondary');
+                        $('#detail-location').text(a.location || '—');
+                        $('#new-location').val(a.location || '');
+                        $('#assign-to').val('');
+                        $('#transfer-preview').addClass('d-none');
+                        $('#asset-details-section').slideDown(350);
+                    } else {
+                        $('#search-error').text(response.error).removeClass('d-none');
+                        $('#asset-details-section').slideUp(200);
+                    }
+                },
+                error: function () {
+                    $('#search-btn').prop('disabled', false).html('<i class="fas fa-search mr-1"></i>Search');
+                    $('#search-error').text('Server error. Please try again.').removeClass('d-none');
+                }
+            });
+        }
+
+        $('#search-btn').on('click', doSearch);
+        $('#search-ics').on('keypress', function (e) { if (e.which === 13) doSearch(); });
+
+        $('#confirm-btn').on('click', function () {
+            const assignTo   = $('#assign-to').val();
+            const actionType = $('#action-type').val();
+            const location   = $('#new-location').val().trim();
+
+            if (!assignTo) {
+                Swal.fire('Required', 'Please select a user to assign to.', 'warning');
+                return;
+            }
+
+            const from    = currentEndUser || 'Unassigned';
+            const icsText = $('#detail-ics').text();
+            const nameText = $('#detail-name').text();
+            const csrfToken = getCookie('csrftoken');
+
+            Swal.fire({
+                title: `${actionType} Asset?`,
+                html: `<b>${icsText}</b> — ${nameText}<br>
+                       <span style="color:#6c757d;">${from}</span>
+                       &nbsp;&rarr;&nbsp;
+                       <b>${assignTo}</b>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-check mr-1"></i> Yes, Confirm',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.value || result.isConfirmed) {
+                    // Show loading state on confirm button
+                    $('#confirm-btn').prop('disabled', true)
+                        .html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+
+                    $.ajax({
+                        url: '{% url 'ppe_asset_transfer' %}',
+                        type: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        data: JSON.stringify({
+                            asset_id:  currentAssetId,
+                            assign_to: assignTo,
+                            action:    actionType,
+                            location:  location
+                        }),
+                        success: function (response) {
+                            $('#confirm-btn').prop('disabled', false)
+                                .html('<i class="fas fa-check-circle mr-2"></i>Confirm Transfer');
+
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Done!',
+                                    text: response.message,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                currentEndUser = assignTo;
+                                $('#detail-end-user').text(assignTo)
+                                    .removeClass('badge-secondary').addClass('badge-success');
+                                if (location) $('#detail-location').text(location);
+                                $('#transfer-preview').addClass('d-none');
+                                $('#assign-to').val('');
+                            } else {
+                                Swal.fire('Error', response.error || 'Transfer failed.', 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            $('#confirm-btn').prop('disabled', false)
+                                .html('<i class="fas fa-check-circle mr-2"></i>Confirm Transfer');
+                            const msg = xhr.responseJSON && xhr.responseJSON.error
+                                ? xhr.responseJSON.error
+                                : `Server error (${xhr.status}). Please try again.`;
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock custom_js %}

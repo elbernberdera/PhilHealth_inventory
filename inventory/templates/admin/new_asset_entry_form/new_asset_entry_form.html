@@ -348,7 +348,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'it_asset_entry' %}" enctype="multipart/form-data">
+            <form method="POST" action="{% url 'ppe_asset_entry' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="save">
 

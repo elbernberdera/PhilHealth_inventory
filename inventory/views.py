@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils import timezone
 from django.core.paginator import Paginator
 import json
@@ -1777,7 +1777,7 @@ def activity_log(request):
 # ppe na akoa ge usab Asset — New Asset Entry Form
 # ---------------------------------------------------------------------------
 @login_required
-def it_asset_entry(request):
+def ppe_asset_entry(request):
     """PPE Asset Entry — list saved assets and handle new asset creation."""
     from .models import PPEAsset
     from django.db.models import Q
@@ -1837,7 +1837,7 @@ def it_asset_entry(request):
                 created_by      = request.user,
             )
             messages.success(request, f'Asset "{ics_number} — {asset_name}" saved successfully!')
-            return redirect('it_asset_entry')
+            return redirect('ppe_asset_entry')
 
     # Generate next ICS number by finding the highest existing number for this year
     year = datetime.date.today().year
@@ -1890,7 +1890,7 @@ def ppe_asset_edit(request):
     import datetime
 
     if request.method != 'POST':
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     asset_id = request.POST.get('asset_id', '').strip()
     asset = get_object_or_404(PPEAsset, pk=asset_id)
@@ -1906,12 +1906,12 @@ def ppe_asset_edit(request):
 
     if not ics_number or not asset_name:
         messages.error(request, 'ICS Number and Asset Name are required.')
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     # Reject duplicate ICS number on a different record
     if PPEAsset.objects.filter(ics_number=ics_number).exclude(pk=asset.pk).exists():
         messages.error(request, f'ICS Number "{ics_number}" is already used by another asset.')
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     unit_value = float(request.POST.get('unit_value', 0) or 0)
     quantity   = int(request.POST.get('quantity', 1) or 1)
@@ -1941,7 +1941,7 @@ def ppe_asset_edit(request):
 
     asset.save()
     messages.success(request, f'Asset "{ics_number} — {asset_name}" updated successfully!')
-    return redirect('it_asset_entry')
+    return redirect('ppe_asset_entry')
 
 
 @login_required
@@ -1970,16 +1970,89 @@ def ppe_asset_delete(request, asset_id):
     return JsonResponse({'success': True, 'message': f'Asset {ics_number} deleted successfully.'})
 
 
+# sugod drea transfer /assignment na it lang ne kay nag chnage c maam og new ppe daw 
+
 @login_required
-def it_transfer_assignment(request):
-    return render(request, 'admin/transfer_assignment/index.html', {'page_title': 'Transfer/Assignment of Unit'})
+@ensure_csrf_cookie
+def ppe_transfer_assignment(request):
+    from django.contrib.auth.models import User
+    from .models import PPEAsset
+    users = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    assets = PPEAsset.objects.filter(is_active=True).order_by('ics_number')
+    return render(request, 'admin/transfer_assignment/index.html', {
+        'page_title': 'Transfer/Assignment of Unit',
+        'users': users,
+        'assets': assets,
+    })
 
 
 @login_required
-def it_unit_trail(request):
+def ppe_asset_search(request):
+    """Search a PPEAsset by ICS number and return its details as JSON."""
+    from django.http import JsonResponse
+    from .models import PPEAsset
+    ics = request.GET.get('ics_number', '').strip()
+    if not ics:
+        return JsonResponse({'success': False, 'error': 'ICS number is required.'})
+    try:
+        asset = PPEAsset.objects.get(ics_number__iexact=ics, is_active=True)
+        return JsonResponse({
+            'success': True,
+            'asset': {
+                'id':          asset.id,
+                'ics_number':  asset.ics_number,
+                'asset_name':  asset.asset_name,
+                'category':    asset.category,
+                'location':    asset.location or '',
+                'end_user':    asset.end_user or '',
+            }
+        })
+    except PPEAsset.DoesNotExist:
+        return JsonResponse({'success': False, 'error': f'No active asset found with ICS "{ics}".'})
+
+
+@login_required
+def ppe_asset_transfer(request):
+    """Transfer/assign a PPEAsset to a new end user."""
+    from django.http import JsonResponse
+    from .models import PPEAsset
+    from django.shortcuts import get_object_or_404
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Invalid request body.'})
+
+    asset_id   = data.get('asset_id')
+    assign_to  = data.get('assign_to', '').strip()
+    action     = data.get('action', 'Transfer').strip()
+    new_location = data.get('location', '').strip()
+
+    if not asset_id or not assign_to:
+        return JsonResponse({'success': False, 'error': 'Asset and Assign To are required.'})
+
+    asset = get_object_or_404(PPEAsset, id=asset_id, is_active=True)
+    previous_user = asset.end_user or 'Unassigned'
+    asset.end_user = assign_to
+    if new_location:
+        asset.location = new_location
+    asset.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': f'{action} successful: {previous_user} → {assign_to}',
+    })
+
+
+@login_required
+def ppe_unit_trail(request):
     return render(request, 'admin/unit_trail/unit_trail.html', {'page_title': 'Unit Trail'})
 
 
 @login_required
-def it_report_config(request):
+def ppe_report_config(request):
     return render(request, 'admin/report_configuration/report_configuration.html', {'page_title': 'Report Configuration'})
