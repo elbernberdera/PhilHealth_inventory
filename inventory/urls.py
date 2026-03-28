@@ -27,6 +27,20 @@ urlpatterns = [
     # Requested Supplies
     path('admin/supply/requested/', views.requested_supplies, name='requested_supplies'),
     path('admin/supply/requested/history/', views.requested_supplies_history, name='requested_supplies_history'),
+
+    # History Print 
+    path('admin/history/print/', views.print_history, name='print_history'),
+
+    # Activity Log
+    path('admin/history/activity-log/', views.activity_log, name='activity_log'),
+
+    # IT Equipments
+    path('admin/it/asset-entry/', views.it_asset_entry, name='it_asset_entry'),
+    path('admin/it/asset-edit/', views.ppe_asset_edit, name='ppe_asset_edit'),
+    path('admin/it/asset-delete/<int:asset_id>/', views.ppe_asset_delete, name='ppe_asset_delete'),
+    path('admin/it/transfer-assignment/', views.it_transfer_assignment, name='it_transfer_assignment'),
+    path('admin/it/unit-trail/', views.it_unit_trail, name='it_unit_trail'),
+    path('admin/it/report-configuration/', views.it_report_config, name='it_report_config'),
     
     # Category API endpoints
     path('api/categories/', views.category_list, name='category_list'),

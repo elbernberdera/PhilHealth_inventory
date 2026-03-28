@@ -1686,3 +1686,300 @@ def staff_update_profile(request):
     return render(request, 'staff/update_profile.html', context)
 
 
+
+
+# ---------------------------------------------------------------------------
+# Print History
+# ---------------------------------------------------------------------------
+@login_required
+def print_history(request):
+    """
+    Print History — shows all approved RequestSupply records (items that
+    were issued / released), with search and pagination.
+    """
+    from .models import RequestSupply
+    from django.db.models import Q
+
+    search_query = request.GET.get('search', '').strip()
+
+    qs = RequestSupply.objects.filter(
+        is_active=True,
+        status='approved'
+    ).order_by('-updated_at', '-date')
+
+    if search_query:
+        qs = qs.filter(
+            Q(transaction_no__icontains=search_query) |
+            Q(requester_name__icontains=search_query) |
+            Q(item_code__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(conforme_by__icontains=search_query)
+        )
+
+    paginator = Paginator(qs, 15)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'page_title': 'Print History',
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_records': paginator.count,
+    }
+    return render(request, 'admin/print_history/print_history.html', context)
+
+
+# ---------------------------------------------------------------------------
+# Activity Log
+# ---------------------------------------------------------------------------
+@login_required
+def activity_log(request):
+    """
+    Activity Log — shows all RequestSupply records ordered by most recently
+    updated, with status badge, actor, and search/pagination.
+    """
+    from .models import RequestSupply
+    from django.db.models import Q
+
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    qs = RequestSupply.objects.filter(
+        is_active=True
+    ).select_related('created_by').order_by('-updated_at', '-created_at')
+
+    if search_query:
+        qs = qs.filter(
+            Q(transaction_no__icontains=search_query) |
+            Q(requester_name__icontains=search_query) |
+            Q(item_code__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(conforme_by__icontains=search_query)
+        )
+
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    paginator = Paginator(qs, 15)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'page_title': 'Activity Log',
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'total_records': paginator.count,
+    }
+    return render(request, 'admin/activity_log/activity_log.html', context)
+
+
+
+    # ---------------------------------------------------------------------------
+# ppe na akoa ge usab Asset — New Asset Entry Form
+# ---------------------------------------------------------------------------
+@login_required
+def it_asset_entry(request):
+    """PPE Asset Entry — list saved assets and handle new asset creation."""
+    from .models import PPEAsset
+    from django.db.models import Q
+    from datetime import date as date_class
+    import datetime
+
+    search_query = request.GET.get('search', '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+
+        ics_number  = request.POST.get('ics_number', '').strip()
+        asset_name  = request.POST.get('asset_name', '').strip()
+
+        if not ics_number or not asset_name:
+            messages.error(request, 'ICS Number and Asset Name are required.')
+        elif action == 'save' and PPEAsset.objects.filter(ics_number=ics_number).exists():
+            messages.error(request, f'ICS Number "{ics_number}" already exists.')
+        else:
+            def parse_date(val):
+                try:
+                    return date_class.fromisoformat(val) if val else None
+                except ValueError:
+                    return None
+
+            def parse_decimal(val, default=0):
+                try:
+                    return float(val) if val else default
+                except (ValueError, TypeError):
+                    return default
+
+            unit_value = parse_decimal(request.POST.get('unit_value', ''))
+            quantity   = int(request.POST.get('quantity', 1) or 1)
+
+            pdf_file = request.FILES.get('pdf_file') or None
+
+            PPEAsset.objects.create(
+                ics_number      = ics_number,
+                ics_date        = parse_date(request.POST.get('ics_date', '')),
+                property_number = request.POST.get('property_number', '').strip() or None,
+                serial_number   = request.POST.get('serial_number', '').strip() or None,
+                category        = request.POST.get('category', 'Computer'),
+                asset_name      = asset_name,
+                date_acquired   = parse_date(request.POST.get('date_acquired', '')),
+                tech_specs      = request.POST.get('tech_specs', '').strip() or None,
+                unit_value      = unit_value,
+                quantity        = quantity,
+                total_value     = unit_value * quantity,
+                location        = request.POST.get('location', '').strip() or None,
+                end_user        = request.POST.get('end_user', '').strip() or None,
+                supplier        = request.POST.get('supplier', '').strip() or None,
+                order_no        = request.POST.get('order_no', '').strip() or None,
+                delivery_no     = request.POST.get('delivery_no', '').strip() or None,
+                iar_no          = request.POST.get('iar_no', '').strip() or None,
+                remarks         = request.POST.get('remarks', '').strip() or None,
+                pdf_file        = pdf_file,
+                created_by      = request.user,
+            )
+            messages.success(request, f'Asset "{ics_number} — {asset_name}" saved successfully!')
+            return redirect('it_asset_entry')
+
+    # Generate next ICS number by finding the highest existing number for this year
+    year = datetime.date.today().year
+    prefix = f'ICS-{year}-'
+    last_asset = (
+        PPEAsset.objects
+        .filter(ics_number__startswith=prefix)
+        .order_by('ics_number')
+        .last()
+    )
+    if last_asset:
+        try:
+            last_num = int(last_asset.ics_number.replace(prefix, ''))
+            next_num = last_num + 1
+        except ValueError:
+            next_num = 1
+    else:
+        next_num = 1
+    suggested_ics = f'{prefix}{next_num:03d}'
+
+    assets_qs = PPEAsset.objects.filter(is_active=True)
+    if search_query:
+        assets_qs = assets_qs.filter(
+            Q(ics_number__icontains=search_query) |
+            Q(asset_name__icontains=search_query) |
+            Q(property_number__icontains=search_query) |
+            Q(category__icontains=search_query) |
+            Q(end_user__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+
+    paginator = Paginator(assets_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'page_obj'      : page_obj,
+        'search_query'  : search_query,
+        'total_records' : paginator.count,
+        'category_choices': PPEAsset.CATEGORY_CHOICES,
+        'suggested_ics' : suggested_ics,
+    }
+    return render(request, 'admin/new_asset_entry_form/new_asset_entry_form.html', context)
+
+
+@login_required
+def ppe_asset_edit(request):
+    """Handle PPEAsset update from the Edit modal form."""
+    from .models import PPEAsset
+    from django.shortcuts import get_object_or_404
+    import datetime
+
+    if request.method != 'POST':
+        return redirect('it_asset_entry')
+
+    asset_id = request.POST.get('asset_id', '').strip()
+    asset = get_object_or_404(PPEAsset, pk=asset_id)
+
+    def parse_date(val):
+        try:
+            return datetime.date.fromisoformat(val) if val else None
+        except ValueError:
+            return None
+
+    ics_number = request.POST.get('ics_number', '').strip()
+    asset_name = request.POST.get('asset_name', '').strip()
+
+    if not ics_number or not asset_name:
+        messages.error(request, 'ICS Number and Asset Name are required.')
+        return redirect('it_asset_entry')
+
+    # Reject duplicate ICS number on a different record
+    if PPEAsset.objects.filter(ics_number=ics_number).exclude(pk=asset.pk).exists():
+        messages.error(request, f'ICS Number "{ics_number}" is already used by another asset.')
+        return redirect('it_asset_entry')
+
+    unit_value = float(request.POST.get('unit_value', 0) or 0)
+    quantity   = int(request.POST.get('quantity', 1) or 1)
+
+    asset.ics_number      = ics_number
+    asset.ics_date        = parse_date(request.POST.get('ics_date', ''))
+    asset.property_number = request.POST.get('property_number', '').strip() or None
+    asset.serial_number   = request.POST.get('serial_number', '').strip() or None
+    asset.category        = request.POST.get('category', 'Computer')
+    asset.asset_name      = asset_name
+    asset.date_acquired   = parse_date(request.POST.get('date_acquired', ''))
+    asset.tech_specs      = request.POST.get('tech_specs', '').strip() or None
+    asset.unit_value      = unit_value
+    asset.quantity        = quantity
+    asset.total_value     = unit_value * quantity
+    asset.location        = request.POST.get('location', '').strip() or None
+    asset.end_user        = request.POST.get('end_user', '').strip() or None
+    asset.supplier        = request.POST.get('supplier', '').strip() or None
+    asset.order_no        = request.POST.get('order_no', '').strip() or None
+    asset.delivery_no     = request.POST.get('delivery_no', '').strip() or None
+    asset.iar_no          = request.POST.get('iar_no', '').strip() or None
+    asset.remarks         = request.POST.get('remarks', '').strip() or None
+
+    new_pdf = request.FILES.get('pdf_file')
+    if new_pdf:
+        asset.pdf_file = new_pdf
+
+    asset.save()
+    messages.success(request, f'Asset "{ics_number} — {asset_name}" updated successfully!')
+    return redirect('it_asset_entry')
+
+
+@login_required
+def ppe_asset_delete(request, asset_id):
+    """Hard-delete a PPEAsset and return a JSON response for the AJAX call."""
+    from django.http import JsonResponse
+    from .models import PPEAsset
+    from django.shortcuts import get_object_or_404
+    import os
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed.'}, status=405)
+
+    asset = get_object_or_404(PPEAsset, id=asset_id)
+    ics_number = asset.ics_number
+
+    # Remove uploaded PDF file from disk if it exists
+    if asset.pdf_file:
+        try:
+            if os.path.isfile(asset.pdf_file.path):
+                os.remove(asset.pdf_file.path)
+        except Exception:
+            pass
+
+    asset.delete()
+    return JsonResponse({'success': True, 'message': f'Asset {ics_number} deleted successfully.'})
+
+
+@login_required
+def it_transfer_assignment(request):
+    return render(request, 'admin/transfer_assignment/index.html', {'page_title': 'Transfer/Assignment of Unit'})
+
+
+@login_required
+def it_unit_trail(request):
+    return render(request, 'admin/unit_trail/unit_trail.html', {'page_title': 'Unit Trail'})
+
+
+@login_required
+def it_report_config(request):
+    return render(request, 'admin/report_configuration/report_configuration.html', {'page_title': 'Report Configuration'})

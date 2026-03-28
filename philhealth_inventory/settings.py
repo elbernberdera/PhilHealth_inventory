@@ -135,6 +135,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (user-uploaded content such as PDFs)
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Authentication settings
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'admin_dashboard'

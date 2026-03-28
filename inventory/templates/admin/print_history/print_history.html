@@ -1,0 +1,34 @@
+{% extends 'admin/base/base.html' %}
+{% load static %}
+
+{% block title %}Print History{% endblock title %}
+{% block page_title %}Print History{% endblock page_title %}
+
+{% block main_content %}
+<section class="content" style="
+    background-image: linear-gradient(135deg, rgba(59,255,255,0.20) 0%, rgba(66,228,160,0.20) 100%), url('{% static "image/bg_ph.avif" %}');
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+    border-radius: 16px; padding: 20px;">
+
+  <div class="container-fluid">
+    <div class="row justify-content-center" style="min-height: 60vh; align-items: center;">
+      <div class="col-md-6 text-center">
+        <div class="card" style="border-radius: 20px; background: rgba(255,255,255,0.95); padding: 60px 40px;">
+          <div class="mb-4">
+            <i class="fas fa-print" style="font-size: 5rem; color: #1e5d3f; opacity: 0.8;"></i>
+          </div>
+          <h2 class="font-weight-bold mb-2" style="color: #1e5d3f;">Print History</h2>
+          <p class="text-muted mb-4" style="font-size: 1.1rem;">
+            This feature is currently under development.<br>
+            <strong>Available Soon!</strong>
+          </p>
+          <span class="badge px-4 py-2" style="background:#1e5d3f; color:#fff; font-size: 1rem; border-radius: 20px;">
+            <i class="fas fa-tools mr-2"></i> Coming Soon
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+{% endblock main_content %}
