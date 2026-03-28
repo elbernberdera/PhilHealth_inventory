@@ -6,6 +6,37 @@
     background: rgba(255, 255, 255, 0.15)!important;
     transition: all 0.3s ease;
   }
+
+  /* Keep user panel always visible at top while nav scrolls */
+  .sidebar-user-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: inherit;
+    background: linear-gradient(135deg, rgba(24, 160, 135, 0.95) 0%, rgba(26, 140, 110, 0.95) 100%);
+    padding-bottom: 2px;
+  }
+
+  /* Make only the nav scrollable */
+  .sidebar-nav-scroll {
+    overflow-y: auto;
+    max-height: calc(100vh - 220px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.3) transparent;
+  }
+
+  .sidebar-nav-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-nav-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-nav-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+  }
 </style>
 
 <aside class="main-sidebar sidebar-dark-success elevation-4" style="
@@ -22,18 +53,26 @@
       </a>
 
       <!-- Sidebar -->
-      <div class="sidebar" style="color: #000!important;">
-        <!-- Sidebar user panel (optional) -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-          <div class="image">
-           
-          </div>
-        <div class="info">
-            <a href="#" class="d-block" style="color: #f0eeee!important;">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+      <div class="sidebar" style="color: #000!important; overflow: hidden;">
+
+        <!-- Sticky user panel — always visible -->
+        <div class="sidebar-user-sticky">
+          <div class="user-panel d-flex align-items-center mb-0"
+               style="padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+            <i class="fas fa-user-circle fa-2x mr-2" style="color: rgba(255,255,255,0.85); flex-shrink:0;"></i>
+            <div>
+              <a href="#" class="d-block" style="color: #f0eeee!important; font-weight: 600; font-size: 0.9rem; line-height: 1.2;">
+                {{ request.user.first_name }} {{ request.user.last_name }}
+              </a>
+              <small style="color: rgba(255,255,255,0.65); font-size: 0.75rem;">
+                {% if request.user.is_superuser %}Admin{% else %}Staff{% endif %}
+              </small>
+            </div>
           </div>
         </div>
 
-        <!-- Sidebar Menu -->
+        <!-- Scrollable nav menu -->
+        <div class="sidebar-nav-scroll">
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <li class="nav-item">
@@ -74,9 +113,85 @@
                 <p>Master Inventory</p>
               </a>
             </li>
+
+
+
+
+
+            <!-- Physical Inventory for Property , Plant & Equipment (PPE) -->
+            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}menu-open{% endif %}">
+              <a href="#"
+                class="nav-link {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}text-dark{% endif %}"
+                style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}background: #1e5d3f!important;{% endif %}">
+                <i class="nav-icon fas fa-boxes" style="color: #fbf8f8!important;"></i>
+                <p style="line-height: 1.2;">
+                  Physical Inventory
+                  <br><span style="font-size: 0.72em; opacity: 0.85;">Property, Plant & Equipment (PPE)</span>
+                  <i class="fas fa-angle-left right"></i>
+                </p>
+              </a>
+
+              
+               
+
+
+
+
+
+
+              <ul class="nav nav-treeview" style="padding-left: 15px;">
+
+                <!-- Property, Plant & Equipment -->
+                <!-- <li class="nav-item">
+                  <a href="#"
+                    class="nav-link"
+                    style="color: #fdfafa!important;">
+                    <i class="fas fa-building nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>Property, Plant &amp; Equipment</p>
+                  </a>
+                </li> -->
+
+                <li class="nav-item">
+                  <a href="{% url 'it_asset_entry' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'it_asset_entry' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_asset_entry' %}background: #1e5d3f!important;{% endif %}">
+                    <i class="fas fa-file-upload nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>New Asset Entry Form</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'it_transfer_assignment' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'it_transfer_assignment' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_transfer_assignment' %}background: #1e5d3f!important;{% endif %}">
+                    <i class="fas fa-exchange-alt nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p style="line-height: 1.3;">Transfer/Assignment<br><span style="font-size: 0.8em;">of Unit</span></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'it_unit_trail' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'it_unit_trail' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_unit_trail' %}background: #1e5d3f!important;{% endif %}">
+                    <i class="fas fa-route nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>Unit Trail</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'it_report_config' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'it_report_config' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_report_config' %}background: #1e5d3f!important;{% endif %}">
+                    <i class="fas fa-cogs nav-icon" style="color: #fbf8f8!important;"></i>
+                    <p>Report Configuration</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            
+            
              <!-- history -->
-                <li class="nav-item has-treeview">
-                  <a href="#" class="nav-link" style="color: #fdfafa!important;">
+                <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}menu-open{% endif %}">
+                  <a href="#"
+                    class="nav-link {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}background: #1e5d3f!important;{% endif %}">
                     <i class="nav-icon fas fa-history" style="color: #fbf8f8!important;"></i>
                     <p>
                       History
@@ -87,20 +202,23 @@
                     <li class="nav-item">
                       <a href="{% url 'requested_supplies_history' %}"
                         class="nav-link {% if request.resolver_match.url_name == 'requested_supplies_history' %}text-dark{% endif %}"
-                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies_history' %}background: #1e5d3f!important;{% endif %}"
-                        id="requested-supplies-history-link">
+                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies_history' %}background: #1e5d3f!important;{% endif %}">
                         <i class="far fa-file-pdf nav-icon" style="color: #fbf8f8!important;"></i>
                         <p>Requested History</p>
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a href="#" class="nav-link" style="color: #fdfafa!important;" id="print-history-link">
+                      <a href="{% url 'print_history' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'print_history' %}text-dark{% endif %}"
+                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'print_history' %}background: #1e5d3f!important;{% endif %}">
                         <i class="fas fa-print nav-icon" style="color: #fbf8f8!important;"></i>
                         <p>Print History</p>
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a href="#" class="nav-link" style="color: #fdfafa!important;" id="activity-log-link">
+                      <a href="{% url 'activity_log' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'activity_log' %}text-dark{% endif %}"
+                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'activity_log' %}background: #1e5d3f!important;{% endif %}">
                         <i class="fas fa-clipboard-list nav-icon" style="color: #fbf8f8!important;"></i>
                         <p>Activity Log</p>
                       </a>
@@ -121,6 +239,8 @@
           </ul>
         </nav>
         <!-- /.sidebar-menu -->
+        </div>
+        <!-- /.sidebar-nav-scroll -->
       </div>
       <!-- /.sidebar -->
     </aside>

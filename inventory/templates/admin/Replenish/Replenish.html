@@ -158,10 +158,19 @@ Replenish/Add New Item
                 <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
             </div>
         </div>
+        <div class="mb-5"></div>
 
-        <!-- Search Bar -->
-        <div class="row mb-3">
-            <div class="col-md-6 ml-auto">
+        <!-- Search Bar + Action Buttons (same row) -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-supplies-btn">
+                    <i class="fas fa-plus mr-1"></i>Add new supplies
+                </button>
+                <button type="button" class="btn btn-success btn-sm" id="add-new-main-category-btn">
+                    <i class="fas fa-plus mr-1"></i>add Main category
+                </button>
+            </div>
+            <div class="col-md-6">
                 <div class="input-group">
                     <input type="text" class="form-control" id="search-requested" placeholder="Search...">
                     <div class="input-group-append">
@@ -170,21 +179,6 @@ Replenish/Add New Item
                         </span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="mb-5"></div>
-
-
-        <!-- Action Buttons -->
-        <div class="row mb-3">
-            <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-supplies-btn">
-                    <i class="fas fa-plus mr-1"></i>Add new supplies
-                </button>
-                <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-main-category-btn">
-                    <i class="fas fa-plus mr-1"></i>add Main category
-                </button>
             </div>
         </div>
 
@@ -287,7 +281,7 @@ Replenish/Add New Item
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
-                                                    <div class="btn-group" role="group">
+                                                    <div class="d-flex" style="gap: 4px;">
                                                         <button type="button"
                                                             class="btn btn-sm btn-success add-stock-btn"
                                                             data-supply-id="{{ supply.id }}" title="Add Stock">
@@ -423,7 +417,7 @@ Replenish/Add New Item
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
-                                                    <div class="btn-group" role="group">
+                                                    <div class="d-flex" style="gap: 4px;">
                                                         <button type="button"
                                                             class="btn btn-sm btn-success add-stock-btn"
                                                             data-supply-id="{{ supply.id }}" title="Add Stock">
@@ -522,7 +516,7 @@ Replenish/Add New Item
                                                 </td>
                                                 <td>₱{{ supply.total_cost|floatformat:2 }}</td>
                                                 <td>
-                                                    <div class="btn-group" role="group">
+                                                    <div class="d-flex" style="gap: 4px;">
                                                         <button type="button"
                                                             class="btn btn-sm btn-info view-supply-details-btn"
                                                             data-supply-id="{{ supply.id }}" title="View Details">

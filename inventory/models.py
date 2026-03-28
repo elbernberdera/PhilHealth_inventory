@@ -368,3 +368,75 @@ class BinCardNotedBy(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PPEAsset(models.Model):
+    """Property, Plant & Equipment (PPE) asset record — ICS-based"""
+
+    CATEGORY_CHOICES = [
+        ('Computer', 'Computer'),
+        ('Printer', 'Printer'),
+        ('Scanner', 'Scanner'),
+        ('Furniture', 'Furniture'),
+        ('Office Equipment', 'Office Equipment'),
+        ('Vehicle', 'Vehicle'),
+        ('Communication Equipment', 'Communication Equipment'),
+        ('Other', 'Other'),
+    ]
+
+    # ICS Information
+    ics_number   = models.CharField(max_length=50, unique=True, verbose_name="ICS Number")
+    ics_date     = models.DateField(blank=True, null=True, verbose_name="ICS Date")
+
+    # Asset Identification
+    property_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="Property Number")
+    serial_number   = models.CharField(max_length=150, blank=True, null=True, verbose_name="Serial Number")
+    category        = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='Computer', verbose_name="Category")
+    asset_name      = models.CharField(max_length=200, verbose_name="Asset Name")
+    date_acquired   = models.DateField(blank=True, null=True, verbose_name="Date Acquired")
+    tech_specs      = models.TextField(blank=True, null=True, verbose_name="Technical Specifications")
+
+    # Value Details
+    unit_value  = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Unit Value (₱)")
+    quantity    = models.IntegerField(default=1, verbose_name="Quantity")
+    total_value = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Total Value (₱)")
+
+    # Location & Responsibility
+    location = models.CharField(max_length=150, blank=True, null=True, verbose_name="Location")
+    end_user = models.CharField(max_length=200, blank=True, null=True, verbose_name="End User")
+    supplier = models.CharField(max_length=200, blank=True, null=True, verbose_name="Supplier")
+
+    # Transaction Information
+    order_no    = models.CharField(max_length=100, blank=True, null=True, verbose_name="Order No")
+    delivery_no = models.CharField(max_length=100, blank=True, null=True, verbose_name="Delivery No")
+    iar_no      = models.CharField(max_length=100, blank=True, null=True, verbose_name="IAR No")
+    remarks     = models.TextField(blank=True, null=True, verbose_name="Remarks")
+
+    # Attached Document
+    pdf_file = models.FileField(
+        upload_to='ppe_assets/pdf/',
+        blank=True, null=True,
+        verbose_name="Uploaded PDF",
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='created_ppe_assets',
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "PPE Asset"
+        verbose_name_plural = "PPE Assets"
+        db_table = "ppe_assets_tbl"
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        self.total_value = self.unit_value * self.quantity
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.ics_number} — {self.asset_name}"

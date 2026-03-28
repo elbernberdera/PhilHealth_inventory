@@ -1,0 +1,1310 @@
+{% extends 'admin/base/base.html' %}
+{% load static %}
+
+{% block title %}New Asset Entry Form{% endblock title %}
+{% block page_title %}Physical Inventory — New Asset Entry Form{% endblock page_title %}
+
+{% block main_content %}
+<style>
+    #asset-table {
+        font-size: 0.875rem;
+    }
+
+    #asset-table th,
+    #asset-table td {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+
+    #asset-table .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Tab styling — active green, inactive black (mirrors Replenish) */
+    #asset-tabs .nav-link {
+        color: #000000 !important;
+        background-color: transparent;
+        border-color: transparent;
+        font-weight: 500;
+    }
+
+    #asset-tabs .nav-link:hover {
+        color: #28a745 !important;
+        border-color: transparent;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    #asset-tabs .nav-link.active {
+        color: #28a745 !important;
+        background-color: #ffffff;
+        border-color: #28a745 #28a745 #ffffff;
+        border-bottom-color: transparent;
+        font-weight: 600;
+    }
+
+    #asset-tabs .nav-link.active:hover {
+        color: #28a745 !important;
+        border-color: #28a745 #28a745 #ffffff;
+    }
+
+    .card.card-outline.card-success {
+        border-top: 3px solid #28a745 !important;
+    }
+
+    .card.card-outline.card-success .card-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .dataTables_info {
+        padding-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .dataTables_paginate {
+        padding-top: 0.25rem;
+    }
+
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        color: #28a745;
+        border-color: #dee2e6;
+    }
+
+    .pagination .page-link:hover {
+        color: #1e7e34;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: #ffffff;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+
+    /* Keep modal footer always visible — body scrolls independently */
+    #addAssetModal .modal-dialog,
+    #editAssetModal .modal-dialog {
+        max-height: 90vh;
+        margin: 5vh auto;
+    }
+
+    #addAssetModal .modal-content,
+    #editAssetModal .modal-content {
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #addAssetModal .modal-body,
+    #editAssetModal .modal-body {
+        overflow-y: auto;
+        flex: 1 1 auto;
+        max-height: calc(90vh - 130px);
+    }
+
+    #addAssetModal .modal-footer,
+    #editAssetModal .modal-footer {
+        flex-shrink: 0;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                {% if message.tags == "error" %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+                {% elif message.tags == "success" %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+                {% else %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+       <!-- Header Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h2 class="mb-0">New Asset Entry</h2>
+                <p class="mb-0">Welcome! {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: bold;" id="current-date"></p>
+            </div>
+        </div>
+
+        <div class="mb-5"></div>
+
+        <!-- Search Bar + Action Button (same row) -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success btn-sm" id="add-asset-btn">
+                    <i class="fas fa-plus mr-1"></i>Add New Item
+                </button>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-asset" placeholder="Search...">
+                    <div class="input-group-append">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-success mt-3">
+                    <div class="card-header p-0">
+                        <ul class="nav nav-tabs" id="asset-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" id="all-assets-tab" data-toggle="tab"
+                                    href="#all-assets" role="tab" aria-controls="all-assets" aria-selected="true">
+                                    <i class="fas fa-list mr-1"></i>All Assets
+                                    {% if page_obj.paginator.count > 0 %}
+                                    <span class="badge badge-primary ml-1">{{ page_obj.paginator.count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="tab-content" id="asset-tab-content">
+                            <!-- All Assets Tab -->
+                            <div class="tab-pane fade show active" id="all-assets" role="tabpanel"
+                                aria-labelledby="all-assets-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover"
+                                        id="asset-table" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>ICS</th>
+                                                <th>Property No</th>
+                                                <th>Asset Name</th>
+                                                <th>Category</th>
+                                                <th>Qty</th>
+                                                <th>Unit Value</th>
+                                                <th>Total Value</th>
+                                                <th>End User</th>
+                                                <th>Location</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="all-assets-table">
+                                            {% for asset in page_obj %}
+                                            <tr data-asset-id="{{ asset.id }}"
+                                                data-ics-number="{{ asset.ics_number }}"
+                                                data-ics-date="{{ asset.ics_date|date:'Y-m-d'|default:'' }}"
+                                                data-property-number="{{ asset.property_number|default:'' }}"
+                                                data-serial-number="{{ asset.serial_number|default:'' }}"
+                                                data-category="{{ asset.category }}"
+                                                data-asset-name="{{ asset.asset_name }}"
+                                                data-date-acquired="{{ asset.date_acquired|date:'Y-m-d'|default:'' }}"
+                                                data-tech-specs="{{ asset.tech_specs|default:'' }}"
+                                                data-unit-value="{{ asset.unit_value }}"
+                                                data-quantity="{{ asset.quantity }}"
+                                                data-total-value="{{ asset.total_value }}"
+                                                data-location="{{ asset.location|default:'' }}"
+                                                data-end-user="{{ asset.end_user|default:'' }}"
+                                                data-supplier="{{ asset.supplier|default:'' }}"
+                                                data-order-no="{{ asset.order_no|default:'' }}"
+                                                data-delivery-no="{{ asset.delivery_no|default:'' }}"
+                                                data-iar-no="{{ asset.iar_no|default:'' }}"
+                                                data-remarks="{{ asset.remarks|default:'' }}"
+                                                data-pdf-url="{% if asset.pdf_file %}{{ asset.pdf_file.url }}{% endif %}">
+                                                <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                                <td>{{ asset.ics_number }}</td>
+                                                <td>{{ asset.property_number|default:"—" }}</td>
+                                                <td>{{ asset.asset_name }}</td>
+                                                <td>{{ asset.category }}</td>
+                                                <td>{{ asset.quantity }}</td>
+                                                <td>₱{{ asset.unit_value|floatformat:2 }}</td>
+                                                <td>₱{{ asset.total_value|floatformat:2 }}</td>
+                                                <td>{{ asset.end_user|default:"—" }}</td>
+                                                <td>{{ asset.location|default:"—" }}</td>
+                                                <td>
+                                                    <div class="d-flex" style="gap: 4px;">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-info view-asset-btn"
+                                                            data-asset-id="{{ asset.id }}" title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary edit-asset-btn"
+                                                            data-asset-id="{{ asset.id }}" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-danger delete-asset-btn"
+                                                            data-asset-id="{{ asset.id }}"
+                                                            data-delete-url="{% url 'ppe_asset_delete' asset.id %}"
+                                                            title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="empty-database-row">
+                                                <td colspan="11" class="text-center text-muted py-4">
+                                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                    No assets recorded yet
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <!-- No matching row (hidden by default) -->
+                                            <tr class="no-matching-row" style="display: none;">
+                                                <td colspan="11" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                                                    No matching results found
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="row mt-3">
+                                    <div class="col-sm-12 col-md-5">
+                                        <div class="dataTables_info" id="all-assets-info" role="status"
+                                            aria-live="polite">
+                                            Showing <span id="all-assets-start">0</span> to
+                                            <span id="all-assets-end">0</span> of
+                                            <span id="all-assets-total">0</span> entries
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 col-md-7">
+                                        <div class="dataTables_paginate paging_simple_numbers float-right"
+                                            id="all-assets-pagination">
+                                            <ul class="pagination">
+                                                <li class="paginate_button page-item previous disabled"
+                                                    id="all-assets-prev">
+                                                    <a href="#" class="page-link">Previous</a>
+                                                </li>
+                                                <!-- Page numbers injected by JS -->
+                                                <li class="paginate_button page-item next disabled"
+                                                    id="all-assets-next">
+                                                    <a href="#" class="page-link">Next</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== ADD ASSET MODAL ===== -->
+<div class="modal fade" id="addAssetModal" tabindex="-1" role="dialog"
+    aria-labelledby="addAssetModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="addAssetModalLabel">
+                    <i class="fas fa-plus-circle mr-2"></i>Add New Asset
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'it_asset_entry' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save">
+
+                <div class="modal-body">
+
+                    <!-- ICS Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-file-invoice mr-2"></i>ICS Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>ICS Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="ics_number" class="form-control"
+                                            value="{{ suggested_ics }}" required readonly
+                                            placeholder="e.g. ICS-2026-001">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>ICS Date</label>
+                                        <input type="date" name="ics_date" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asset Identification -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-tag mr-2"></i>Asset Identification</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Property Number</label>
+                                        <input type="text" name="property_number" class="form-control"
+                                            placeholder="e.g. PROP-2026-001">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Serial Number</label>
+                                        <input type="text" name="serial_number" class="form-control"
+                                            placeholder="Serial / Tag No">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        <select name="category" class="form-control">
+                                            {% for val, label in category_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>Asset Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="asset_name" class="form-control" required
+                                            placeholder="e.g. Desktop Computer, Laptop, Printer…">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Date Acquired</label>
+                                        <input type="date" name="date_acquired" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Technical Specifications</label>
+                                <textarea name="tech_specs" class="form-control" rows="2"
+                                    placeholder="Processor, RAM, Storage, OS, or other specs…"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Value Details -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-peso-sign mr-2"></i>Value Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Unit Value (₱)</label>
+                                        <input type="number" name="unit_value" id="unit_value"
+                                            class="form-control" step="0.01" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Quantity</label>
+                                        <input type="number" name="quantity" id="qty_input"
+                                            class="form-control" min="1" value="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Total Value (₱)</label>
+                                        <input type="text" id="total_value_display" class="form-control"
+                                            value="0.00" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location & Responsibility -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-map-marker-alt mr-2"></i>Location &amp; Responsibility</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Location</label>
+                                        <input type="text" name="location" class="form-control"
+                                            placeholder="Room / Office">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>End User</label>
+                                        <input type="text" name="end_user" class="form-control"
+                                            placeholder="Assigned person">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Supplier</label>
+                                        <input type="text" name="supplier" class="form-control"
+                                            placeholder="Supplier name">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-receipt mr-2"></i>Transaction Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Order No</label>
+                                        <input type="text" name="order_no" class="form-control"
+                                            placeholder="Purchase Order No">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Delivery No</label>
+                                        <input type="text" name="delivery_no" class="form-control"
+                                            placeholder="Delivery Receipt No">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>IAR No</label>
+                                        <input type="text" name="iar_no" class="form-control"
+                                            placeholder="Inspection & Acceptance Report No">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Remarks</label>
+                                <textarea name="remarks" class="form-control" rows="2"
+                                    placeholder="Additional notes…"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload PDF -->
+                    <div class="form-group">
+                        <label><i class="fas fa-file-pdf mr-1 text-danger"></i>Upload PDF</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="upload-pdf" name="pdf_file"
+                                accept=".pdf">
+                            <label class="custom-file-label" for="upload-pdf">Choose file…</label>
+                        </div>
+                        <small class="form-text text-muted">Accepted format: PDF only.</small>
+                    </div>
+
+                </div><!-- end modal-body -->
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" name="modal_action" value="save"
+                        class="btn btn-success">
+                        <i class="fas fa-save mr-1"></i>Save Asset
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VIEW ASSET MODAL ===== -->
+<div class="modal fade" id="viewAssetModal" tabindex="-1" role="dialog"
+    aria-labelledby="viewAssetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewAssetModalLabel">
+                    <i class="fas fa-info-circle mr-2"></i>Asset Details
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Left column -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-file-invoice mr-2"></i>ICS &amp; Identification</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <dl class="row mb-0" style="font-size:0.875rem;">
+                                    <dt class="col-sm-5">ICS Number:</dt>
+                                    <dd class="col-sm-7" id="view-ics-number">—</dd>
+                                    <dt class="col-sm-5">ICS Date:</dt>
+                                    <dd class="col-sm-7" id="view-ics-date">—</dd>
+                                    <dt class="col-sm-5">Property No:</dt>
+                                    <dd class="col-sm-7" id="view-property-no">—</dd>
+                                    <dt class="col-sm-5">Serial No:</dt>
+                                    <dd class="col-sm-7" id="view-serial-no">—</dd>
+                                    <dt class="col-sm-5">Category:</dt>
+                                    <dd class="col-sm-7" id="view-category">—</dd>
+                                    <dt class="col-sm-5">Asset Name:</dt>
+                                    <dd class="col-sm-7" id="view-asset-name">—</dd>
+                                    <dt class="col-sm-5">Date Acquired:</dt>
+                                    <dd class="col-sm-7" id="view-date-acquired">—</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-microchip mr-2"></i>Technical Specifications</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <p id="view-tech-specs" class="mb-0" style="font-size:0.875rem; white-space:pre-wrap;">—</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-peso-sign mr-2"></i>Value &amp; Location</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <dl class="row mb-0" style="font-size:0.875rem;">
+                                    <dt class="col-sm-5">Unit Value:</dt>
+                                    <dd class="col-sm-7" id="view-unit-value">—</dd>
+                                    <dt class="col-sm-5">Quantity:</dt>
+                                    <dd class="col-sm-7" id="view-quantity">—</dd>
+                                    <dt class="col-sm-5">Total Value:</dt>
+                                    <dd class="col-sm-7" id="view-total-value">—</dd>
+                                    <dt class="col-sm-5">Location:</dt>
+                                    <dd class="col-sm-7" id="view-location">—</dd>
+                                    <dt class="col-sm-5">End User:</dt>
+                                    <dd class="col-sm-7" id="view-end-user">—</dd>
+                                    <dt class="col-sm-5">Supplier:</dt>
+                                    <dd class="col-sm-7" id="view-supplier">—</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-receipt mr-2"></i>Transaction</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <dl class="row mb-0" style="font-size:0.875rem;">
+                                    <dt class="col-sm-5">Order No:</dt>
+                                    <dd class="col-sm-7" id="view-order-no">—</dd>
+                                    <dt class="col-sm-5">Delivery No:</dt>
+                                    <dd class="col-sm-7" id="view-delivery-no">—</dd>
+                                    <dt class="col-sm-5">IAR No:</dt>
+                                    <dd class="col-sm-7" id="view-iar-no">—</dd>
+                                    <dt class="col-sm-5">Remarks:</dt>
+                                    <dd class="col-sm-7" id="view-remarks">—</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3" id="view-pdf-card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-file-pdf mr-2 text-danger"></i>Uploaded PDF</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <a id="view-pdf-link" href="#" download
+                                    class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-download mr-1"></i>Download PDF
+                                </a>
+                                <span id="view-pdf-none" class="text-muted" style="font-size:0.875rem;">No PDF attached.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== EDIT ASSET MODAL ===== -->
+<div class="modal fade" id="editAssetModal" tabindex="-1" role="dialog"
+    aria-labelledby="editAssetModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="editAssetModalLabel">
+                    <i class="fas fa-edit mr-2"></i>Edit Asset
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'ppe_asset_edit' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="asset_id" id="edit-asset-id">
+
+                <div class="modal-body">
+
+                    <!-- ICS Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-file-invoice mr-2"></i>ICS Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>ICS Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="ics_number" id="edit-ics-number"
+                                            class="form-control" required readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>ICS Date</label>
+                                        <input type="date" name="ics_date" id="edit-ics-date" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asset Identification -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-tag mr-2"></i>Asset Identification</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Property Number</label>
+                                        <input type="text" name="property_number" id="edit-property-number"
+                                            class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Serial Number</label>
+                                        <input type="text" name="serial_number" id="edit-serial-number"
+                                            class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        <select name="category" id="edit-category" class="form-control">
+                                            {% for val, label in category_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>Asset Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="asset_name" id="edit-asset-name"
+                                            class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Date Acquired</label>
+                                        <input type="date" name="date_acquired" id="edit-date-acquired"
+                                            class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Technical Specifications</label>
+                                <textarea name="tech_specs" id="edit-tech-specs"
+                                    class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Value Details -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-peso-sign mr-2"></i>Value Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Unit Value (₱)</label>
+                                        <input type="number" name="unit_value" id="edit-unit-value"
+                                            class="form-control" step="0.01" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Quantity</label>
+                                        <input type="number" name="quantity" id="edit-qty"
+                                            class="form-control" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Total Value (₱)</label>
+                                        <input type="text" id="edit-total-display"
+                                            class="form-control" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location & Responsibility -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-map-marker-alt mr-2"></i>Location &amp; Responsibility</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Location</label>
+                                        <input type="text" name="location" id="edit-location" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>End User</label>
+                                        <input type="text" name="end_user" id="edit-end-user" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Supplier</label>
+                                        <input type="text" name="supplier" id="edit-supplier" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-receipt mr-2"></i>Transaction Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Order No</label>
+                                        <input type="text" name="order_no" id="edit-order-no" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Delivery No</label>
+                                        <input type="text" name="delivery_no" id="edit-delivery-no" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>IAR No</label>
+                                        <input type="text" name="iar_no" id="edit-iar-no" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Remarks</label>
+                                <textarea name="remarks" id="edit-remarks" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload PDF -->
+                    <div class="form-group">
+                        <label><i class="fas fa-file-pdf mr-1 text-danger"></i>Replace PDF (optional)</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="edit-upload-pdf"
+                                name="pdf_file" accept=".pdf">
+                            <label class="custom-file-label" for="edit-upload-pdf">Choose file…</label>
+                        </div>
+                        <small class="form-text text-muted">Leave blank to keep the existing PDF.</small>
+                    </div>
+
+                </div><!-- end modal-body -->
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i>Update Asset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- SweetAlert2 -->
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script>
+    $(document).ready(function () {
+
+        // Fix aria-hidden warning
+        $(document).on('shown.bs.modal', '.modal', function () {
+            $('.wrapper').removeAttr('aria-hidden');
+        });
+
+        // Display current date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            $('#current-date').text(now.toLocaleDateString('en-US', options));
+        }
+        updateCurrentDate();
+
+        // Auto-dismiss alerts
+        setTimeout(function () {
+            $('.alert').fadeOut('slow', function () { $(this).remove(); });
+        }, 5000);
+
+        // Open Add Asset modal
+        $('#add-asset-btn').on('click', function () {
+            $('#addAssetModal').modal('show');
+        });
+
+        // Clear form on modal close
+        $('#addAssetModal').on('hidden.bs.modal', function () {
+            $(this).find('form')[0].reset();
+            recalcTotal();
+        });
+
+        // Auto-calculate Total Value
+        function recalcTotal() {
+            const unit = parseFloat($('#unit_value').val()) || 0;
+            const qty  = parseInt($('#qty_input').val()) || 1;
+            $('#total_value_display').val(
+                (unit * qty).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            );
+        }
+        $('#unit_value, #qty_input').on('input', recalcTotal);
+
+        // ===== SEARCH (client-side, mirrors Replenish) =====
+        $('#search-asset').on('keyup', function () {
+            const term = $(this).val().toLowerCase().trim();
+            const rows = $('#all-assets-table tr').not('.empty-database-row, .no-matching-row');
+            const noMatch = $('#all-assets-table .no-matching-row');
+            const emptyRow = $('#all-assets-table .empty-database-row');
+            let visible = 0;
+
+            if (term.length > 0) {
+                emptyRow.hide();
+            } else {
+                emptyRow.show();
+                noMatch.hide();
+            }
+
+            rows.each(function () {
+                const text = $(this).text().toLowerCase();
+                if (term.length === 0 || text.indexOf(term) !== -1) {
+                    $(this).show();
+                    visible++;
+                } else {
+                    $(this).hide();
+                }
+            });
+
+            noMatch.toggle(term.length > 0 && visible === 0);
+
+            // Refresh pagination counts after search
+            setTimeout(refreshPaginationAfterSearch, 50);
+        });
+
+        // ===== PAGINATION (mirrors Replenish) =====
+        const pageConf = { rowsPerPage: 10, currentPage: 1, totalRows: 0, totalPages: 0 };
+
+        function initializePagination() {
+            const rows = $('#all-assets-table tr').not('.empty-database-row, .no-matching-row');
+            pageConf.totalRows  = rows.length;
+            pageConf.totalPages = Math.ceil(pageConf.totalRows / pageConf.rowsPerPage);
+            pageConf.currentPage = 1;
+            renderPagination();
+            displayPage(1);
+        }
+
+        function displayPage(pageNumber) {
+            pageConf.currentPage = pageNumber;
+            const rows = $('#all-assets-table tr').not('.empty-database-row, .no-matching-row');
+            rows.hide();
+
+            const start = (pageNumber - 1) * pageConf.rowsPerPage;
+            const end   = start + pageConf.rowsPerPage;
+
+            rows.slice(start, end).each(function (idx) {
+                $(this).show();
+                $(this).find('td:first').text(start + idx + 1);
+            });
+
+            const displayStart = pageConf.totalRows > 0 ? start + 1 : 0;
+            const displayEnd   = Math.min(end, pageConf.totalRows);
+            $('#all-assets-start').text(displayStart);
+            $('#all-assets-end').text(displayEnd);
+            $('#all-assets-total').text(pageConf.totalRows);
+
+            updatePaginationButtons();
+        }
+
+        function renderPagination() {
+            const list = $('#all-assets-pagination ul');
+            const next = $('#all-assets-next');
+            list.find('.page-number').remove();
+
+            for (let i = 1; i <= pageConf.totalPages; i++) {
+                const li = $('<li>').addClass('paginate_button page-item page-number').attr('data-page', i);
+                const a  = $('<a>').addClass('page-link').attr('href', '#').text(i);
+                li.append(a).insertBefore(next);
+            }
+            updatePaginationButtons();
+        }
+
+        function updatePaginationButtons() {
+            $('#all-assets-prev').toggleClass('disabled', pageConf.currentPage === 1);
+            $('#all-assets-next').toggleClass(
+                'disabled',
+                pageConf.currentPage === pageConf.totalPages || pageConf.totalPages === 0
+            );
+            $('.page-number').removeClass('active');
+            $('.page-number[data-page="' + pageConf.currentPage + '"]').addClass('active');
+        }
+
+        function refreshPaginationAfterSearch() {
+            const visibleRows = $('#all-assets-table tr:visible').not('.empty-database-row, .no-matching-row');
+            pageConf.totalRows  = visibleRows.length;
+            pageConf.totalPages = Math.ceil(pageConf.totalRows / pageConf.rowsPerPage);
+            pageConf.currentPage = 1;
+            renderPagination();
+
+            // Re-number visible rows
+            visibleRows.each(function (idx) { $(this).find('td:first').text(idx + 1); });
+            const displayEnd = Math.min(pageConf.rowsPerPage, pageConf.totalRows);
+            $('#all-assets-start').text(pageConf.totalRows > 0 ? 1 : 0);
+            $('#all-assets-end').text(displayEnd);
+            $('#all-assets-total').text(pageConf.totalRows);
+            updatePaginationButtons();
+        }
+
+        $(document).on('click', '#all-assets-prev', function (e) {
+            e.preventDefault();
+            if (pageConf.currentPage > 1) displayPage(pageConf.currentPage - 1);
+        });
+
+        $(document).on('click', '#all-assets-next', function (e) {
+            e.preventDefault();
+            if (pageConf.currentPage < pageConf.totalPages) displayPage(pageConf.currentPage + 1);
+        });
+
+        $(document).on('click', '.page-number', function (e) {
+            e.preventDefault();
+            displayPage(parseInt($(this).attr('data-page')));
+        });
+
+        initializePagination();
+
+        // ===== VIEW ASSET DETAILS (reads all data-* attributes) =====
+        $(document).on('click', '.view-asset-btn', function () {
+            const row = $(this).closest('tr');
+            const d   = row.data();
+
+            $('#view-ics-number').text(d.icsNumber   || '—');
+            $('#view-ics-date').text(d.icsDate        || '—');
+            $('#view-property-no').text(d.propertyNumber || '—');
+            $('#view-serial-no').text(d.serialNumber  || '—');
+            $('#view-category').text(d.category       || '—');
+            $('#view-asset-name').text(d.assetName    || '—');
+            $('#view-date-acquired').text(d.dateAcquired || '—');
+            $('#view-tech-specs').text(d.techSpecs    || '—');
+            $('#view-unit-value').text('₱' + parseFloat(d.unitValue || 0).toLocaleString('en-PH', {minimumFractionDigits:2}));
+            $('#view-quantity').text(d.quantity       || '—');
+            $('#view-total-value').text('₱' + parseFloat(d.totalValue || 0).toLocaleString('en-PH', {minimumFractionDigits:2}));
+            $('#view-location').text(d.location       || '—');
+            $('#view-end-user').text(d.endUser        || '—');
+            $('#view-supplier').text(d.supplier       || '—');
+            $('#view-order-no').text(d.orderNo        || '—');
+            $('#view-delivery-no').text(d.deliveryNo  || '—');
+            $('#view-iar-no').text(d.iarNo            || '—');
+            $('#view-remarks').text(d.remarks         || '—');
+
+            // PDF attachment — set href + download filename to force save to disk
+            if (d.pdfUrl) {
+                const pdfFilename = d.pdfUrl.split('/').pop() || 'asset.pdf';
+                $('#view-pdf-link')
+                    .attr('href', d.pdfUrl)
+                    .attr('download', pdfFilename)
+                    .show();
+                $('#view-pdf-none').hide();
+            } else {
+                $('#view-pdf-link').hide();
+                $('#view-pdf-none').show();
+            }
+
+            $('#viewAssetModal').modal('show');
+        });
+
+        // ===== EDIT ASSET (pre-fill form from data-* attributes) =====
+        $(document).on('click', '.edit-asset-btn', function () {
+            const row = $(this).closest('tr');
+            const d   = row.data();
+
+            $('#edit-asset-id').val(d.assetId);
+            $('#edit-ics-number').val(d.icsNumber       || '');
+            $('#edit-ics-date').val(d.icsDate            || '');
+            $('#edit-property-number').val(d.propertyNumber || '');
+            $('#edit-serial-number').val(d.serialNumber  || '');
+            $('#edit-category').val(d.category           || '');
+            $('#edit-asset-name').val(d.assetName        || '');
+            $('#edit-date-acquired').val(d.dateAcquired  || '');
+            $('#edit-tech-specs').val(d.techSpecs        || '');
+            $('#edit-unit-value').val(parseFloat(d.unitValue || 0).toFixed(2));
+            $('#edit-qty').val(d.quantity                || 1);
+            $('#edit-total-display').val(parseFloat(d.totalValue || 0).toFixed(2));
+            $('#edit-location').val(d.location           || '');
+            $('#edit-end-user').val(d.endUser            || '');
+            $('#edit-supplier').val(d.supplier           || '');
+            $('#edit-order-no').val(d.orderNo            || '');
+            $('#edit-delivery-no').val(d.deliveryNo      || '');
+            $('#edit-iar-no').val(d.iarNo                || '');
+            $('#edit-remarks').val(d.remarks             || '');
+            $('#edit-upload-pdf').next('.custom-file-label').text('Choose file…');
+
+            $('#editAssetModal').modal('show');
+        });
+
+        // Auto-calc total in edit modal
+        $('#edit-unit-value, #edit-qty').on('input', function () {
+            const unit = parseFloat($('#edit-unit-value').val()) || 0;
+            const qty  = parseInt($('#edit-qty').val()) || 1;
+            $('#edit-total-display').val((unit * qty).toFixed(2));
+        });
+
+        // Custom file label for edit modal
+        $('#edit-upload-pdf').on('change', function () {
+            const fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').text(fileName || 'Choose file…');
+        });
+
+        // Clear edit modal on close
+        $('#editAssetModal').on('hidden.bs.modal', function () {
+            $(this).find('form')[0].reset();
+            $('#edit-total-display').val('');
+        });
+
+        // ===== DELETE ASSET =====
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        $(document).on('click', '.delete-asset-btn', function () {
+            const btn       = $(this);
+            const row       = btn.closest('tr');
+            const deleteUrl = btn.data('delete-url');
+            const ics       = row.find('td:eq(1)').text().trim();
+            const name      = row.find('td:eq(3)').text().trim();
+
+            Swal.fire({
+                title: 'Delete Asset?',
+                html: `Are you sure you want to delete<br><strong>${ics} — ${name}</strong>?<br><small class="text-muted">This action cannot be undone.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-trash mr-1"></i> Yes, Delete it!',
+                cancelButtonText: '<i class="fas fa-times mr-1"></i> Cancel'
+            }).then((result) => {
+                if (result.value || result.isConfirmed) {
+                    $.ajax({
+                        url: deleteUrl,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: `"${ics}" has been permanently removed.`,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 2000);
+                            } else {
+                                Swal.fire('Error', response.error || 'Could not delete asset.', 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            const msg = xhr.responseJSON && xhr.responseJSON.error
+                                ? xhr.responseJSON.error
+                                : 'Server error. Please try again.';
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // ===== CUSTOM FILE INPUT LABEL =====
+        $('#upload-pdf').on('change', function () {
+            const fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').text(fileName || 'Choose file…');
+        });
+
+        // ===== EXPORT EXCEL =====
+        $('#export-excel-btn').on('click', function () {
+            const rows = $('#all-assets-table tr').not('.empty-database-row, .no-matching-row').filter(':visible');
+            if (rows.length === 0) {
+                alert('No asset records to export.');
+                return;
+            }
+
+            const headers = ['ICS', 'Property No', 'Asset Name', 'Category', 'Qty',
+                             'Unit Value', 'Total Value', 'End User', 'Location'];
+            let csv = headers.join(',') + '\n';
+
+            rows.each(function () {
+                const cells = $(this).find('td');
+                const row = [
+                    cells.eq(1).text().trim(),
+                    cells.eq(2).text().trim(),
+                    cells.eq(3).text().trim(),
+                    cells.eq(4).text().trim(),
+                    cells.eq(5).text().trim(),
+                    cells.eq(6).text().trim(),
+                    cells.eq(7).text().trim(),
+                    cells.eq(8).text().trim(),
+                    cells.eq(9).text().trim()
+                ].map(v => '"' + v.replace(/"/g, '""') + '"');
+                csv += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'PPE_Assets_' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        // ===== BACKUP JSON =====
+        $('#backup-json-btn').on('click', function () {
+            const rows = $('#all-assets-table tr').not('.empty-database-row, .no-matching-row').filter(':visible');
+            if (rows.length === 0) {
+                alert('No asset records to backup.');
+                return;
+            }
+
+            const data = [];
+            rows.each(function () {
+                const cells = $(this).find('td');
+                data.push({
+                    ics_number   : cells.eq(1).text().trim(),
+                    property_no  : cells.eq(2).text().trim(),
+                    asset_name   : cells.eq(3).text().trim(),
+                    category     : cells.eq(4).text().trim(),
+                    quantity     : cells.eq(5).text().trim(),
+                    unit_value   : cells.eq(6).text().trim(),
+                    total_value  : cells.eq(7).text().trim(),
+                    end_user     : cells.eq(8).text().trim(),
+                    location     : cells.eq(9).text().trim()
+                });
+            });
+
+            const blob = new Blob([JSON.stringify({ ppe_assets: data }, null, 2)],
+                                  { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'PPE_Assets_Backup_' + new Date().toISOString().slice(0, 10) + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+    });
+</script>
+{% endblock custom_js %}
