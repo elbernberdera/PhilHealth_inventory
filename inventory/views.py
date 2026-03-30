@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils import timezone
 from django.core.paginator import Paginator
 import json
@@ -596,23 +596,55 @@ def bin_card(request):
 @login_required
 def requested_supplies(request):
     """Requested Supplies view - FIFO (First In First Out) ordering"""
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+
     from .models import RequestSupply
-    
-    # Get all active requested supplies - FIFO: oldest first by date, then item_code
-    # This ensures oldest supplies are shown first for admin approval
-    requests_qs = RequestSupply.objects.filter(
-        is_active=True
-    ).order_by('date', 'item_code', 'created_at')
-    
-    # Calculate counts for each status
+
+    q = (request.GET.get('q') or '').strip()
+
+    requests_qs = (
+        RequestSupply.objects.filter(is_active=True)
+        .select_related('main_category')
+        .order_by('date', 'item_code', 'created_at')
+    )
+
+    if q:
+        requests_qs = requests_qs.filter(
+            Q(transaction_no__icontains=q)
+            | Q(requester_name__icontains=q)
+            | Q(item_code__icontains=q)
+            | Q(description__icontains=q)
+            | Q(sub_category__icontains=q)
+            | Q(conforme_by__icontains=q)
+            | Q(main_category__name__icontains=q)
+        )
+
+    def _pg(page_key, qs):
+        try:
+            p = int(request.GET.get(page_key) or 1)
+        except ValueError:
+            p = 1
+        return Paginator(qs, 10).get_page(p)
+
+    page_obj_all = _pg('page_all', requests_qs)
+    page_obj_approved = _pg('page_approved', requests_qs.filter(status='approved'))
+    page_obj_pending = _pg('page_pending', requests_qs.filter(status='pending'))
+    page_obj_rejected = _pg('page_rejected', requests_qs.filter(status='rejected'))
+    page_obj_oos = _pg('page_oos', requests_qs.filter(status='Out of Stocks'))
+
     approved_count = requests_qs.filter(status='approved').count()
     pending_count = requests_qs.filter(status='pending').count()
     rejected_count = requests_qs.filter(status='rejected').count()
     out_of_stock_count = requests_qs.filter(status='Out of Stocks').count()
-    
+
     context = {
         'page_title': 'Requested Supplies',
-        'requests': requests_qs,
+        'page_obj_all': page_obj_all,
+        'page_obj_approved': page_obj_approved,
+        'page_obj_pending': page_obj_pending,
+        'page_obj_rejected': page_obj_rejected,
+        'page_obj_oos': page_obj_oos,
         'approved_count': approved_count,
         'pending_count': pending_count,
         'rejected_count': rejected_count,
@@ -1832,9 +1864,9 @@ def activity_log(request):
 # ppe na akoa ge usab Asset — New Asset Entry Form
 # ---------------------------------------------------------------------------
 @login_required
-def it_asset_entry(request):
+def ppe_asset_entry(request):
     """PPE Asset Entry — list saved assets and handle new asset creation."""
-    from .models import PPEAsset
+    from .models import PPEAsset, PPEAssetAssignmentLog
     from django.db.models import Q
     from datetime import date as date_class
     import datetime
@@ -1869,12 +1901,12 @@ def it_asset_entry(request):
 
             pdf_file = request.FILES.get('pdf_file') or None
 
-            PPEAsset.objects.create(
+            asset = PPEAsset.objects.create(
                 ics_number      = ics_number,
                 ics_date        = parse_date(request.POST.get('ics_date', '')),
                 property_number = request.POST.get('property_number', '').strip() or None,
                 serial_number   = request.POST.get('serial_number', '').strip() or None,
-                category        = request.POST.get('category', 'Computer'),
+                category        = request.POST.get('category', 'IT EQUIPMENTS'),
                 asset_name      = asset_name,
                 date_acquired   = parse_date(request.POST.get('date_acquired', '')),
                 tech_specs      = request.POST.get('tech_specs', '').strip() or None,
@@ -1891,8 +1923,16 @@ def it_asset_entry(request):
                 pdf_file        = pdf_file,
                 created_by      = request.user,
             )
+            PPEAssetAssignmentLog.objects.create(
+                asset=asset,
+                action='Registered',
+                assignee=asset.end_user or 'Unassigned',
+                previous_assignee='',
+                location=asset.location or '',
+                performed_by=request.user,
+            )
             messages.success(request, f'Asset "{ics_number} — {asset_name}" saved successfully!')
-            return redirect('it_asset_entry')
+            return redirect('ppe_asset_entry')
 
     # Generate next ICS number by finding the highest existing number for this year
     year = datetime.date.today().year
@@ -1945,7 +1985,7 @@ def ppe_asset_edit(request):
     import datetime
 
     if request.method != 'POST':
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     asset_id = request.POST.get('asset_id', '').strip()
     asset = get_object_or_404(PPEAsset, pk=asset_id)
@@ -1961,12 +2001,12 @@ def ppe_asset_edit(request):
 
     if not ics_number or not asset_name:
         messages.error(request, 'ICS Number and Asset Name are required.')
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     # Reject duplicate ICS number on a different record
     if PPEAsset.objects.filter(ics_number=ics_number).exclude(pk=asset.pk).exists():
         messages.error(request, f'ICS Number "{ics_number}" is already used by another asset.')
-        return redirect('it_asset_entry')
+        return redirect('ppe_asset_entry')
 
     unit_value = float(request.POST.get('unit_value', 0) or 0)
     quantity   = int(request.POST.get('quantity', 1) or 1)
@@ -1975,7 +2015,7 @@ def ppe_asset_edit(request):
     asset.ics_date        = parse_date(request.POST.get('ics_date', ''))
     asset.property_number = request.POST.get('property_number', '').strip() or None
     asset.serial_number   = request.POST.get('serial_number', '').strip() or None
-    asset.category        = request.POST.get('category', 'Computer')
+    asset.category        = request.POST.get('category', 'IT EQUIPMENTS')
     asset.asset_name      = asset_name
     asset.date_acquired   = parse_date(request.POST.get('date_acquired', ''))
     asset.tech_specs      = request.POST.get('tech_specs', '').strip() or None
@@ -1996,7 +2036,7 @@ def ppe_asset_edit(request):
 
     asset.save()
     messages.success(request, f'Asset "{ics_number} — {asset_name}" updated successfully!')
-    return redirect('it_asset_entry')
+    return redirect('ppe_asset_entry')
 
 
 @login_required
@@ -2025,16 +2065,430 @@ def ppe_asset_delete(request, asset_id):
     return JsonResponse({'success': True, 'message': f'Asset {ics_number} deleted successfully.'})
 
 
-@login_required
-def it_transfer_assignment(request):
-    return render(request, 'admin/transfer_assignment/index.html', {'page_title': 'Transfer/Assignment of Unit'})
-
+# sugod drea transfer /assignment na it lang ne kay nag chnage c maam og new ppe daw 
 
 @login_required
-def it_unit_trail(request):
-    return render(request, 'admin/unit_trail/unit_trail.html', {'page_title': 'Unit Trail'})
+@ensure_csrf_cookie
+def ppe_transfer_assignment(request):
+    from django.contrib.auth.models import User
+    from .models import PPEAsset
+    users = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    assets = PPEAsset.objects.filter(is_active=True).order_by('ics_number')
+    return render(request, 'admin/transfer_assignment/index.html', {
+        'page_title': 'Transfer/Assignment of Unit',
+        'users': users,
+        'assets': assets,
+    })
 
 
 @login_required
-def it_report_config(request):
-    return render(request, 'admin/report_configuration/report_configuration.html', {'page_title': 'Report Configuration'})
+def ppe_asset_search(request):
+    """Search a PPEAsset by ICS number and return its details as JSON."""
+    from django.http import JsonResponse
+    from .models import PPEAsset
+    ics = request.GET.get('ics_number', '').strip()
+    if not ics:
+        return JsonResponse({'success': False, 'error': 'ICS number is required.'})
+    try:
+        asset = PPEAsset.objects.get(ics_number__iexact=ics, is_active=True)
+        return JsonResponse({
+            'success': True,
+            'asset': {
+                'id':          asset.id,
+                'ics_number':  asset.ics_number,
+                'asset_name':  asset.asset_name,
+                'category':    asset.category,
+                'location':    asset.location or '',
+                'end_user':    asset.end_user or '',
+            }
+        })
+    except PPEAsset.DoesNotExist:
+        return JsonResponse({'success': False, 'error': f'No active asset found with ICS "{ics}".'})
+
+
+@login_required
+def ppe_asset_transfer(request):
+    """Transfer/assign a PPEAsset to a new end user."""
+    from django.http import JsonResponse
+    from .models import PPEAsset, PPEAssetAssignmentLog
+    from django.shortcuts import get_object_or_404
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Invalid request body.'})
+
+    asset_id   = data.get('asset_id')
+    assign_to  = data.get('assign_to', '').strip()
+    action     = data.get('action', 'Transfer').strip()
+    new_location = data.get('location', '').strip()
+
+    if not asset_id or not assign_to:
+        return JsonResponse({'success': False, 'error': 'Asset and Assign To are required.'})
+
+    asset = get_object_or_404(PPEAsset, id=asset_id, is_active=True)
+    previous_user = asset.end_user or 'Unassigned'
+    asset.end_user = assign_to
+    if new_location:
+        asset.location = new_location
+    asset.save()
+
+    PPEAssetAssignmentLog.objects.create(
+        asset=asset,
+        action=action or 'Transfer',
+        assignee=assign_to,
+        previous_assignee=previous_user,
+        location=asset.location or '',
+        performed_by=request.user,
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': f'{action} successful: {previous_user} → {assign_to}',
+    })
+
+
+@login_required
+def ppe_unit_trail(request):
+    """Item / unit trail: search by ICS, view details & assignment history, print report."""
+    import urllib.parse
+
+    from django.contrib import messages
+    from django.db.models import Max
+    from django.shortcuts import redirect
+    from django.urls import reverse
+
+    from .models import BinCardNotedBy, BinCardPreparedBy, PPEAsset
+
+    if request.method == 'POST':
+        ics_redirect = (request.POST.get('ics') or '').strip()
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'noted'):
+            role = 'prepared'
+        SignModel = BinCardNotedBy if role == 'noted' else BinCardPreparedBy
+        label = 'Verified by' if role == 'noted' else 'Prepared by'
+
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                SignModel.objects.create(
+                    name=name, position=position, sort_order=next_order
+                )
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = SignModel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except SignModel.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = SignModel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        url = reverse('ppe_unit_trail')
+        if ics_redirect:
+            url += '?ics=' + urllib.parse.quote(ics_redirect, safe='')
+        return redirect(url)
+
+    ics = request.GET.get('ics', '').strip()
+    asset = None
+    history = []
+
+    if ics:
+        try:
+            asset = PPEAsset.objects.select_related('created_by').get(
+                ics_number__iexact=ics, is_active=True
+            )
+            logs = asset.assignment_logs.order_by('-logged_at')
+            if logs.exists():
+                history = list(logs)
+            else:
+                history = []
+        except PPEAsset.DoesNotExist:
+            messages.warning(request, f'No active asset found with ICS number "{ics}".')
+
+    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    noted_by_signatories = list(BinCardNotedBy.objects.all())
+
+    trail_print_data = None
+    if asset:
+        if history:
+            hist_rows = [
+                {
+                    'date': l.logged_at.strftime('%m/%d/%Y %H:%M'),
+                    'action': l.action,
+                    'assignee': l.assignee,
+                }
+                for l in history
+            ]
+        else:
+            hist_rows = [
+                {
+                    'date': asset.created_at.strftime('%m/%d/%Y'),
+                    'action': 'Current assignment',
+                    'assignee': asset.end_user or 'Unassigned',
+                }
+            ]
+        trail_print_data = {
+            'asset': {
+                'ics_number': asset.ics_number,
+                'ics_date': asset.ics_date.strftime('%b %d, %Y') if asset.ics_date else '',
+                'property_number': asset.property_number or '',
+                'serial_number': asset.serial_number or '',
+                'category': asset.category,
+                'asset_name': asset.asset_name,
+                'date_acquired': asset.date_acquired.strftime('%b %d, %Y') if asset.date_acquired else '',
+                'tech_specs': asset.tech_specs or '',
+                'unit_value': str(asset.unit_value),
+                'quantity': str(asset.quantity),
+                'total_value': str(asset.total_value),
+                'location': asset.location or '',
+                'end_user': asset.end_user or 'Unassigned',
+                'supplier': asset.supplier or '',
+                'order_no': asset.order_no or '',
+                'delivery_no': asset.delivery_no or '',
+                'iar_no': asset.iar_no or '',
+                'remarks': asset.remarks or '',
+            },
+            'history': hist_rows,
+        }
+
+    return render(
+        request,
+        'admin/unit_trail/unit_trail.html',
+        {
+            'page_title': 'Unit Trail',
+            'ics_query': ics,
+            'asset': asset,
+            'history': history,
+            'prepared_by_signatories': prepared_by_signatories,
+            'noted_by_signatories': noted_by_signatories,
+            'trail_print_data': trail_print_data,
+        },
+    )
+
+
+@login_required
+def ppe_report_config(request):
+    """Report Configuration: on-screen list like All Assets; print = formal physical inventory form."""
+    from django.contrib import messages
+    from django.core.paginator import Paginator
+    from django.db.models import Max, Q
+    from django.shortcuts import redirect
+
+    from .models import PPEAsset, PpeReportSignatory
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'verified', 'noted'):
+            role = 'prepared'
+        label_map = {
+            'prepared': 'Prepared by',
+            'verified': 'Verified by',
+            'noted': 'Noted by',
+        }
+        label = label_map[role]
+        role_qs = PpeReportSignatory.objects.filter(role=role)
+
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (role_qs.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                PpeReportSignatory.objects.create(
+                    role=role, name=name, position=position, sort_order=next_order
+                )
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = PpeReportSignatory.objects.get(pk=pk, role=role)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except PpeReportSignatory.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = PpeReportSignatory.objects.filter(pk=pk, role=role).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        return redirect(request.get_full_path())
+
+    def fmt_date(d):
+        if not d:
+            return ''
+        return d.strftime('%m/%d/%Y')
+
+    search_query = request.GET.get('search', '').strip()
+    category_filter = (request.GET.get('category') or '').strip()
+    sub_filter = (request.GET.get('sub') or '').strip()
+    person_filter = (request.GET.get('person') or '').strip()
+    location_filter = (request.GET.get('location') or '').strip()
+    status_filter = (request.GET.get('status') or '').strip()
+
+    base_active = PPEAsset.objects.filter(is_active=True)
+
+    assets_qs = base_active.order_by('ics_number')
+    if search_query:
+        assets_qs = assets_qs.filter(
+            Q(ics_number__icontains=search_query)
+            | Q(asset_name__icontains=search_query)
+            | Q(property_number__icontains=search_query)
+            | Q(category__icontains=search_query)
+            | Q(end_user__icontains=search_query)
+            | Q(location__icontains=search_query)
+        )
+    if category_filter:
+        assets_qs = assets_qs.filter(category=category_filter)
+    if sub_filter:
+        assets_qs = assets_qs.filter(
+            Q(asset_name__icontains=sub_filter)
+            | Q(tech_specs__icontains=sub_filter)
+        )
+    if person_filter:
+        assets_qs = assets_qs.filter(end_user__iexact=person_filter)
+    if location_filter:
+        assets_qs = assets_qs.filter(location__iexact=location_filter)
+    if status_filter == 'assigned':
+        assets_qs = assets_qs.exclude(end_user__isnull=True).exclude(end_user='')
+    elif status_filter == 'unassigned':
+        assets_qs = assets_qs.filter(Q(end_user__isnull=True) | Q(end_user=''))
+
+    paginator = Paginator(assets_qs, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Dropdown options (all active assets — not narrowed by current filters)
+    people_choices = (
+        base_active.exclude(end_user__isnull=True)
+        .exclude(end_user='')
+        .values_list('end_user', flat=True)
+        .distinct()
+        .order_by('end_user')
+    )
+    location_choices = (
+        base_active.exclude(location__isnull=True)
+        .exclude(location='')
+        .values_list('location', flat=True)
+        .distinct()
+        .order_by('location')
+    )
+
+    # Printed report uses the same filtered list as the table (not paginated)
+    print_report_rows = []
+    for i, a in enumerate(assets_qs, start=1):
+        print_report_rows.append(
+            {
+                'no': str(i),
+                'ics': a.ics_number or '',
+                'date_acquired': fmt_date(a.date_acquired),
+                'item_name': a.asset_name or '',
+                'property_no': (a.property_number or '').strip(),
+                'serial': (a.serial_number or '').strip(),
+                'unit_value': f'{a.unit_value:,.2f}' if a.unit_value is not None else '',
+                'qty': str(a.quantity or 0),
+                'total': f'{a.total_value:,.2f}' if a.total_value is not None else '',
+                'accountable': (a.end_user or '').strip(),
+                'end_user': (a.end_user or '').strip(),
+                'current_user': (a.end_user or '').strip(),
+                'location': (a.location or '').strip(),
+                'remarks': (a.remarks or '').strip(),
+                'status_date': fmt_date(a.ics_date),
+            }
+        )
+    for _ in range(3):
+        print_report_rows.append(None)
+
+    print_report_title_category = (
+        category_filter if category_filter else 'ALL CATEGORIES'
+    )
+    _pf_parts = []
+    if sub_filter:
+        _pf_parts.append(f'Sub-category/specs: {sub_filter}')
+    if person_filter:
+        _pf_parts.append(f'Person: {person_filter}')
+    if location_filter:
+        _pf_parts.append(f'Location: {location_filter}')
+    if status_filter == 'assigned':
+        _pf_parts.append('Status: Assigned')
+    elif status_filter == 'unassigned':
+        _pf_parts.append('Status: Unassigned')
+    if search_query:
+        _pf_parts.append(f'Search: {search_query}')
+    print_filter_summary = '; '.join(_pf_parts)
+
+    ppe_prepared_signatories = list(
+        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_PREPARED)
+    )
+    ppe_verified_signatories = list(
+        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_VERIFIED)
+    )
+    ppe_noted_signatories = list(
+        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_NOTED)
+    )
+
+    return render(
+        request,
+        'admin/report_configuration/report_configuration.html',
+        {
+            'page_title': 'Report Configuration',
+            'page_obj': page_obj,
+            'search_query': search_query,
+            'category_filter': category_filter,
+            'sub_filter': sub_filter,
+            'person_filter': person_filter,
+            'location_filter': location_filter,
+            'status_filter': status_filter,
+            'ppe_category_choices': PPEAsset.CATEGORY_CHOICES,
+            'people_choices': list(people_choices),
+            'location_choices': list(location_choices),
+            'print_report_rows': print_report_rows,
+            'print_report_title_category': print_report_title_category,
+            'print_filter_summary': print_filter_summary,
+            'ppe_prepared_signatories': ppe_prepared_signatories,
+            'ppe_verified_signatories': ppe_verified_signatories,
+            'ppe_noted_signatories': ppe_noted_signatories,
+        },
+    )

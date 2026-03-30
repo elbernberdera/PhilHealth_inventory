@@ -10,6 +10,40 @@
     .card.card-outline.card-success .card-header { border-bottom: 1px solid #dee2e6; background-color: #f8f9fa; }
     #master-inventory-table { font-size: 0.875rem; }
     #master-inventory-table th, #master-inventory-table td { padding: 0.5rem; vertical-align: middle; }
+    .dt-pagination-footer {
+        border-top: 1px solid #dee2e6;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+    .dt-pagination-footer .dataTables_info {
+        padding-top: 0.35rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .dt-pagination-footer .dataTables_paginate { padding-top: 0.25rem; }
+    .dt-pagination-footer .pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .dt-pagination-footer .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        color: #28a745;
+        border-color: #dee2e6;
+    }
+    .dt-pagination-footer .pagination .page-link:hover {
+        color: #1e7e34;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+    .dt-pagination-footer .pagination .page-item.active .page-link {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: #ffffff;
+    }
+    .dt-pagination-footer .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
     @media print {
         .no-print { display: none !important; }
         .content-wrapper { padding: 0 !important; }
@@ -102,6 +136,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="master-inventory-pagination-footer"></div>
             </div>
         </div>
     </div>
@@ -118,6 +153,9 @@
     let allSupplies = [];
     let searchDebounceTimer = null;
     const SEARCH_DEBOUNCE_MS = 200;
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
+    const footerEl = document.getElementById('master-inventory-pagination-footer');
 
     function formatNum(val) {
         if (val === '' || val === null || val === undefined) return '0';
@@ -207,16 +245,26 @@
             '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandTotalCost) + '</td>' +
             '</tr>';
 
+        var fontReport = 'Georgia, "Times New Roman", Times, serif';
+        var pageMarginTop = '26mm';
+        var pageMarginSides = '9mm';
+        var pageMarginBottom = '7mm';
+
         const html = '<!DOCTYPE html><html><head><title>Office Inventory Report</title>' +
             '<style>' +
-            'body{font-family:Arial,sans-serif;padding:16px;font-size:10pt;}' +
-            'h1{font-size:14pt;margin:0 0 4px;text-align:center;}' +
-            'p.sub{text-align:center;margin:0 0 12px;color:#444;}' +
-            'table{width:100%;border-collapse:collapse;margin-top:8px;}' +
+            '@page{size:A4 landscape;margin:' + pageMarginTop + ' ' + pageMarginSides + ' ' + pageMarginBottom + ' ' + pageMarginSides + ';}' +
+            '*{box-sizing:border-box;}' +
+            'html,body{margin:0;padding:0;}' +
+            'body{font-family:' + fontReport + ';font-size:10pt;line-height:1.25;color:#000;' +
+            '-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+            'h1{font-size:14pt;margin:0 0 4px;text-align:center;font-family:' + fontReport + ';font-weight:700;}' +
+            'p.sub{text-align:center;margin:0 0 12px;color:#333;}' +
+            'table{width:100%;border-collapse:collapse;margin-top:8px;font-family:' + fontReport + ';}' +
             'th,td{border:1px solid #000;padding:3px 4px;}' +
             'th{background:#e8e8e8;font-size:9pt;text-align:center;}' +
             'td.num{text-align:right;}' +
             '.no-border td{border:none;}' +
+            '@media print{body,table,h1,.no-border{font-family:' + fontReport + ' !important;}}' +
             '</style></head><body>' +
             '<h1>Office Inventory Report</h1>' +
             '<p class=\"sub\">As of ' + escapeHtml(asOfStr) + '</p>' +
@@ -260,14 +308,71 @@
         w.document.close();
     }
 
-    function renderRows(supplies) {
+    function getFilteredList() {
+        const catId = (filterCategory.value || '').trim();
+        const search = (searchItem.value || '').trim().toLowerCase();
+        let list = allSupplies;
+        if (catId) list = list.filter(function(s) { return s.main_category == catId; });
+        if (search) {
+            list = list.filter(function(s) {
+                return (s.item_code && s.item_code.toLowerCase().indexOf(search) !== -1) ||
+                    (s.description && s.description.toLowerCase().indexOf(search) !== -1) ||
+                    (s.main_category_name && s.main_category_name.toLowerCase().indexOf(search) !== -1) ||
+                    (s.sub_category && s.sub_category.toLowerCase().indexOf(search) !== -1);
+            });
+        }
+        return list;
+    }
+
+    function renderPaginationFooter(total, totalPages) {
+        if (!footerEl) return;
+        if (!total) {
+            footerEl.innerHTML = '';
+            footerEl.style.display = 'none';
+            return;
+        }
+        footerEl.style.display = '';
+        const start = (currentPage - 1) * PAGE_SIZE + 1;
+        const end = Math.min(currentPage * PAGE_SIZE, total);
+        var html = '<div class="row dt-pagination-footer px-2 pb-2">' +
+            '<div class="col-sm-12 col-md-5"><div class="dataTables_info" role="status">Showing ' + start + ' to ' + end + ' of ' + total + ' entries</div></div>' +
+            '<div class="col-sm-12 col-md-7"><div class="dataTables_paginate paging_simple_numbers float-md-right text-md-right mt-2 mt-md-0">' +
+            '<ul class="pagination justify-content-md-end mb-0">';
+        html += '<li class="page-item' + (currentPage <= 1 ? ' disabled' : '') + '">';
+        if (currentPage > 1) {
+            html += '<a href="#" class="page-link master-inv-page" data-page="' + (currentPage - 1) + '">Previous</a>';
+        } else {
+            html += '<span class="page-link">Previous</span>';
+        }
+        html += '</li>';
+        for (var p = 1; p <= totalPages; p++) {
+            html += '<li class="page-item' + (currentPage === p ? ' active' : '') + '">';
+            if (currentPage === p) {
+                html += '<span class="page-link">' + p + '</span>';
+            } else {
+                html += '<a href="#" class="page-link master-inv-page" data-page="' + p + '">' + p + '</a>';
+            }
+            html += '</li>';
+        }
+        html += '<li class="page-item' + (currentPage >= totalPages ? ' disabled' : '') + '">';
+        if (currentPage < totalPages) {
+            html += '<a href="#" class="page-link master-inv-page" data-page="' + (currentPage + 1) + '">Next</a>';
+        } else {
+            html += '<span class="page-link">Next</span>';
+        }
+        html += '</li></ul></div></div></div>';
+        footerEl.innerHTML = html;
+    }
+
+    function renderRows(supplies, rowOffset) {
+        rowOffset = rowOffset || 0;
         if (!supplies.length) {
             tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-5">No items found.</td></tr>';
             return;
         }
         tbody.innerHTML = supplies.map(function(s, i) {
             return '<tr>' +
-                '<td>' + (i + 1) + '</td>' +
+                '<td>' + (rowOffset + i + 1) + '</td>' +
                 '<td>' + (s.item_code || '') + '</td>' +
                 '<td>' + (s.description || '') + '</td>' +
                 '<td>' + (s.main_category_name || '') + '</td>' +
@@ -281,20 +386,26 @@
         }).join('');
     }
 
-    function filterSupplies() {
-        const catId = (filterCategory.value || '').trim();
-        const search = (searchItem.value || '').trim().toLowerCase();
-        let list = allSupplies;
-        if (catId) list = list.filter(function(s) { return s.main_category == catId; });
-        if (search) {
-            list = list.filter(function(s) {
-                return (s.item_code && s.item_code.toLowerCase().indexOf(search) !== -1) ||
-                    (s.description && s.description.toLowerCase().indexOf(search) !== -1) ||
-                    (s.main_category_name && s.main_category_name.toLowerCase().indexOf(search) !== -1) ||
-                    (s.sub_category && s.sub_category.toLowerCase().indexOf(search) !== -1);
-            });
+    function renderTablePage() {
+        const list = getFilteredList();
+        const total = list.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        if (!total) {
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-5">No items found.</td></tr>';
+            renderPaginationFooter(0, 0);
+            return;
         }
-        renderRows(list);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const slice = list.slice(start, start + PAGE_SIZE);
+        renderRows(slice, start);
+        renderPaginationFooter(total, totalPages);
+    }
+
+    function filterSupplies() {
+        currentPage = 1;
+        renderTablePage();
     }
 
     function loadSupplies() {
@@ -310,10 +421,12 @@
                 filterSupplies();
             } else {
                 tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-5">Failed to load inventory.</td></tr>';
+                if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
             }
         })
         .catch(function() {
             tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-5">Error loading inventory.</td></tr>';
+            if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
         });
     }
 
@@ -342,6 +455,19 @@
         if (!allSupplies.length) return;
         filterSupplies();
     });
+
+    if (footerEl) {
+        footerEl.addEventListener('click', function(e) {
+            var a = e.target.closest('a.master-inv-page');
+            if (!a) return;
+            e.preventDefault();
+            var p = parseInt(a.getAttribute('data-page'), 10);
+            if (!isNaN(p) && p >= 1) {
+                currentPage = p;
+                renderTablePage();
+            }
+        });
+    }
 
     if (btnPrintAll) btnPrintAll.addEventListener('click', function(e) {
         e.preventDefault();

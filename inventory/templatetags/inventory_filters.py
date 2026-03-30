@@ -3,6 +3,18 @@ from datetime import date
 
 register = template.Library()
 
+
+@register.simple_tag(takes_context=True)
+def page_query(context, page_key, page_num):
+    """
+    Merge GET params and set one page key (e.g. page_all=2) for pagination links.
+    Preserves search (q) and other query keys.
+    """
+    request = context["request"]
+    q = request.GET.copy()
+    q[str(page_key)] = str(page_num)
+    return q.urlencode()
+
 @register.filter(name='days_until_expiration')
 def days_until_expiration(expiration_date):
     """

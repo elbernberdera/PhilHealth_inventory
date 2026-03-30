@@ -348,7 +348,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'it_asset_entry' %}" enctype="multipart/form-data">
+            <form method="POST" action="{% url 'ppe_asset_entry' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="save">
 
@@ -416,7 +416,7 @@
                                     <div class="form-group">
                                         <label>Asset Name <span class="text-danger">*</span></label>
                                         <input type="text" name="asset_name" class="form-control" required
-                                            placeholder="e.g. Desktop Computer, Laptop, Printer…">
+                                            placeholder="e.g. laptop, monitor, chair, refrigerator…">
                                     </div>
                                 </div>
                                 <div class="col-md-4">

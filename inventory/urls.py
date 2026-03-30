@@ -34,13 +34,15 @@ urlpatterns = [
     # Activity Log
     path('admin/history/activity-log/', views.activity_log, name='activity_log'),
 
-    # IT Equipments
-    path('admin/it/asset-entry/', views.it_asset_entry, name='it_asset_entry'),
-    path('admin/it/asset-edit/', views.ppe_asset_edit, name='ppe_asset_edit'),
-    path('admin/it/asset-delete/<int:asset_id>/', views.ppe_asset_delete, name='ppe_asset_delete'),
-    path('admin/it/transfer-assignment/', views.it_transfer_assignment, name='it_transfer_assignment'),
-    path('admin/it/unit-trail/', views.it_unit_trail, name='it_unit_trail'),
-    path('admin/it/report-configuration/', views.it_report_config, name='it_report_config'),
+    # PPE Equipments
+    path('admin/ppe/asset-entry/', views.ppe_asset_entry, name='ppe_asset_entry'),
+    path('admin/ppe/asset-edit/', views.ppe_asset_edit, name='ppe_asset_edit'),
+    path('admin/ppe/asset-delete/<int:asset_id>/', views.ppe_asset_delete, name='ppe_asset_delete'),
+    path('admin/ppe/transfer-assignment/', views.ppe_transfer_assignment, name='ppe_transfer_assignment'),
+    path('admin/ppe/asset-search/', views.ppe_asset_search, name='ppe_asset_search'),
+    path('admin/ppe/asset-transfer/', views.ppe_asset_transfer, name='ppe_asset_transfer'),
+    path('admin/ppe/unit-trail/', views.ppe_unit_trail, name='ppe_unit_trail'),
+    path('admin/ppe/report-configuration/', views.ppe_report_config, name='ppe_report_config'),
     
     # Category API endpoints
     path('api/categories/', views.category_list, name='category_list'),

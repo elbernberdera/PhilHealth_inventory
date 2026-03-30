@@ -1,0 +1,40 @@
+{% load inventory_filters %}
+{# DataTables-style footer: page_obj, page_key (e.g. page_all, page, page_approved) #}
+{% if page_obj.paginator.count > 0 %}
+<div class="row dt-pagination-footer px-2 pb-2">
+  <div class="col-sm-12 col-md-5">
+    <div class="dataTables_info" role="status" aria-live="polite">
+      Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-7">
+    <div class="dataTables_paginate paging_simple_numbers float-md-right text-md-right mt-2 mt-md-0">
+      <ul class="pagination justify-content-md-end mb-0">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+          <a class="page-link" href="?{% page_query page_key page_obj.previous_page_number %}">Previous</a>
+          {% else %}
+          <span class="page-link">Previous</span>
+          {% endif %}
+        </li>
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+          {% if page_obj.number == num %}
+          <span class="page-link">{{ num }}</span>
+          {% else %}
+          <a class="page-link" href="?{% page_query page_key num %}">{{ num }}</a>
+          {% endif %}
+        </li>
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+          <a class="page-link" href="?{% page_query page_key page_obj.next_page_number %}">Next</a>
+          {% else %}
+          <span class="page-link">Next</span>
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,3 @@
+{% for message in messages %}
+<div class="django-msg-swal d-none" data-tags="{{ message.tags|default:''|escape }}">{{ message }}</div>
+{% endfor %}

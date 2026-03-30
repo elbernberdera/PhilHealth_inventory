@@ -78,18 +78,7 @@
 
 <section class="content">
     <div class="container-fluid">
-        {% if messages %}
-        <div class="row">
-            <div class="col-12">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+        {% include 'admin/shared/django_messages_hidden.html' %}
 
         <div class="row mb-3">
             <div class="col-md-6">
@@ -852,26 +841,32 @@
             );
         }
         const sheets = pages.join('');
+        var fontReport = 'Georgia, "Times New Roman", Times, serif';
+        var pageMarginTop = '26mm';
+        var pageMarginSides = '9mm';
+        var pageMarginBottom = '7mm';
+        /* A4 landscape short edge 210mm minus top+bottom @page margins (letterhead + bottom). */
+        var printVertMargins = '33mm';
         const html = '<!doctype html><html><head><title>Bin Card</title>' +
             '<style>' +
-            '@page{size:A4 landscape;margin:6mm;}' +
+            '@page{size:A4 landscape;margin:' + pageMarginTop + ' ' + pageMarginSides + ' ' + pageMarginBottom + ' ' + pageMarginSides + ';}' +
             'html,body{height:auto;min-height:0;margin:0;padding:0;}' +
-            'body{font-family:Arial,sans-serif;}' +
-            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:28mm;page-break-after:always;break-inside:avoid;page-break-inside:avoid;}' +
+            'body{font-family:' + fontReport + ';font-size:8pt;line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:28mm;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
             '.print-page:last-child{page-break-after:auto;}' +
             '.print-page-cards{display:flex;flex-direction:row;gap:4mm;align-items:flex-start;justify-content:center;flex-shrink:0;}' +
-            '.print-page-sig{width:100%;max-width:calc(3in + 4mm + 3in);flex-shrink:0;margin-top:0;padding-top:0;}' +
-            '.card-slot{width:3in;height:auto;max-height:calc(210mm - 12mm - 28mm - 20mm);flex:0 0 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;}' +
+            '.print-page-sig{width:100%;max-width:calc(3in + 4mm + 3in);flex-shrink:0;margin-top:0;padding-top:0;font-family:' + fontReport + ';}' +
+            '.card-slot{width:3in;height:auto;max-height:calc(210mm - ' + printVertMargins + ' - 28mm - 20mm);flex:0 0 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;}' +
             '.empty-slot{border:0;min-height:0;align-self:stretch;}' +
             '.bin-table-wrap{flex:0 0 auto;width:100%;overflow:hidden;}' +
             '.no-border td,.no-border th{border:none!important;}' +
-            '.bin-sig-footer{width:100%;border-collapse:collapse;font-size:8pt;line-height:1.1;}' +
+            '.bin-sig-footer{width:100%;border-collapse:collapse;font-size:8pt;line-height:1.1;font-family:' + fontReport + ';}' +
             '.bin-sig-footer td{padding:0 2px;vertical-align:bottom;}' +
             '.prepared-by-print-name{font-weight:700;font-size:8pt;display:block;}' +
             '.prepared-by-print-position{font-size:7pt;display:block;margin-top:1px;line-height:1.1;}' +
             '.bin-sig-spacer{height:3mm;}' +
             '.bin-sig-spacer td{padding:0;border:none!important;}' +
-            '.bin-form{border-collapse:collapse;width:100%;height:auto;font-size:6.8pt;table-layout:fixed;}' +
+            '.bin-form{border-collapse:collapse;width:100%;height:auto;font-size:6.8pt;table-layout:fixed;font-family:' + fontReport + ';}' +
             '.bin-form td,.bin-form th{border:1px solid #000;padding:2px 3px;vertical-align:middle;line-height:1.1;}' +
             '.header-cell{height:auto;min-height:18px;padding:2px 3px;vertical-align:middle;}' +
             '.head-row{display:flex;justify-content:space-between;align-items:flex-start;width:100%;box-sizing:border-box;gap:4px;}' +
@@ -888,6 +883,7 @@
             '.total-row td{font-weight:700;}' +
             '.total-label{text-align:center;}' +
             '.bin-form tr.hdr~tr{height:auto;min-height:11px;}' +
+            '@media print{body,.print-page,.bin-form,.bin-sig-footer{font-family:' + fontReport + ' !important;}}' +
             '</style></head><body>' +
             sheets +
             '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script></body></html>';
@@ -1096,6 +1092,7 @@
 
 {# Signatory modals use jQuery; base.html loads jQuery after main_content, so this must run in custom_js. #}
 {% block custom_js %}
+{% include 'admin/shared/django_messages_sweetalert_js.html' %}
 <script>
 jQuery(function () {
     jQuery('#addSignatoryModal').on('hidden.bs.modal', function () {

@@ -10,6 +10,7 @@ Requested Supplies
 
 {% block main_content %}
 {% load static %}
+{% load inventory_filters %}
 
 <style>
     /* Custom tab styling - Active tabs green, inactive tabs black */
@@ -115,7 +116,7 @@ Requested Supplies
         <div class="row mb-3">
             <div class="col-md-6 ml-auto">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="search-requests" placeholder="Search .......">
+                    <input type="text" class="form-control" id="search-requests" placeholder="Search ......." value="{{ request.GET.q|default:'' }}" autocomplete="off">
                     <div class="input-group-append">
                         <span class="input-group-text">
                             <i class="fas fa-search"></i>
@@ -188,10 +189,10 @@ Requested Supplies
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if requests %}
-                                                {% for req in requests %}
+                                            {% if page_obj_all.paginator.count > 0 %}
+                                                {% for req in page_obj_all %}
                                                     <tr>
-                                                        <td>{{ req.id }}</td>
+                                                        <td>{{ forloop.counter0|add:page_obj_all.start_index }}</td>
                                                         <td>{{ req.date|date:"m/d/Y" }}</td>
                                                         <td>{{ req.transaction_no }}</td>
                                                         <td>{{ req.requester_name }}</td>
@@ -259,6 +260,7 @@ Requested Supplies
                                         </tbody>
                                     </table>
                                 </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_all page_key='page_all' %}
                             </div>
 
                             <!-- Approved Tab -->
@@ -283,11 +285,10 @@ Requested Supplies
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if approved_count > 0 %}
-                                                {% for req in requests %}
-                                                    {% if req.status == 'approved' %}
+                                            {% if page_obj_approved.paginator.count > 0 %}
+                                                {% for req in page_obj_approved %}
                                                         <tr>
-                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ forloop.counter0|add:page_obj_approved.start_index }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -336,7 +337,6 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    {% endif %}
                                                 {% endfor %}
                                             {% else %}
                                                 <tr>
@@ -348,6 +348,7 @@ Requested Supplies
                                         </tbody>
                                     </table>
                                 </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_approved page_key='page_approved' %}
                             </div>
 
                             <!-- Pending Tab -->
@@ -372,11 +373,10 @@ Requested Supplies
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if pending_count > 0 %}
-                                                {% for req in requests %}
-                                                    {% if req.status == 'pending' %}
+                                            {% if page_obj_pending.paginator.count > 0 %}
+                                                {% for req in page_obj_pending %}
                                                         <tr>
-                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ forloop.counter0|add:page_obj_pending.start_index }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -425,7 +425,6 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    {% endif %}
                                                 {% endfor %}
                                             {% else %}
                                                 <tr>
@@ -437,6 +436,7 @@ Requested Supplies
                                         </tbody>
                                     </table>
                                 </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_pending page_key='page_pending' %}
                             </div>
 
                             <!-- Rejected Tab -->
@@ -461,11 +461,10 @@ Requested Supplies
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if rejected_count > 0 %}
-                                                {% for req in requests %}
-                                                    {% if req.status == 'rejected' %}
+                                            {% if page_obj_rejected.paginator.count > 0 %}
+                                                {% for req in page_obj_rejected %}
                                                         <tr>
-                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ forloop.counter0|add:page_obj_rejected.start_index }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -514,7 +513,6 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    {% endif %}
                                                 {% endfor %}
                                             {% else %}
                                                 <tr>
@@ -526,6 +524,7 @@ Requested Supplies
                                         </tbody>
                                     </table>
                                 </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_rejected page_key='page_rejected' %}
                             </div>
 
                             <!-- Out of Stock Tab -->
@@ -550,11 +549,10 @@ Requested Supplies
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if out_of_stock_count > 0 %}
-                                                {% for req in requests %}
-                                                    {% if req.status == 'Out of Stocks' %}
+                                            {% if page_obj_oos.paginator.count > 0 %}
+                                                {% for req in page_obj_oos %}
                                                         <tr>
-                                                            <td>{{ req.id }}</td>
+                                                            <td>{{ forloop.counter0|add:page_obj_oos.start_index }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -603,7 +601,6 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    {% endif %}
                                                 {% endfor %}
                                             {% else %}
                                                 <tr>
@@ -615,6 +612,7 @@ Requested Supplies
                                         </tbody>
                                     </table>
                                 </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_oos page_key='page_oos' %}
                             </div>
                         </div>
                     </div>
@@ -641,57 +639,24 @@ Requested Supplies
         }
     });
 
-    // Search functionality - Filter table rows
+    // Search: server-side filter + pagination (reset all tab pages to 1)
+    var reqSearchTimer = null;
     $('#search-requests').on('keyup', function() {
-        var searchTerm = $(this).val().toLowerCase();
-        var activeTab = $('.tab-pane.active');
-        var table = activeTab.find('table tbody');
-        
-        // Remove any existing "no results" row
-        table.find('.no-results-row').remove();
-        
-        // Filter rows in the active tab (exclude empty state rows)
-        var hasVisibleDataRows = false;
-        table.find('tr').each(function() {
-            var row = $(this);
-            
-            // Skip empty state rows (colspan rows)
-            if (row.find('td[colspan]').length > 0) {
-                // Hide empty state rows when searching
-                if (searchTerm) {
-                    row.hide();
-                } else {
-                    row.show();
-                }
-                return;
-            }
-            
-            var rowText = '';
-            
-            // Get text from all columns except Actions column
-            row.find('td').not(':last-child').each(function() {
-                rowText += $(this).text().toLowerCase() + ' ';
-            });
-            
-            // Show/hide row based on search term
-            if (!searchTerm || rowText.indexOf(searchTerm) > -1) {
-                row.show();
-                hasVisibleDataRows = true;
+        var el = $(this);
+        clearTimeout(reqSearchTimer);
+        reqSearchTimer = setTimeout(function() {
+            var u = new URL(window.location.href);
+            var v = (el.val() || '').trim();
+            if (v) {
+                u.searchParams.set('q', v);
             } else {
-                row.hide();
+                u.searchParams.delete('q');
             }
-        });
-        
-        // Show "No results" message if searching and no rows are visible
-        if (searchTerm && !hasVisibleDataRows) {
-            var colspan = activeTab.find('table thead th').length;
-            table.append('<tr class="no-results-row"><td colspan="' + colspan + '" class="text-center text-muted">No matching results found.</td></tr>');
-        }
-    });
-
-    // Clear search when switching tabs
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
-        $('#search-requests').val('').trigger('keyup');
+            ['page_all', 'page_approved', 'page_pending', 'page_rejected', 'page_oos'].forEach(function(k) {
+                u.searchParams.set(k, '1');
+            });
+            window.location.href = u.pathname + u.search;
+        }, 450);
     });
 
     // Update Status Dropdown Handler - Automatic update on click

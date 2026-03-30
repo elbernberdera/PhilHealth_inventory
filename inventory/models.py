@@ -370,18 +370,42 @@ class BinCardNotedBy(models.Model):
         return self.name
 
 
+class PpeReportSignatory(models.Model):
+    """Signatories for PPE Report Configuration printout (Prepared / Verified / Noted)."""
+
+    ROLE_PREPARED = 'prepared'
+    ROLE_VERIFIED = 'verified'
+    ROLE_NOTED = 'noted'
+    ROLE_CHOICES = [
+        (ROLE_PREPARED, 'Prepared by'),
+        (ROLE_VERIFIED, 'Verified by'),
+        (ROLE_NOTED, 'Noted by'),
+    ]
+
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, db_index=True)
+    name = models.CharField(max_length=200, verbose_name='Name')
+    position = models.CharField(max_length=200, blank=True, verbose_name='Position / Title')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Sort order')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['role', 'sort_order', 'name']
+        verbose_name = 'PPE Report Signatory'
+        verbose_name_plural = 'PPE Report Signatories'
+
+    def __str__(self):
+        return f'{self.get_role_display()}: {self.name}'
+
+
 class PPEAsset(models.Model):
     """Property, Plant & Equipment (PPE) asset record — ICS-based"""
 
     CATEGORY_CHOICES = [
-        ('Computer', 'Computer'),
-        ('Printer', 'Printer'),
-        ('Scanner', 'Scanner'),
-        ('Furniture', 'Furniture'),
-        ('Office Equipment', 'Office Equipment'),
-        ('Vehicle', 'Vehicle'),
-        ('Communication Equipment', 'Communication Equipment'),
-        ('Other', 'Other'),
+        ('APPLIANCES', 'APPLIANCES'),
+        ('ELECTRONIC DEVICES', 'ELECTRONIC DEVICES'),
+        ('FURNITURE & FIXTURES', 'FURNITURE & FIXTURES'),
+        ('IT EQUIPMENTS', 'IT EQUIPMENTS'),
+        ('OTHERS', 'OTHERS'),
     ]
 
     # ICS Information
@@ -391,7 +415,7 @@ class PPEAsset(models.Model):
     # Asset Identification
     property_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="Property Number")
     serial_number   = models.CharField(max_length=150, blank=True, null=True, verbose_name="Serial Number")
-    category        = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='Computer', verbose_name="Category")
+    category        = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='IT EQUIPMENTS', verbose_name="Category")
     asset_name      = models.CharField(max_length=200, verbose_name="Asset Name")
     date_acquired   = models.DateField(blank=True, null=True, verbose_name="Date Acquired")
     tech_specs      = models.TextField(blank=True, null=True, verbose_name="Technical Specifications")
@@ -440,3 +464,36 @@ class PPEAsset(models.Model):
 
     def __str__(self):
         return f"{self.ics_number} — {self.asset_name}"
+
+
+class PPEAssetAssignmentLog(models.Model):
+    """Audit trail for PPE asset assignment / transfer (Unit Trail)."""
+
+    asset = models.ForeignKey(
+        PPEAsset,
+        on_delete=models.CASCADE,
+        related_name='assignment_logs',
+        verbose_name="Asset",
+    )
+    logged_at = models.DateTimeField(auto_now_add=True, verbose_name="Date/Time")
+    action = models.CharField(max_length=100, verbose_name="Action")
+    assignee = models.CharField(max_length=200, verbose_name="Assignee")
+    previous_assignee = models.CharField(max_length=200, blank=True, verbose_name="Previous assignee")
+    location = models.CharField(max_length=150, blank=True, verbose_name="Location")
+    performed_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ppe_assignment_logs',
+        verbose_name="Recorded by",
+    )
+
+    class Meta:
+        verbose_name = "PPE Assignment Log"
+        verbose_name_plural = "PPE Assignment Logs"
+        db_table = "ppe_asset_assignment_log_tbl"
+        ordering = ['-logged_at']
+
+    def __str__(self):
+        return f"{self.asset.ics_number} — {self.action} @ {self.logged_at}"

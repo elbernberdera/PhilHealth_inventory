@@ -119,10 +119,10 @@
 
 
             <!-- Physical Inventory for Property , Plant & Equipment (PPE) -->
-            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}menu-open{% endif %}">
+            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'ppe_asset_entry' or request.resolver_match.url_name == 'ppe_transfer_assignment' or request.resolver_match.url_name == 'ppe_unit_trail' or request.resolver_match.url_name == 'ppe_report_config' %}menu-open{% endif %}">
               <a href="#"
-                class="nav-link {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}text-dark{% endif %}"
-                style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_asset_entry' or request.resolver_match.url_name == 'it_transfer_assignment' or request.resolver_match.url_name == 'it_unit_trail' or request.resolver_match.url_name == 'it_report_config' %}background: #1e5d3f!important;{% endif %}">
+                class="nav-link {% if request.resolver_match.url_name == 'ppe_asset_entry' or request.resolver_match.url_name == 'ppe_transfer_assignment' or request.resolver_match.url_name == 'ppe_unit_trail' or request.resolver_match.url_name == 'ppe_report_config' %}text-dark{% endif %}"
+                style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'ppe_asset_entry' or request.resolver_match.url_name == 'ppe_transfer_assignment' or request.resolver_match.url_name == 'ppe_unit_trail' or request.resolver_match.url_name == 'ppe_report_config' %}background: #1e5d3f!important;{% endif %}">
                 <i class="nav-icon fas fa-boxes" style="color: #fbf8f8!important;"></i>
                 <p style="line-height: 1.2;">
                   Physical Inventory
@@ -152,33 +152,33 @@
                 </li> -->
 
                 <li class="nav-item">
-                  <a href="{% url 'it_asset_entry' %}"
-                    class="nav-link {% if request.resolver_match.url_name == 'it_asset_entry' %}text-dark{% endif %}"
-                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_asset_entry' %}background: #1e5d3f!important;{% endif %}">
+                  <a href="{% url 'ppe_asset_entry' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'ppe_asset_entry' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'ppe_asset_entry' %}background: #1e5d3f!important;{% endif %}">
                     <i class="fas fa-file-upload nav-icon" style="color: #fbf8f8!important;"></i>
                     <p>New Asset Entry Form</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'it_transfer_assignment' %}"
-                    class="nav-link {% if request.resolver_match.url_name == 'it_transfer_assignment' %}text-dark{% endif %}"
-                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_transfer_assignment' %}background: #1e5d3f!important;{% endif %}">
+                  <a href="{% url 'ppe_transfer_assignment' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'ppe_transfer_assignment' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'ppe_transfer_assignment' %}background: #1e5d3f!important;{% endif %}">
                     <i class="fas fa-exchange-alt nav-icon" style="color: #fbf8f8!important;"></i>
                     <p style="line-height: 1.3;">Transfer/Assignment<br><span style="font-size: 0.8em;">of Unit</span></p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'it_unit_trail' %}"
-                    class="nav-link {% if request.resolver_match.url_name == 'it_unit_trail' %}text-dark{% endif %}"
-                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_unit_trail' %}background: #1e5d3f!important;{% endif %}">
+                  <a href="{% url 'ppe_unit_trail' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'ppe_unit_trail' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'ppe_unit_trail' %}background: #1e5d3f!important;{% endif %}">
                     <i class="fas fa-route nav-icon" style="color: #fbf8f8!important;"></i>
                     <p>Unit Trail</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'it_report_config' %}"
-                    class="nav-link {% if request.resolver_match.url_name == 'it_report_config' %}text-dark{% endif %}"
-                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'it_report_config' %}background: #1e5d3f!important;{% endif %}">
+                  <a href="{% url 'ppe_report_config' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'ppe_report_config' %}text-dark{% endif %}"
+                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'ppe_report_config' %}background: #1e5d3f!important;{% endif %}">
                     <i class="fas fa-cogs nav-icon" style="color: #fbf8f8!important;"></i>
                     <p>Report Configuration</p>
                   </a>

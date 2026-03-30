@@ -1,0 +1,54 @@
+{% load static %}
+<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script>
+jQuery(function () {
+  var djangoMsgs = [];
+  jQuery('.django-msg-swal').each(function () {
+    var el = jQuery(this);
+    djangoMsgs.push({
+      tags: el.attr('data-tags') || '',
+      text: el.text().trim()
+    });
+  });
+  function djangoMsgTagsToIcon(tags) {
+    var t = (tags || '').toLowerCase();
+    if (t.indexOf('success') !== -1) return 'success';
+    if (t.indexOf('error') !== -1) return 'error';
+    if (t.indexOf('warning') !== -1) return 'warning';
+    return 'info';
+  }
+  function djangoMsgTitleForIcon(icon) {
+    if (icon === 'success') return 'Success';
+    if (icon === 'error') return 'Error';
+    if (icon === 'warning') return 'Notice';
+    return 'Info';
+  }
+  function djangoMsgShowNext(i) {
+    if (i >= djangoMsgs.length || typeof Swal === 'undefined') return;
+    var m = djangoMsgs[i];
+    var icon = djangoMsgTagsToIcon(m.tags);
+    var opts = {
+      icon: icon,
+      title: djangoMsgTitleForIcon(icon),
+      text: m.text,
+      confirmButtonText: 'OK',
+      allowOutsideClick: true
+    };
+    if (icon === 'success') {
+      opts.confirmButtonColor = '#28a745';
+      opts.timer = 2800;
+      opts.timerProgressBar = true;
+    } else if (icon === 'error') {
+      opts.confirmButtonColor = '#dc3545';
+    } else if (icon === 'warning') {
+      opts.confirmButtonColor = '#ffc107';
+    } else {
+      opts.confirmButtonColor = '#3085d6';
+    }
+    Swal.fire(opts).then(function () {
+      djangoMsgShowNext(i + 1);
+    });
+  }
+  djangoMsgShowNext(0);
+});
+</script>
