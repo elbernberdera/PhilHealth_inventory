@@ -127,31 +127,7 @@
 <section class="content">
     <div class="container-fluid">
 
-        <!-- Messages -->
-        {% if messages %}
-        <div class="row">
-            <div class="col-12">
-                {% for message in messages %}
-                {% if message.tags == "error" %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                </div>
-                {% elif message.tags == "success" %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                </div>
-                {% else %}
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <i class="fas fa-info-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+        {% include 'admin/shared/django_messages_hidden.html' %}
 
        <!-- Header Section -->
         <div class="row mb-3">
@@ -905,8 +881,7 @@
 {% endblock main_content %}
 
 {% block custom_js %}
-<!-- SweetAlert2 -->
-<script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+{% include 'admin/shared/django_messages_sweetalert_js.html' %}
 <script>
     $(document).ready(function () {
 
@@ -922,11 +897,6 @@
             $('#current-date').text(now.toLocaleDateString('en-US', options));
         }
         updateCurrentDate();
-
-        // Auto-dismiss alerts
-        setTimeout(function () {
-            $('.alert').fadeOut('slow', function () { $(this).remove(); });
-        }, 5000);
 
         // Open Add Asset modal
         $('#add-asset-btn').on('click', function () {

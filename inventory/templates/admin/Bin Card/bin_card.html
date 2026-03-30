@@ -621,6 +621,28 @@
     </div>
 </div>
 
+<div class="modal fade" id="binCardSelectItemRequiredModal" tabindex="-1" role="dialog"
+    aria-labelledby="binCardSelectItemRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-dark" id="binCardSelectItemRequiredModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Select item required
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-dark">
+                Please select at least one item before printing.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ all_rows|json_script:"bin-card-all-data" }}
 
 <script>
@@ -1039,7 +1061,11 @@
             e.preventDefault();
             const selected = Array.prototype.slice.call(document.querySelectorAll('.item-check')).filter(function (cb) { return cb.checked; });
             if (!selected.length) {
-                alert('Please select at least one item.');
+                if (typeof window.jQuery !== 'undefined' && window.jQuery.fn && window.jQuery.fn.modal) {
+                    window.jQuery('#binCardSelectItemRequiredModal').modal('show');
+                } else {
+                    alert('Please select at least one item.');
+                }
                 return;
             }
             var preparedSel = document.getElementById('bin-card-prepared-by');
