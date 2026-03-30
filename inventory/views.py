@@ -1840,8 +1840,8 @@ def ppe_asset_entry(request):
             return redirect('ppe_asset_entry')
 
     # Generate next ICS number by finding the highest existing number for this year
-    year = datetime.date.today().year
-    prefix = f'ICS-{year}-'
+    year = datetime.date.today().year % 100
+    prefix = f'{year:02d}-'
     last_asset = (
         PPEAsset.objects
         .filter(ics_number__startswith=prefix)
