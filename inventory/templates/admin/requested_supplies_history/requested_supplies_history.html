@@ -46,49 +46,17 @@ Requested History
         padding: 5px 10px;
         border-radius: 3px;
     }
+
+    /*
+     * Letterhead allowance (screen preview only — print/PDF use inline styles in JS).
+     * ~28mm is a typical space for logos/letterhead on pre-printed paper.
+     */
 </style>
 
 <section class="content">
     <div class="container-fluid">
 
-        <!-- Display Messages -->
-        {% if messages %}
-        <div class="row">
-            <div class="col-12">
-                {% for message in messages %}
-                {% if message.tags == "error" %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% elif message.tags == "success" %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% elif message.tags == "warning" %}
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% else %}
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <i class="fas fa-info-circle mr-2"></i>{{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+        {% include 'admin/shared/django_messages_hidden.html' %}
 
         <!-- Header Section -->
         <div class="row mb-3">
@@ -225,10 +193,10 @@ Requested History
                                 </h3>
                             </div>
                             <div class="col-md-6">
-                                <button class="btn btn-primary float-right">
+                                <button class="btn btn-primary float-right" id="btn-print-history" type="button">
                                     <i class="fas fa-print mr-2"></i> Print
                                 </button>
-                                <button class="btn btn-success float-right mr-2">
+                                <button class="btn btn-success float-right mr-2" id="btn-save-pdf-history" type="button">
                                     <i class="fas fa-file-pdf mr-2"></i> Save to PDF
                                 </button>
                             </div>
@@ -236,7 +204,7 @@ Requested History
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-hover mb-0"
+                            <table id="requested-supplies-history-table" class="table table-bordered table-striped table-hover mb-0"
                                 style="font-size: 0.875rem;">
                                 <thead>
                                     <tr>
@@ -379,13 +347,371 @@ Requested History
             </div>
         </div>
 
+        <!-- Report Signatories (shared lists with Master Inventory / Bin Card; used on printed history) -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card card-outline card-success">
+                    <div class="card-header">
+                        <h3 class="card-title float-none mb-0">
+                            <i class="fas fa-user-check text-success mr-2"></i>Report Signatories
+                        </h3>
+                        <p class="mb-0 mt-2 small text-muted">Manage names and positions here. Choose who appears on the printed Requested Supplies History below.</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                    <p class="mb-0 small font-weight-bold">Prepared by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#rshAddPreparedModal">
+                                        <i class="fas fa-plus mr-1"></i>Add Signatory
+                                    </button>
+                                </div>
+                                {% if prepared_by_signatories %}
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Position</th>
+                                                <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for s in prepared_by_signatories %}
+                                            <tr>
+                                                <td class="align-middle">{{ s.name }}</td>
+                                                <td class="align-middle">{{ s.position }}</td>
+                                                <td class="align-middle text-center text-nowrap">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary rsh-edit-prepared mr-1"
+                                                        data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rsh-delete-prepared" title="Delete"
+                                                        data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                        <i class="fas fa-trash-alt"></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <p class="text-muted small mb-0 mt-2">No prepared-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
+                                {% endif %}
+                                <div class="col-md-5 col-lg-4 px-0 mt-3">
+                                    <label for="rsh-prepared-by" class="mb-0 small font-weight-bold">Prepared by <span class="text-muted font-weight-normal">(on printed form)</span></label>
+                                    <select class="form-control form-control-sm mt-1" id="rsh-prepared-by">
+                                        <option value="">-- Select name --</option>
+                                        {% for s in prepared_by_signatories %}
+                                        <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12 border-top mt-2 pt-3">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                    <p class="mb-0 small font-weight-bold">Verified by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#rshAddVerifiedModal">
+                                        <i class="fas fa-plus mr-1"></i>Add Signatory
+                                    </button>
+                                </div>
+                                {% if verified_by_signatories %}
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Position</th>
+                                                <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for s in verified_by_signatories %}
+                                            <tr>
+                                                <td class="align-middle">{{ s.name }}</td>
+                                                <td class="align-middle">{{ s.position }}</td>
+                                                <td class="align-middle text-center text-nowrap">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary rsh-edit-verified mr-1"
+                                                        data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rsh-delete-verified" title="Delete"
+                                                        data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                        <i class="fas fa-trash-alt"></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <p class="text-muted small mb-0 mt-2">No verified-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
+                                {% endif %}
+                                <div class="col-md-5 col-lg-4 px-0 mt-3">
+                                    <label for="rsh-verified-by" class="mb-0 small font-weight-bold">Verified by <span class="text-muted font-weight-normal">(on printed form)</span></label>
+                                    <select class="form-control form-control-sm mt-1" id="rsh-verified-by">
+                                        <option value="">-- Select name --</option>
+                                        {% for s in verified_by_signatories %}
+                                        <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="rshSignatoriesRequiredModal" tabindex="-1" role="dialog" aria-labelledby="rshSignatoriesRequiredModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content border-warning">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title text-dark" id="rshSignatoriesRequiredModalLabel">
+                            <i class="fas fa-user-check mr-2"></i>Report signatories required
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body text-dark" id="rshSignatoriesRequiredModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prepared-by modals -->
+        <div class="modal fade" id="rshAddPreparedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Prepared by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="prepared">
+                        <input type="hidden" name="action" value="add">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" maxlength="200" placeholder="Full name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" maxlength="200" placeholder="Position or title" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="rshEditPreparedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Prepared by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="" id="rsh-edit-prepared-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="prepared">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="pk" id="rsh-edit-prepared-pk" value="">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" id="rsh-edit-prepared-name" maxlength="200" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" id="rsh-edit-prepared-position" maxlength="200" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="rshDeletePreparedModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure you want to remove <strong id="rsh-delete-prepared-display"></strong> from Prepared by list? This cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="rsh-delete-prepared-confirm"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="post" action="" id="rsh-delete-prepared-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="prepared">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="pk" id="rsh-delete-prepared-pk" value="">
+        </form>
+
+        <!-- Verified-by modals -->
+        <div class="modal fade" id="rshAddVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Verified by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="verified">
+                        <input type="hidden" name="action" value="add">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" maxlength="200" placeholder="Full name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" maxlength="200" placeholder="Position or title" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="rshEditVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Verified by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="" id="rsh-edit-verified-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="verified">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="pk" id="rsh-edit-verified-pk" value="">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" id="rsh-edit-verified-name" maxlength="200" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" id="rsh-edit-verified-position" maxlength="200" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="rshDeleteVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure you want to remove <strong id="rsh-delete-verified-display"></strong> from Verified by list? This cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="rsh-delete-verified-confirm"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="post" action="" id="rsh-delete-verified-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="verified">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="pk" id="rsh-delete-verified-pk" value="">
+        </form>
+
     </div>
 </section>
 
 {% endblock main_content %}
 
 {% block custom_js %}
+{% include 'admin/shared/django_messages_sweetalert_js.html' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script>
+    function rshEscapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        var d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+    }
+    function rshSignatoryFromSelect(sel) {
+        if (!sel || sel.selectedIndex < 0) return { name: '', position: '' };
+        var opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) return { name: '', position: '' };
+        return {
+            name: (opt.getAttribute('data-name') || '').trim(),
+            position: (opt.getAttribute('data-position') || '').trim()
+        };
+    }
+    function rshSwalOrAlert(title, text, icon) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: icon || 'info', title: title || '', text: text || '', confirmButtonText: 'OK' });
+        } else {
+            alert(text || title || '');
+        }
+    }
+
+    /** Reserved height for pre-printed letterhead (print: mm; PDF: pt ≈ mm × 2.835). Tune if your stock differs. */
+    var RSH_LETTERHEAD_MM = 28;
+    var RSH_LETTERHEAD_PT = Math.round(RSH_LETTERHEAD_MM * 2.83465);
+
     // Display current date
     $(document).ready(function () {
         var today = new Date();
@@ -468,10 +794,10 @@ Requested History
         window.location.href = currentUrl.toString();
     });
 
-    // Search functionality - Filter table rows
+    // Search functionality - Filter table rows (history table only)
     $('#search-history').on('keyup', function () {
         var searchTerm = $(this).val().toLowerCase();
-        var table = $('table tbody');
+        var table = $('#requested-supplies-history-table tbody');
 
         // Remove any existing "no results" row
         table.find('.no-results-row').remove();
@@ -510,9 +836,275 @@ Requested History
 
         // Show "No results" message if searching and no rows are visible
         if (searchTerm && !hasVisibleRows) {
-            var colspan = $('table thead th').length;
+            var colspan = $('#requested-supplies-history-table thead th').length;
             table.append('<tr class="no-results-row"><td colspan="' + colspan + '" class="text-center text-muted py-4"><i class="fas fa-search fa-2x mb-2 d-block"></i>No matching results found.</td></tr>');
         }
     });
+
+    // Print currently visible history rows (respects active search/filter results on page)
+    $('#btn-save-pdf-history').on('click', function () {
+        if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+            rshSwalOrAlert('PDF unavailable', 'PDF library failed to load. Please refresh and try again.', 'error');
+            return;
+        }
+
+        var visibleRows = [];
+        $('#requested-supplies-history-table tbody tr:visible').each(function () {
+            var row = $(this);
+            if (row.hasClass('no-results-row')) return;
+            if (row.find('td[colspan]').length > 0) return;
+            var cols = [];
+            row.find('td').each(function () {
+                cols.push($(this).text().trim());
+            });
+            if (cols.length) visibleRows.push(cols);
+        });
+
+        if (!visibleRows.length) {
+            rshSwalOrAlert('Nothing to export', 'No rows available to save as PDF.', 'warning');
+            return;
+        }
+
+        var preparedSelect = document.getElementById('rsh-prepared-by');
+        var verifiedSelect = document.getElementById('rsh-verified-by');
+        var prep = rshSignatoryFromSelect(preparedSelect);
+        var ver = rshSignatoryFromSelect(verifiedSelect);
+        var missing = [];
+        if (!prep.name) missing.push('Prepared by');
+        if (!ver.name) missing.push('Verified by');
+        if (missing.length) {
+            var msg = 'Please select signatories: ' + missing.join(', ') + '.';
+            var body = document.getElementById('rshSignatoriesRequiredModalBody');
+            if (body) body.textContent = msg;
+            if (typeof window.jQuery !== 'undefined' && window.jQuery.fn && window.jQuery.fn.modal) {
+                window.jQuery('#rshSignatoriesRequiredModal').modal('show');
+            } else {
+                rshSwalOrAlert('Signatories required', msg, 'warning');
+            }
+            return;
+        }
+
+        var headCols = [];
+        $('#requested-supplies-history-table thead th').each(function () {
+            headCols.push($(this).text().trim());
+        });
+
+        var now = new Date();
+        var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        var subtitle = 'All requested supplies history';
+        var fd = '{{ filtered_date|escapejs }}';
+        if (fd) subtitle = 'Filtered: ' + fd;
+
+        var jsPDFCtor = window.jspdf.jsPDF;
+        var doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+        var pageW = doc.internal.pageSize.getWidth();
+
+        var y0 = RSH_LETTERHEAD_PT + 28;
+        doc.setFont('times', 'bold');
+        doc.setFontSize(15);
+        doc.text('REQUESTED SUPPLIES HISTORY', pageW / 2, y0, { align: 'center' });
+
+        doc.setFont('times', 'normal');
+        doc.setFontSize(10);
+        doc.text(subtitle, pageW / 2, y0 + 16, { align: 'center' });
+        doc.text('Generated on ' + today, pageW / 2, y0 + 30, { align: 'center' });
+
+        doc.autoTable({
+            head: [headCols],
+            body: visibleRows,
+            startY: y0 + 44,
+            theme: 'grid',
+            styles: { font: 'times', fontSize: 9, cellPadding: 4, valign: 'middle' },
+            headStyles: { fillColor: [239, 239, 239], textColor: [0, 0, 0], halign: 'center', fontStyle: 'bold' },
+            margin: { left: 28, right: 28, top: 36 },
+        });
+
+        var y = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : y0 + 44) + 34;
+        if (y > 500) y = 500;
+        doc.setFontSize(10);
+        doc.setFont('times', 'normal');
+        doc.text('Prepared by:', 40, y);
+        doc.text('Verified by:', pageW - 280, y);
+        doc.setFont('times', 'bold');
+        doc.text(prep.name, 40, y + 42);
+        doc.text(ver.name, pageW - 280, y + 42);
+        doc.setFont('times', 'normal');
+        doc.setFontSize(9);
+        doc.text(prep.position || 'Position', 40, y + 56);
+        doc.text(ver.position || 'Position', pageW - 280, y + 56);
+
+        var fileDate = now.toISOString().slice(0, 10);
+        doc.save('requested_supplies_history_' + fileDate + '.pdf');
+    });
+
+    // Print currently visible history rows (respects active search/filter results on page)
+    $('#btn-print-history').on('click', function () {
+        var visibleRows = [];
+        $('#requested-supplies-history-table tbody tr:visible').each(function () {
+            var row = $(this);
+            if (row.hasClass('no-results-row')) return;
+            if (row.find('td[colspan]').length > 0) return;
+            var cols = [];
+            row.find('td').each(function () {
+                cols.push($(this).text().trim());
+            });
+            if (cols.length) visibleRows.push(cols);
+        });
+
+        if (!visibleRows.length) {
+            rshSwalOrAlert('Nothing to print', 'No rows available to print.', 'warning');
+            return;
+        }
+
+        var preparedSelect = document.getElementById('rsh-prepared-by');
+        var verifiedSelect = document.getElementById('rsh-verified-by');
+        var prep = rshSignatoryFromSelect(preparedSelect);
+        var ver = rshSignatoryFromSelect(verifiedSelect);
+        var missing = [];
+        if (!prep.name) missing.push('Prepared by');
+        if (!ver.name) missing.push('Verified by');
+        if (missing.length) {
+            var msg = 'Please select signatories: ' + missing.join(', ') + '.';
+            var body = document.getElementById('rshSignatoriesRequiredModalBody');
+            if (body) body.textContent = msg;
+            if (typeof window.jQuery !== 'undefined' && window.jQuery.fn && window.jQuery.fn.modal) {
+                window.jQuery('#rshSignatoriesRequiredModal').modal('show');
+            } else {
+                rshSwalOrAlert('Signatories required', msg, 'warning');
+            }
+            return;
+        }
+
+        var now = new Date();
+        var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        var subtitle = 'All requested supplies history';
+        var fd = '{{ filtered_date|escapejs }}';
+        if (fd) subtitle = 'Filtered: ' + fd;
+
+        var headCols = [];
+        $('#requested-supplies-history-table thead th').each(function () {
+            headCols.push($(this).text().trim());
+        });
+
+        var theadHtml = '<tr>' + headCols.map(function (h) {
+            return '<th>' + rshEscapeHtml(h) + '</th>';
+        }).join('') + '</tr>';
+
+        var tbodyHtml = visibleRows.map(function (row) {
+            return '<tr>' + row.map(function (c) {
+                return '<td>' + rshEscapeHtml(c) + '</td>';
+            }).join('') + '</tr>';
+        }).join('');
+
+        var sigHtml =
+            '<br><br>' +
+            '<table class="no-border" style="width:100%;margin-top:24px;font-size:9pt;border-collapse:collapse;">' +
+            '<tr>' +
+            '<td style="width:40%;text-align:left;border:none;">Prepared by:</td>' +
+            '<td style="width:20%;border:none;"></td>' +
+            '<td style="width:40%;text-align:left;border:none;">Verified by:</td>' +
+            '</tr>' +
+            '<tr style="height:40px;"><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td></tr>' +
+            '<tr>' +
+            '<td style="text-align:left;border:none;">' + rshEscapeHtml(prep.name) + '<br><span style="font-size:8pt;">' + rshEscapeHtml(prep.position || 'Position') + '</span></td>' +
+            '<td style="border:none;"></td>' +
+            '<td style="text-align:left;border:none;">' + rshEscapeHtml(ver.name) + '<br><span style="font-size:8pt;">' + rshEscapeHtml(ver.position || 'Position') + '</span></td>' +
+            '</tr>' +
+            '</table>';
+
+        var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Requested Supplies History</title>' +
+            '<style>' +
+            '@page{size:A4 landscape;margin:12mm 14mm 14mm 14mm;}' +
+            'body{font-family:Georgia, "Times New Roman", serif;color:#000;font-size:10pt;margin:0;}' +
+            '.rsh-letterhead-spacer{height:' + RSH_LETTERHEAD_MM + 'mm;min-height:' + RSH_LETTERHEAD_MM + 'mm;}' +
+            'h1{font-size:16pt;margin:0 0 4px;text-align:center;}' +
+            '.sub{margin:0 0 2px;text-align:center;}' +
+            '.muted{margin:0 0 12px;text-align:center;color:#444;}' +
+            'table{width:100%;border-collapse:collapse;}' +
+            'th,td{border:1px solid #000;padding:4px 6px;vertical-align:top;}' +
+            'th{background:#efefef;text-align:center;}' +
+            '</style></head><body>' +
+            '<div class="rsh-letterhead-spacer" aria-hidden="true"></div>' +
+            '<h1>REQUESTED SUPPLIES HISTORY</h1>' +
+            '<p class="sub">' + rshEscapeHtml(subtitle) + '</p>' +
+            '<p class="muted">Printed on ' + rshEscapeHtml(today) + '</p>' +
+            '<table><thead>' + theadHtml + '</thead><tbody>' + tbodyHtml + '</tbody></table>' +
+            sigHtml +
+            '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>' +
+            '</body></html>';
+
+        var win = window.open('', '_blank');
+        if (!win) {
+            rshSwalOrAlert('Pop-up blocked', 'Please allow pop-ups to print.', 'warning');
+            return;
+        }
+        win.document.write(html);
+        win.document.close();
+    });
+</script>
+<script>
+jQuery(function () {
+    jQuery('#rshAddPreparedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#rshAddPreparedModal form')[0];
+        if (f) f.reset();
+    });
+    jQuery('#rshEditPreparedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#rsh-edit-prepared-form')[0];
+        if (f) f.reset();
+        jQuery('#rsh-edit-prepared-pk').val('');
+    });
+    jQuery(document).on('click', '.rsh-edit-prepared', function () {
+        var btn = jQuery(this);
+        jQuery('#rsh-edit-prepared-pk').val(btn.attr('data-pk') || '');
+        jQuery('#rsh-edit-prepared-name').val(btn.attr('data-name') || '');
+        jQuery('#rsh-edit-prepared-position').val(btn.attr('data-position') || '');
+        jQuery('#rshEditPreparedModal').modal('show');
+    });
+    jQuery(document).on('click', '.rsh-delete-prepared', function () {
+        var btn = jQuery(this);
+        jQuery('#rsh-delete-prepared-pk').val(btn.attr('data-pk') || '');
+        jQuery('#rsh-delete-prepared-display').text(btn.attr('data-name') || 'this signatory');
+        jQuery('#rshDeletePreparedModal').modal('show');
+    });
+    jQuery('#rsh-delete-prepared-confirm').on('click', function () {
+        if (!jQuery('#rsh-delete-prepared-pk').val()) return;
+        jQuery('#rsh-delete-prepared-form').submit();
+    });
+    jQuery('#rshDeletePreparedModal').on('hidden.bs.modal', function () {
+        jQuery('#rsh-delete-prepared-pk').val('');
+        jQuery('#rsh-delete-prepared-display').text('');
+    });
+
+    jQuery('#rshAddVerifiedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#rshAddVerifiedModal form')[0];
+        if (f) f.reset();
+    });
+    jQuery('#rshEditVerifiedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#rsh-edit-verified-form')[0];
+        if (f) f.reset();
+        jQuery('#rsh-edit-verified-pk').val('');
+    });
+    jQuery(document).on('click', '.rsh-edit-verified', function () {
+        var btn = jQuery(this);
+        jQuery('#rsh-edit-verified-pk').val(btn.attr('data-pk') || '');
+        jQuery('#rsh-edit-verified-name').val(btn.attr('data-name') || '');
+        jQuery('#rsh-edit-verified-position').val(btn.attr('data-position') || '');
+        jQuery('#rshEditVerifiedModal').modal('show');
+    });
+    jQuery(document).on('click', '.rsh-delete-verified', function () {
+        var btn = jQuery(this);
+        jQuery('#rsh-delete-verified-pk').val(btn.attr('data-pk') || '');
+        jQuery('#rsh-delete-verified-display').text(btn.attr('data-name') || 'this signatory');
+        jQuery('#rshDeleteVerifiedModal').modal('show');
+    });
+    jQuery('#rsh-delete-verified-confirm').on('click', function () {
+        if (!jQuery('#rsh-delete-verified-pk').val()) return;
+        jQuery('#rsh-delete-verified-form').submit();
+    });
+    jQuery('#rshDeleteVerifiedModal').on('hidden.bs.modal', function () {
+        jQuery('#rsh-delete-verified-pk').val('');
+        jQuery('#rsh-delete-verified-display').text('');
+    });
+});
 </script>
 {% endblock custom_js %}

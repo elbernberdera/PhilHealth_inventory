@@ -482,11 +482,64 @@ def replenish_item(request):
 @login_required
 def master_inventory(request):
     """Master Inventory: view all stocks including out-of-stock (no balance filter)."""
-    from .models import Category
+    from django.contrib import messages
+    from django.db.models import Max
+    from .models import BinCardNotedBy, BinCardPreparedBy, Category
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'verified'):
+            role = 'prepared'
+        SignModel = BinCardNotedBy if role == 'verified' else BinCardPreparedBy
+        label = 'Verified by' if role == 'verified' else 'Prepared by'
+
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                SignModel.objects.create(name=name, position=position, sort_order=next_order)
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = SignModel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except SignModel.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = SignModel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        return redirect('master_inventory')
+
     categories = Category.objects.filter(is_active=True).order_by('name')
+    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    verified_by_signatories = list(BinCardNotedBy.objects.all())
     context = {
         'page_title': 'Master Inventory',
         'categories': categories,
+        'prepared_by_signatories': prepared_by_signatories,
+        'verified_by_signatories': verified_by_signatories,
     }
     return render(request, 'admin/Master_Inventory/master_inventory.html', context)
 
@@ -658,8 +711,55 @@ def requested_supplies_history(request):
     """All requested supplies (all statuses) with date filters, search, and pagination."""
     from datetime import date as date_class
     from calendar import monthrange
-    from .models import RequestSupply
-    from django.db.models import Q
+    from django.contrib import messages
+    from django.db.models import Max, Q
+    from .models import BinCardNotedBy, BinCardPreparedBy, RequestSupply
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'verified'):
+            role = 'prepared'
+        SignModel = BinCardNotedBy if role == 'verified' else BinCardPreparedBy
+        label = 'Verified by' if role == 'verified' else 'Prepared by'
+
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                SignModel.objects.create(name=name, position=position, sort_order=next_order)
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = SignModel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except SignModel.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = SignModel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        return redirect(request.get_full_path())
 
     # All active request records (pending, approved, rejected, out of stock, etc.)
     qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
@@ -735,6 +835,9 @@ def requested_supplies_history(request):
     page_number = request.GET.get('page') or 1
     page_obj = paginator.get_page(page_number)
 
+    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    verified_by_signatories = list(BinCardNotedBy.objects.all())
+
     context = {
         'page_title': 'Requested Supplies History',
         'page_obj': page_obj,
@@ -750,6 +853,8 @@ def requested_supplies_history(request):
         'filtered_date': filtered_date,
         'per_page': per_page,
         'search_query': search_query,
+        'prepared_by_signatories': prepared_by_signatories,
+        'verified_by_signatories': verified_by_signatories,
     }
     return render(request, 'admin/requested_supplies_history/requested_supplies_history.html', context)
 

@@ -52,18 +52,7 @@
 
 <section class="content">
     <div class="container-fluid">
-        {% if messages %}
-        <div class="row">
-            <div class="col-12">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+        {% include 'admin/shared/django_messages_hidden.html' %}
 
         <div class="row mb-3">
             <div class="col-md-6">
@@ -139,6 +128,326 @@
                 <div id="master-inventory-pagination-footer"></div>
             </div>
         </div>
+
+        <div class="card card-outline card-secondary mt-3 no-print">
+            <div class="card-header py-3"><i class="fas fa-user-edit mr-2 text-success"></i>Report Signatories</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Manage names and positions here. Choose who appears on the printed Master Inventory report below.</p>
+
+                <div class="row px-1 pb-2">
+                    <div class="col-12 mb-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                            <p class="mb-0 small font-weight-bold">Prepared by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#miAddPreparedModal">
+                                <i class="fas fa-plus mr-1"></i>Add Signatory
+                            </button>
+                        </div>
+                        {% if prepared_by_signatories %}
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in prepared_by_signatories %}
+                                    <tr>
+                                        <td class="align-middle">{{ s.name }}</td>
+                                        <td class="align-middle">{{ s.position }}</td>
+                                        <td class="align-middle text-center text-nowrap">
+                                            <button type="button" class="btn btn-sm btn-outline-primary mi-edit-prepared mr-1"
+                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mi-delete-prepared" title="Delete"
+                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted small mb-0 mt-2">No prepared-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
+                        {% endif %}
+                        <div class="col-md-5 col-lg-4 px-0 mt-3">
+                            <label for="mi-prepared-by" class="mb-0 small font-weight-bold">Prepared by <span class="text-muted font-weight-normal">(on printed form)</span></label>
+                            <select class="form-control form-control-sm mt-1" id="mi-prepared-by">
+                                <option value="">-- Select name --</option>
+                                {% for s in prepared_by_signatories %}
+                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12 border-top mt-2 pt-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                            <p class="mb-0 small font-weight-bold">Verified by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#miAddVerifiedModal">
+                                <i class="fas fa-plus mr-1"></i>Add Signatory
+                            </button>
+                        </div>
+                        {% if verified_by_signatories %}
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in verified_by_signatories %}
+                                    <tr>
+                                        <td class="align-middle">{{ s.name }}</td>
+                                        <td class="align-middle">{{ s.position }}</td>
+                                        <td class="align-middle text-center text-nowrap">
+                                            <button type="button" class="btn btn-sm btn-outline-primary mi-edit-verified mr-1"
+                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mi-delete-verified" title="Delete"
+                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted small mb-0 mt-2">No verified-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
+                        {% endif %}
+                        <div class="col-md-5 col-lg-4 px-0 mt-3">
+                            <label for="mi-verified-by" class="mb-0 small font-weight-bold">Verified by <span class="text-muted font-weight-normal">(on printed form)</span></label>
+                            <select class="form-control form-control-sm mt-1" id="mi-verified-by">
+                                <option value="">-- Select name --</option>
+                                {% for s in verified_by_signatories %}
+                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="miSignatoriesRequiredModal" tabindex="-1" role="dialog" aria-labelledby="miSignatoriesRequiredModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content border-warning">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title text-dark" id="miSignatoriesRequiredModalLabel">
+                            <i class="fas fa-user-check mr-2"></i>Report signatories required
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body text-dark" id="miSignatoriesRequiredModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prepared-by modals -->
+        <div class="modal fade" id="miAddPreparedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Prepared by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="prepared">
+                        <input type="hidden" name="action" value="add">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" maxlength="200" placeholder="Full name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" maxlength="200" placeholder="Position or title" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="miEditPreparedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Prepared by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="" id="mi-edit-prepared-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="prepared">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="pk" id="mi-edit-prepared-pk" value="">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" id="mi-edit-prepared-name" maxlength="200" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" id="mi-edit-prepared-position" maxlength="200" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="miDeletePreparedModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure you want to remove <strong id="mi-delete-prepared-display"></strong> from Prepared by list? This cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="mi-delete-prepared-confirm"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="post" action="" id="mi-delete-prepared-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="prepared">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="pk" id="mi-delete-prepared-pk" value="">
+        </form>
+
+        <!-- Verified-by modals -->
+        <div class="modal fade" id="miAddVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Verified by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="verified">
+                        <input type="hidden" name="action" value="add">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" maxlength="200" placeholder="Full name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" maxlength="200" placeholder="Position or title" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="miEditVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Verified by signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <form method="post" action="" id="mi-edit-verified-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="signatory_role" value="verified">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="pk" id="mi-edit-verified-pk" value="">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" id="mi-edit-verified-name" maxlength="200" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="position" id="mi-edit-verified-position" maxlength="200" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="miDeleteVerifiedModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure you want to remove <strong id="mi-delete-verified-display"></strong> from Verified by list? This cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="mi-delete-verified-confirm"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="post" action="" id="mi-delete-verified-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="verified">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="pk" id="mi-delete-verified-pk" value="">
+        </form>
     </div>
 </section>
 
@@ -149,6 +458,8 @@
     const searchItem = document.getElementById('search-item');
     const btnPrintAll = document.getElementById('btn-print-all');
     const btnPrintCategory = document.getElementById('btn-print-category');
+    const preparedSelect = document.getElementById('mi-prepared-by');
+    const verifiedSelect = document.getElementById('mi-verified-by');
 
     let allSupplies = [];
     let searchDebounceTimer = null;
@@ -168,6 +479,16 @@
         const d = document.createElement('div');
         d.textContent = String(str);
         return d.innerHTML;
+    }
+
+    function signatoryFromSelect(sel) {
+        if (!sel || sel.selectedIndex < 0) return { name: '', position: '' };
+        var opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) return { name: '', position: '' };
+        return {
+            name: (opt.getAttribute('data-name') || '').trim(),
+            position: (opt.getAttribute('data-position') || '').trim()
+        };
     }
 
     function buildCategoryPrintOptions() {
@@ -197,6 +518,23 @@
         if (!supplies.length) {
             const msg = subtitle.indexOf('Category:') === 0 ? 'No items in this category.' : 'No inventory items loaded.';
             alert(msg);
+            return;
+        }
+
+        const prep = signatoryFromSelect(preparedSelect);
+        const ver = signatoryFromSelect(verifiedSelect);
+        const missing = [];
+        if (!prep.name) missing.push('Prepared by');
+        if (!ver.name) missing.push('Verified by');
+        if (missing.length) {
+            var msg = 'Please select signatories: ' + missing.join(', ') + '.';
+            var body = document.getElementById('miSignatoriesRequiredModalBody');
+            if (body) body.textContent = msg;
+            if (typeof window.jQuery !== 'undefined' && window.jQuery.fn && window.jQuery.fn.modal) {
+                window.jQuery('#miSignatoriesRequiredModal').modal('show');
+            } else {
+                alert(msg);
+            }
             return;
         }
 
@@ -291,9 +629,9 @@
             '</tr>' +
             '<tr style=\"height:40px;\"><td></td><td></td><td></td></tr>' +
             '<tr>' +
-            '<td style=\"text-align:left;\">__________________________</td>' +
+            '<td style=\"text-align:left;\">' + escapeHtml(prep.name) + '<br><span style=\"font-size:8pt;\">' + escapeHtml(prep.position || 'Position') + '</span></td>' +
             '<td></td>' +
-            '<td style=\"text-align:left;\">__________________________</td>' +
+            '<td style=\"text-align:left;\">' + escapeHtml(ver.name) + '<br><span style=\"font-size:8pt;\">' + escapeHtml(ver.position || 'Position') + '</span></td>' +
             '</tr>' +
             '</table>' +
             '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>' +
@@ -496,3 +834,72 @@
 })();
 </script>
 {% endblock main_content %}
+
+{% block custom_js %}
+{% include 'admin/shared/django_messages_sweetalert_js.html' %}
+<script>
+jQuery(function () {
+    jQuery('#miAddPreparedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#miAddPreparedModal form')[0];
+        if (f) f.reset();
+    });
+    jQuery('#miEditPreparedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#mi-edit-prepared-form')[0];
+        if (f) f.reset();
+        jQuery('#mi-edit-prepared-pk').val('');
+    });
+    jQuery(document).on('click', '.mi-edit-prepared', function () {
+        var btn = jQuery(this);
+        jQuery('#mi-edit-prepared-pk').val(btn.attr('data-pk') || '');
+        jQuery('#mi-edit-prepared-name').val(btn.attr('data-name') || '');
+        jQuery('#mi-edit-prepared-position').val(btn.attr('data-position') || '');
+        jQuery('#miEditPreparedModal').modal('show');
+    });
+    jQuery(document).on('click', '.mi-delete-prepared', function () {
+        var btn = jQuery(this);
+        jQuery('#mi-delete-prepared-pk').val(btn.attr('data-pk') || '');
+        jQuery('#mi-delete-prepared-display').text(btn.attr('data-name') || 'this signatory');
+        jQuery('#miDeletePreparedModal').modal('show');
+    });
+    jQuery('#mi-delete-prepared-confirm').on('click', function () {
+        if (!jQuery('#mi-delete-prepared-pk').val()) return;
+        jQuery('#mi-delete-prepared-form').submit();
+    });
+    jQuery('#miDeletePreparedModal').on('hidden.bs.modal', function () {
+        jQuery('#mi-delete-prepared-pk').val('');
+        jQuery('#mi-delete-prepared-display').text('');
+    });
+
+    jQuery('#miAddVerifiedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#miAddVerifiedModal form')[0];
+        if (f) f.reset();
+    });
+    jQuery('#miEditVerifiedModal').on('hidden.bs.modal', function () {
+        var f = jQuery('#mi-edit-verified-form')[0];
+        if (f) f.reset();
+        jQuery('#mi-edit-verified-pk').val('');
+    });
+    jQuery(document).on('click', '.mi-edit-verified', function () {
+        var btn = jQuery(this);
+        jQuery('#mi-edit-verified-pk').val(btn.attr('data-pk') || '');
+        jQuery('#mi-edit-verified-name').val(btn.attr('data-name') || '');
+        jQuery('#mi-edit-verified-position').val(btn.attr('data-position') || '');
+        jQuery('#miEditVerifiedModal').modal('show');
+    });
+    jQuery(document).on('click', '.mi-delete-verified', function () {
+        var btn = jQuery(this);
+        jQuery('#mi-delete-verified-pk').val(btn.attr('data-pk') || '');
+        jQuery('#mi-delete-verified-display').text(btn.attr('data-name') || 'this signatory');
+        jQuery('#miDeleteVerifiedModal').modal('show');
+    });
+    jQuery('#mi-delete-verified-confirm').on('click', function () {
+        if (!jQuery('#mi-delete-verified-pk').val()) return;
+        jQuery('#mi-delete-verified-form').submit();
+    });
+    jQuery('#miDeleteVerifiedModal').on('hidden.bs.modal', function () {
+        jQuery('#mi-delete-verified-pk').val('');
+        jQuery('#mi-delete-verified-display').text('');
+    });
+});
+</script>
+{% endblock custom_js %}
