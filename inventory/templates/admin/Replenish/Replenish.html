@@ -454,6 +454,194 @@ Replenish/Add New Item
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card card-outline card-success mb-0">
+                                            <div class="card-header">
+                                                <h3 class="card-title float-none mb-0">
+                                                    <i class="fas fa-user-check text-success mr-2"></i>Report Signatories
+                                                </h3>
+                                                <p class="mb-0 mt-2 small text-muted">Manage names and positions here. Choose who appears on the printed/PDF Out of Stock requisition footer.</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-12 mb-3">
+                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                            <p class="mb-0 small font-weight-bold">Requested by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddRequestedModal">
+                                                                <i class="fas fa-plus mr-1"></i>Add Signatory
+                                                            </button>
+                                                        </div>
+                                                        {% if prepared_by_signatories %}
+                                                        <div class="table-responsive mt-2">
+                                                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                                                <thead class="thead-light">
+                                                                    <tr>
+                                                                        <th>Name</th>
+                                                                        <th>Position</th>
+                                                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for s in prepared_by_signatories %}
+                                                                    <tr>
+                                                                        <td class="align-middle">{{ s.name }}</td>
+                                                                        <td class="align-middle">{{ s.position }}</td>
+                                                                        <td class="align-middle text-center text-nowrap">
+                                                                            <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-requested mr-1"
+                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">
+                                                                                <i class="fas fa-edit"></i> Edit
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-requested"
+                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                                                <i class="fas fa-trash-alt"></i> Delete
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        {% endif %}
+                                                        <div class="col-md-4 col-lg-3 px-0 mt-3">
+                                                            <label for="replenish-requested-by" class="mb-0 small font-weight-bold">Requested by</label>
+                                                            <select class="form-control form-control-sm mt-1" id="replenish-requested-by">
+                                                                <option value="">-- Select name --</option>
+                                                                {% for s in prepared_by_signatories %}
+                                                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 border-top mt-2 pt-3">
+                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                            <p class="mb-0 small font-weight-bold">Approved by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddApprovedModal">
+                                                                <i class="fas fa-plus mr-1"></i>Add Signatory
+                                                            </button>
+                                                        </div>
+                                                        {% if noted_by_signatories %}
+                                                        <div class="table-responsive mt-2">
+                                                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                                                <thead class="thead-light">
+                                                                    <tr>
+                                                                        <th>Name</th>
+                                                                        <th>Position</th>
+                                                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for s in noted_by_signatories %}
+                                                                    <tr>
+                                                                        <td class="align-middle">{{ s.name }}</td>
+                                                                        <td class="align-middle">{{ s.position }}</td>
+                                                                        <td class="align-middle text-center text-nowrap">
+                                                                            <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-approved mr-1"
+                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">
+                                                                                <i class="fas fa-edit"></i> Edit
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-approved"
+                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
+                                                                                <i class="fas fa-trash-alt"></i> Delete
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        {% endif %}
+                                                        <div class="col-md-4 col-lg-3 px-0 mt-3">
+                                                            <label for="replenish-approved-by" class="mb-0 small font-weight-bold">Approved by</label>
+                                                            <select class="form-control form-control-sm mt-1" id="replenish-approved-by">
+                                                                <option value="">-- Select name --</option>
+                                                                {% for s in noted_by_signatories %}
+                                                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12 border-top mt-2 pt-3">
+                                                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                                <p class="mb-0 small font-weight-bold">Issued by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddIssuedModal">
+                                                                    <i class="fas fa-plus mr-1"></i>Add Signatory
+                                                                </button>
+                                                            </div>
+                                                            {% if prepared_by_signatories %}
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                                                    <thead class="thead-light">
+                                                                        <tr><th>Name</th><th>Position</th><th class="text-center text-nowrap" style="width:1%;">Actions</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for s in prepared_by_signatories %}
+                                                                        <tr>
+                                                                            <td class="align-middle">{{ s.name }}</td>
+                                                                            <td class="align-middle">{{ s.position }}</td>
+                                                                            <td class="align-middle text-center text-nowrap">
+                                                                                <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-issued mr-1" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}"><i class="fas fa-edit"></i> Edit</button>
+                                                                                <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-issued" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}"><i class="fas fa-trash-alt"></i> Delete</button>
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            {% endif %}
+                                                            <div class="col-md-4 col-lg-3 px-0 mt-3">
+                                                                <label for="replenish-issued-by" class="mb-0 small font-weight-bold">Issued by</label>
+                                                                <select class="form-control form-control-sm mt-1" id="replenish-issued-by">
+                                                                    <option value="">-- Select name --</option>
+                                                                    {% for s in prepared_by_signatories %}
+                                                                    <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 border-top mt-2 pt-3">
+                                                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                                <p class="mb-0 small font-weight-bold">Received by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
+                                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddReceivedModal">
+                                                                    <i class="fas fa-plus mr-1"></i>Add Signatory
+                                                                </button>
+                                                            </div>
+                                                            {% if noted_by_signatories %}
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-bordered table-hover mb-0 bg-white">
+                                                                    <thead class="thead-light">
+                                                                        <tr><th>Name</th><th>Position</th><th class="text-center text-nowrap" style="width:1%;">Actions</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for s in noted_by_signatories %}
+                                                                        <tr>
+                                                                            <td class="align-middle">{{ s.name }}</td>
+                                                                            <td class="align-middle">{{ s.position }}</td>
+                                                                            <td class="align-middle text-center text-nowrap">
+                                                                                <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-received mr-1" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}"><i class="fas fa-edit"></i> Edit</button>
+                                                                                <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-received" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}"><i class="fas fa-trash-alt"></i> Delete</button>
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            {% endif %}
+                                                            <div class="col-md-4 col-lg-3 px-0 mt-3">
+                                                                <label for="replenish-received-by" class="mb-0 small font-weight-bold">Received by</label>
+                                                                <select class="form-control form-control-sm mt-1" id="replenish-received-by">
+                                                                    <option value="">-- Select name --</option>
+                                                                    {% for s in noted_by_signatories %}
+                                                                    <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Expiring Soon Tab -->
@@ -644,6 +832,175 @@ Replenish/Add New Item
         </div>
     </div>
 </section>
+
+<!-- Replenish Signatory Modals -->
+<div class="modal fade" id="replenishAddRequestedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Requested by signatory</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="signatory_role" value="prepared">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
+                        <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="replenishEditRequestedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Requested by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="" id="replenish-edit-requested-form">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="prepared"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-requested-pk">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-requested-name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-requested-position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishDeleteRequestedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-requested-display"></strong> from Requested by list?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-requested-confirm">Delete</button></div>
+    </div></div>
+</div>
+<form method="post" action="" id="replenish-delete-requested-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="signatory_role" value="prepared"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-requested-pk">
+</form>
+
+<div class="modal fade" id="replenishAddApprovedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Approved by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="add">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishEditApprovedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Approved by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="" id="replenish-edit-approved-form">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-approved-pk">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-approved-name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-approved-position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishDeleteApprovedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-approved-display"></strong> from Approved by list?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-approved-confirm">Delete</button></div>
+    </div></div>
+</div>
+<form method="post" action="" id="replenish-delete-approved-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-approved-pk">
+</form>
+
+<div class="modal fade" id="replenishAddIssuedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Issued by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="add">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishEditIssuedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Issued by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-issued-pk">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-issued-name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-issued-position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishDeleteIssuedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-issued-display"></strong> from Issued by list?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-issued-confirm">Delete</button></div>
+    </div></div>
+</div>
+<form method="post" action="" id="replenish-delete-issued-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-issued-pk">
+</form>
+
+<div class="modal fade" id="replenishAddReceivedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Received by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="add">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishEditReceivedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Received by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-received-pk">
+            <div class="modal-body"><div class="row">
+                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-received-name" maxlength="200" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-received-position" maxlength="200" required></div></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="replenishDeleteReceivedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-received-display"></strong> from Received by list?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-received-confirm">Delete</button></div>
+    </div></div>
+</div>
+<form method="post" action="" id="replenish-delete-received-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-received-pk">
+</form>
 
 <!-- Add Item Modal -->
 <div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel"
@@ -2451,6 +2808,133 @@ Replenish/Add New Item
             return selectedData;
         }
 
+        function replenishSignatoryFromSelect(selectId) {
+            const sel = document.getElementById(selectId);
+            if (!sel || sel.selectedIndex < 0) return { name: '', position: '' };
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt || !opt.value) return { name: '', position: '' };
+            return {
+                name: (opt.getAttribute('data-name') || '').trim(),
+                position: (opt.getAttribute('data-position') || '').trim()
+            };
+        }
+
+        function getReplenishSelectedSignatories() {
+            return {
+                requested: replenishSignatoryFromSelect('replenish-requested-by'),
+                approved: replenishSignatoryFromSelect('replenish-approved-by'),
+                issued: replenishSignatoryFromSelect('replenish-issued-by'),
+                received: replenishSignatoryFromSelect('replenish-received-by')
+            };
+        }
+
+        function ensureReplenishSignatoriesSelected() {
+            const sig = getReplenishSelectedSignatories();
+            const missing = [];
+            if (!sig.requested.name) missing.push('Requested by');
+            if (!sig.approved.name) missing.push('Approved by');
+            if (!sig.issued.name) missing.push('Issued by');
+            if (!sig.received.name) missing.push('Received by');
+            if (missing.length) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Signatories Required',
+                    text: 'Please select signatories: ' + missing.join(', ') + '.',
+                    confirmButtonColor: '#28a745'
+                });
+                return null;
+            }
+            return sig;
+        }
+
+        $('#replenishAddRequestedModal').on('hidden.bs.modal', function () {
+            const f = $('#replenishAddRequestedModal form')[0];
+            if (f) f.reset();
+        });
+        $(document).on('click', '.replenish-edit-requested', function () {
+            const btn = $(this);
+            $('#replenish-edit-requested-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-edit-requested-name').val(btn.attr('data-name') || '');
+            $('#replenish-edit-requested-position').val(btn.attr('data-position') || '');
+            $('#replenishEditRequestedModal').modal('show');
+        });
+        $(document).on('click', '.replenish-delete-requested', function () {
+            const btn = $(this);
+            $('#replenish-delete-requested-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-delete-requested-display').text(btn.attr('data-name') || 'this signatory');
+            $('#replenishDeleteRequestedModal').modal('show');
+        });
+        $('#replenish-delete-requested-confirm').on('click', function () {
+            if (!$('#replenish-delete-requested-pk').val()) return;
+            $('#replenish-delete-requested-form').submit();
+        });
+
+        $('#replenishAddApprovedModal').on('hidden.bs.modal', function () {
+            const f = $('#replenishAddApprovedModal form')[0];
+            if (f) f.reset();
+        });
+        $(document).on('click', '.replenish-edit-approved', function () {
+            const btn = $(this);
+            $('#replenish-edit-approved-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-edit-approved-name').val(btn.attr('data-name') || '');
+            $('#replenish-edit-approved-position').val(btn.attr('data-position') || '');
+            $('#replenishEditApprovedModal').modal('show');
+        });
+        $(document).on('click', '.replenish-delete-approved', function () {
+            const btn = $(this);
+            $('#replenish-delete-approved-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-delete-approved-display').text(btn.attr('data-name') || 'this signatory');
+            $('#replenishDeleteApprovedModal').modal('show');
+        });
+        $('#replenish-delete-approved-confirm').on('click', function () {
+            if (!$('#replenish-delete-approved-pk').val()) return;
+            $('#replenish-delete-approved-form').submit();
+        });
+
+        $('#replenishAddIssuedModal').on('hidden.bs.modal', function () {
+            const f = $('#replenishAddIssuedModal form')[0];
+            if (f) f.reset();
+        });
+        $(document).on('click', '.replenish-edit-issued', function () {
+            const btn = $(this);
+            $('#replenish-edit-issued-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-edit-issued-name').val(btn.attr('data-name') || '');
+            $('#replenish-edit-issued-position').val(btn.attr('data-position') || '');
+            $('#replenishEditIssuedModal').modal('show');
+        });
+        $(document).on('click', '.replenish-delete-issued', function () {
+            const btn = $(this);
+            $('#replenish-delete-issued-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-delete-issued-display').text(btn.attr('data-name') || 'this signatory');
+            $('#replenishDeleteIssuedModal').modal('show');
+        });
+        $('#replenish-delete-issued-confirm').on('click', function () {
+            if (!$('#replenish-delete-issued-pk').val()) return;
+            $('#replenish-delete-issued-form').submit();
+        });
+
+        $('#replenishAddReceivedModal').on('hidden.bs.modal', function () {
+            const f = $('#replenishAddReceivedModal form')[0];
+            if (f) f.reset();
+        });
+        $(document).on('click', '.replenish-edit-received', function () {
+            const btn = $(this);
+            $('#replenish-edit-received-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-edit-received-name').val(btn.attr('data-name') || '');
+            $('#replenish-edit-received-position').val(btn.attr('data-position') || '');
+            $('#replenishEditReceivedModal').modal('show');
+        });
+        $(document).on('click', '.replenish-delete-received', function () {
+            const btn = $(this);
+            $('#replenish-delete-received-pk').val(btn.attr('data-pk') || '');
+            $('#replenish-delete-received-display').text(btn.attr('data-name') || 'this signatory');
+            $('#replenishDeleteReceivedModal').modal('show');
+        });
+        $('#replenish-delete-received-confirm').on('click', function () {
+            if (!$('#replenish-delete-received-pk').val()) return;
+            $('#replenish-delete-received-form').submit();
+        });
+
         // Print Selected Items - PhilHealth Requisition Format
         $('#print-out-of-stock-btn').on('click', function () {
             const selectedData = getSelectedOutOfStockData();
@@ -2464,6 +2948,8 @@ Replenish/Add New Item
                 });
                 return;
             }
+            const selectedSignatories = ensureReplenishSignatoriesSelected();
+            if (!selectedSignatories) return;
 
             // Generate RIS number (legacy format: XXX-XX-XXX e.g. 023-26-001)
             const risNumber = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
@@ -2571,7 +3057,7 @@ Replenish/Add New Item
                         }
                         
                         .data-table tr {
-                            height: 18px;
+                            height: 16px;
                         }
                         
                         .col-balance { width: 10%; text-align: center; }
@@ -2680,7 +3166,7 @@ Replenish/Add New Item
 
             // Add data rows - use slightly more rows in print so the HTML table visually reaches the bottom of A4
             // (print CSS row height is a bit smaller than the PDF's mm-based rows)
-            const maxRows = 34;
+            const maxRows = 30;
             for (let i = 0; i < maxRows; i++) {
                 if (i < selectedData.length) {
                     const item = selectedData[i];
@@ -2742,16 +3228,16 @@ Replenish/Add New Item
                                     <td>Signature<br><div class="footer-sig-line"></div></td>
                                 </tr>
                                 <tr>
-                                    <td>Printed Name:</td>
-                                    <td>Printed Name:</td>
-                                    <td>Printed Name:</td>
-                                    <td>Printed Name:</td>
+                                    <td>Printed Name: ${selectedSignatories.requested.name}</td>
+                                    <td>Printed Name: ${selectedSignatories.approved.name}</td>
+                                    <td>Printed Name: ${selectedSignatories.issued.name}</td>
+                                    <td>Printed Name: ${selectedSignatories.received.name}</td>
                                 </tr>
                                 <tr>
-                                    <td>Designation:</td>
-                                    <td>Designation:</td>
-                                    <td>Designation:</td>
-                                    <td>Designation:</td>
+                                    <td>Designation: ${selectedSignatories.requested.position || ''}</td>
+                                    <td>Designation: ${selectedSignatories.approved.position || ''}</td>
+                                    <td>Designation: ${selectedSignatories.issued.position || ''}</td>
+                                    <td>Designation: ${selectedSignatories.received.position || ''}</td>
                                 </tr>
                                 <tr>
                                     <td>Date:</td>
@@ -2892,6 +3378,8 @@ Replenish/Add New Item
                 });
                 return;
             }
+            const selectedSignatories = ensureReplenishSignatoriesSelected();
+            if (!selectedSignatories) return;
 
             // Ask user confirmation before generating PDF
             console.log('Showing SweetAlert confirmation dialog...');
@@ -3279,17 +3767,17 @@ Replenish/Add New Item
 
                         // Row 3: Printed Name:
                         const row3Y = sigBlockTop + (sigRowHeight * 2) + 4.5;
-                        doc.text('Printed Name:', margin + 4, row3Y);
-                        doc.text('Printed Name:', margin + sigBoxWidth + 4, row3Y);
-                        doc.text('Printed Name:', margin + (sigBoxWidth * 2) + 4, row3Y);
-                        doc.text('Printed Name:', margin + (sigBoxWidth * 3) + 4, row3Y);
+                        doc.text('Printed Name: ' + (selectedSignatories.requested.name || ''), margin + 4, row3Y);
+                        doc.text('Printed Name: ' + (selectedSignatories.approved.name || ''), margin + sigBoxWidth + 4, row3Y);
+                        doc.text('Printed Name: ' + (selectedSignatories.issued.name || ''), margin + (sigBoxWidth * 2) + 4, row3Y);
+                        doc.text('Printed Name: ' + (selectedSignatories.received.name || ''), margin + (sigBoxWidth * 3) + 4, row3Y);
 
                         // Row 4: Designation:
                         const row4Y = sigBlockTop + (sigRowHeight * 3) + 4.5;
-                        doc.text('Designation:', margin + 4, row4Y);
-                        doc.text('Designation:', margin + sigBoxWidth + 4, row4Y);
-                        doc.text('Designation:', margin + (sigBoxWidth * 2) + 4, row4Y);
-                        doc.text('Designation:', margin + (sigBoxWidth * 3) + 4, row4Y);
+                        doc.text('Designation: ' + (selectedSignatories.requested.position || ''), margin + 4, row4Y);
+                        doc.text('Designation: ' + (selectedSignatories.approved.position || ''), margin + sigBoxWidth + 4, row4Y);
+                        doc.text('Designation: ' + (selectedSignatories.issued.position || ''), margin + (sigBoxWidth * 2) + 4, row4Y);
+                        doc.text('Designation: ' + (selectedSignatories.received.position || ''), margin + (sigBoxWidth * 3) + 4, row4Y);
 
                         // Row 5: Date:
                         const row5Y = sigBlockTop + (sigRowHeight * 4) + 4.5;

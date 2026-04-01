@@ -447,8 +447,68 @@ def request_supply_module(request):
 @login_required
 def replenish_item(request):
     """Replenish/Add New Item view"""
-    from .models import Category, Supply
+    from django.contrib import messages
+    from django.db.models import Max
+    from .models import BinCardNotedBy, BinCardPreparedBy, Category, Supply
     from datetime import date, timedelta
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
+        if role not in ('prepared', 'noted', 'issued', 'received'):
+            role = 'prepared'
+        model_map = {
+            'prepared': BinCardPreparedBy,
+            'issued': BinCardPreparedBy,
+            'noted': BinCardNotedBy,
+            'received': BinCardNotedBy,
+        }
+        label_map = {
+            'prepared': 'Requested by',
+            'noted': 'Approved by',
+            'issued': 'Issued by',
+            'received': 'Received by',
+        }
+        SignModel = model_map[role]
+        label = label_map[role]
+
+        if action == 'add':
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if name and position:
+                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
+                SignModel.objects.create(name=name, position=position, sort_order=next_order)
+                messages.success(request, f'{label} signatory added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+        elif action == 'edit':
+            pk = request.POST.get('pk')
+            name = (request.POST.get('name') or '').strip()
+            position = (request.POST.get('position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = SignModel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, f'{label} signatory updated.')
+                except SignModel.DoesNotExist:
+                    messages.warning(request, 'That signatory no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update signatory.')
+        elif action == 'delete':
+            pk = request.POST.get('pk')
+            if pk:
+                deleted, _ = SignModel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, f'{label} signatory removed.')
+        return redirect('replenish_item')
     
     # Get all active categories for the dropdown
     categories = Category.objects.filter(is_active=True).order_by('name')
@@ -467,6 +527,8 @@ def replenish_item(request):
         expiration_date__isnull=False,
         expiration_date__lte=date_threshold
     ).order_by('expiration_date', '-id')
+    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    noted_by_signatories = list(BinCardNotedBy.objects.all())
     
     context = {
         'page_title': 'Replenish/Add New Item',
@@ -475,6 +537,8 @@ def replenish_item(request):
         'out_of_stock_supplies': out_of_stock_supplies,
         'deleted_supplies': deleted_supplies,
         'expiring_supplies': expiring_supplies,
+        'prepared_by_signatories': prepared_by_signatories,
+        'noted_by_signatories': noted_by_signatories,
     }
     return render(request, 'admin/Replenish/Replenish.html', context)
 

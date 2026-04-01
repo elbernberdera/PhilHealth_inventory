@@ -208,26 +208,31 @@ Requested History
                                 style="font-size: 0.875rem;">
                                 <thead>
                                     <tr>
-                                        <th style="width: 60px;">No.</th>
-                                        <th>Date</th>
-                                        <th>Transaction No.</th>
-                                        <th>Requester</th>
-                                        <th>Item Code</th>
+                                        <th style="width: 44px;">No.</th>
+                                        <th style="width: 88px;">Date</th>
+                                        <th style="width: 100px;">Transaction No.</th>
+                                        <th>Name of Requester</th>
+                                        <th style="width: 120px;">Item Code</th>
                                         <th>Description</th>
-                                        <th style="width: 90px;">Qty</th>
+                                        <th style="width: 72px;">Unit</th>
+                                        <th style="width: 56px;">Qty</th>
+                                        <th style="width: 100px;">Stock-In-Out</th>
                                         <th style="width: 110px;">Status</th>
+                                        <th style="width: 120px;">Conforme by</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for req in page_obj %}
-                                    <tr>
-                                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                                        <td>{{ req.date|date:"m/d/Y" }}</td>
-                                        <td>{{ req.transaction_no }}</td>
+                                    <tr class="rsh-history-row">
+                                        <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                        <td class="text-center">{{ req.date|date:"m/d/Y" }}</td>
+                                        <td class="text-center">{{ req.transaction_no }}</td>
                                         <td>{{ req.requester_name }}</td>
-                                        <td>{{ req.item_code }}</td>
+                                        <td class="text-center">{{ req.item_code }}</td>
                                         <td>{{ req.description }}</td>
+                                        <td class="text-center">{{ req.unit }}</td>
                                         <td class="text-center">{{ req.quantity }}</td>
+                                        <td class="text-center">{{ req.get_stock_in_out_display }}</td>
                                         <td class="text-center">
                                             {% if req.status == 'approved' %}
                                             <span class="badge badge-success">Approved</span>
@@ -241,10 +246,11 @@ Requested History
                                             <span class="badge badge-light">{{ req.status }}</span>
                                             {% endif %}
                                         </td>
+                                        <td>{{ req.conforme_by|default:"" }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-5">
+                                        <td colspan="11" class="text-center text-muted py-5">
                                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                                             <p class="mb-0">No requests found{% if filtered_date %} for {{ filtered_date }}{% endif %}.</p>
                                         </td>
@@ -255,7 +261,7 @@ Requested History
                                 <!-- Table Footer with Pagination -->
                                 <tfoot>
                                     <tr>
-                                        <td colspan="8" class="p-0">
+                                        <td colspan="11" class="p-0">
                                             {% if page_obj.paginator.num_pages > 1 or total_count > 10 %}
                                             <div
                                                 class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
@@ -712,6 +718,49 @@ Requested History
     var RSH_LETTERHEAD_MM = 28;
     var RSH_LETTERHEAD_PT = Math.round(RSH_LETTERHEAD_MM * 2.83465);
 
+    /** Print/PDF column headers (match on-screen requested-supplies columns). */
+    function rshPrintColumnHeaders() {
+        return ['No.', 'Date', 'Transaction No.', 'Name of Requester', 'Item Code', 'Description', 'Unit', 'Qty', 'Stock-In-Out', 'Status', 'Conforme by'];
+    }
+    /** Plain status label for print/PDF (strip badge chrome). */
+    function rshStatusLabelFromCell($td) {
+        var t = ($td.find('.badge').length ? $td.find('.badge').first().text() : $td.text());
+        return (t || '').trim();
+    }
+    /** Builds rows from visible table body cells (same order as thead). */
+    function rshBuildPrintRowsFromTable() {
+        var out = [];
+        $('#requested-supplies-history-table tbody tr:visible').each(function () {
+            var $r = $(this);
+            if ($r.hasClass('no-results-row')) return;
+            if ($r.find('td[colspan]').length) return;
+            if (!$r.hasClass('rsh-history-row')) return;
+            var $cells = $r.find('td');
+            if ($cells.length !== 11) return;
+            out.push([
+                '', // placeholder; renumbered below
+                ($cells.eq(1).text() || '').trim(),
+                ($cells.eq(2).text() || '').trim(),
+                ($cells.eq(3).text() || '').trim(),
+                ($cells.eq(4).text() || '').trim(),
+                ($cells.eq(5).text() || '').trim(),
+                ($cells.eq(6).text() || '').trim(),
+                ($cells.eq(7).text() || '').trim(),
+                ($cells.eq(8).text() || '').trim(),
+                rshStatusLabelFromCell($cells.eq(9)),
+                ($cells.eq(10).text() || '').trim()
+            ]);
+        });
+        return out.map(function (row, idx) {
+            row[0] = String(idx + 1);
+            return row;
+        });
+    }
+    function rshPrintTdClass(i) {
+        if (i === 3 || i === 5 || i === 10) return ' class="rsh-l"';
+        return ' class="rsh-c"';
+    }
+
     // Display current date
     $(document).ready(function () {
         var today = new Date();
@@ -848,19 +897,9 @@ Requested History
             return;
         }
 
-        var visibleRows = [];
-        $('#requested-supplies-history-table tbody tr:visible').each(function () {
-            var row = $(this);
-            if (row.hasClass('no-results-row')) return;
-            if (row.find('td[colspan]').length > 0) return;
-            var cols = [];
-            row.find('td').each(function () {
-                cols.push($(this).text().trim());
-            });
-            if (cols.length) visibleRows.push(cols);
-        });
+        var printRows = rshBuildPrintRowsFromTable();
 
-        if (!visibleRows.length) {
+        if (!printRows.length) {
             rshSwalOrAlert('Nothing to export', 'No rows available to save as PDF.', 'warning');
             return;
         }
@@ -884,10 +923,7 @@ Requested History
             return;
         }
 
-        var headCols = [];
-        $('#requested-supplies-history-table thead th').each(function () {
-            headCols.push($(this).text().trim());
-        });
+        var headCols = rshPrintColumnHeaders();
 
         var now = new Date();
         var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -911,12 +947,25 @@ Requested History
 
         doc.autoTable({
             head: [headCols],
-            body: visibleRows,
+            body: printRows,
             startY: y0 + 44,
             theme: 'grid',
-            styles: { font: 'times', fontSize: 9, cellPadding: 4, valign: 'middle' },
+            styles: { font: 'times', fontSize: 8, cellPadding: 3, valign: 'middle', overflow: 'linebreak' },
             headStyles: { fillColor: [239, 239, 239], textColor: [0, 0, 0], halign: 'center', fontStyle: 'bold' },
-            margin: { left: 28, right: 28, top: 36 },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 28 },
+                1: { halign: 'center', cellWidth: 54 },
+                2: { halign: 'center', cellWidth: 64 },
+                3: { halign: 'left', cellWidth: 72 },
+                4: { halign: 'center', cellWidth: 62 },
+                5: { halign: 'left', cellWidth: 128 },
+                6: { halign: 'center', cellWidth: 36 },
+                7: { halign: 'center', cellWidth: 28 },
+                8: { halign: 'center', cellWidth: 48 },
+                9: { halign: 'center', cellWidth: 52 },
+                10: { halign: 'left', cellWidth: 64 }
+            },
+            margin: { left: 24, right: 24, top: 36 },
         });
 
         var y = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : y0 + 44) + 34;
@@ -939,19 +988,9 @@ Requested History
 
     // Print currently visible history rows (respects active search/filter results on page)
     $('#btn-print-history').on('click', function () {
-        var visibleRows = [];
-        $('#requested-supplies-history-table tbody tr:visible').each(function () {
-            var row = $(this);
-            if (row.hasClass('no-results-row')) return;
-            if (row.find('td[colspan]').length > 0) return;
-            var cols = [];
-            row.find('td').each(function () {
-                cols.push($(this).text().trim());
-            });
-            if (cols.length) visibleRows.push(cols);
-        });
+        var printRows = rshBuildPrintRowsFromTable();
 
-        if (!visibleRows.length) {
+        if (!printRows.length) {
             rshSwalOrAlert('Nothing to print', 'No rows available to print.', 'warning');
             return;
         }
@@ -981,18 +1020,15 @@ Requested History
         var fd = '{{ filtered_date|escapejs }}';
         if (fd) subtitle = 'Filtered: ' + fd;
 
-        var headCols = [];
-        $('#requested-supplies-history-table thead th').each(function () {
-            headCols.push($(this).text().trim());
-        });
+        var headCols = rshPrintColumnHeaders();
 
         var theadHtml = '<tr>' + headCols.map(function (h) {
             return '<th>' + rshEscapeHtml(h) + '</th>';
         }).join('') + '</tr>';
 
-        var tbodyHtml = visibleRows.map(function (row) {
-            return '<tr>' + row.map(function (c) {
-                return '<td>' + rshEscapeHtml(c) + '</td>';
+        var tbodyHtml = printRows.map(function (row) {
+            return '<tr>' + row.map(function (c, i) {
+                return '<td' + rshPrintTdClass(i) + '>' + rshEscapeHtml(c) + '</td>';
             }).join('') + '</tr>';
         }).join('');
 
@@ -1021,14 +1057,17 @@ Requested History
             '.sub{margin:0 0 2px;text-align:center;}' +
             '.muted{margin:0 0 12px;text-align:center;color:#444;}' +
             'table{width:100%;border-collapse:collapse;}' +
-            'th,td{border:1px solid #000;padding:4px 6px;vertical-align:top;}' +
-            'th{background:#efefef;text-align:center;}' +
+            'th,td{border:1px solid #000;padding:4px 6px;vertical-align:middle;}' +
+            'th{background:#efefef;text-align:center;font-weight:bold;}' +
+            'td.rsh-c{text-align:center;}' +
+            'td.rsh-l{text-align:left;}' +
+            'table.rsh-inv-print{table-layout:fixed;width:100%;}' +
             '</style></head><body>' +
             '<div class="rsh-letterhead-spacer" aria-hidden="true"></div>' +
             '<h1>REQUESTED SUPPLIES HISTORY</h1>' +
             '<p class="sub">' + rshEscapeHtml(subtitle) + '</p>' +
             '<p class="muted">Printed on ' + rshEscapeHtml(today) + '</p>' +
-            '<table><thead>' + theadHtml + '</thead><tbody>' + tbodyHtml + '</tbody></table>' +
+            '<table class="rsh-inv-print"><thead>' + theadHtml + '</thead><tbody>' + tbodyHtml + '</tbody></table>' +
             sigHtml +
             '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>' +
             '</body></html>';

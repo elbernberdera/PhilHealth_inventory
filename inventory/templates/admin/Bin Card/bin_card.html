@@ -737,7 +737,7 @@
 
         // Ruled lines for handwriting; fixed count only — does not pad to fill the 7in card
         const blankRowHtml = '<tr class="bin-blank-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
-        const blankRowsAfterTotal = 19;
+        const blankRowsAfterTotal = 23;
         for (let b = 0; b < blankRowsAfterTotal; b++) {
             rows.push(blankRowHtml);
         }
@@ -762,8 +762,8 @@
                             '</div>' +
                         '</td>' +
                     '</tr>' +
-                    '<tr><td class="label" colspan="1">ARTICLE:</td><td colspan="5">' + escapeHtml(card.article) + '</td></tr>' +
-                    '<tr><td class="label" colspan="1">DESCRIPTION:</td><td colspan="5">' + escapeHtml(card.description) + '</td></tr>' +
+                    '<tr><td colspan="6"><span class="label">ARTICLE:</span> ' + escapeHtml(card.article) + '</td></tr>' +
+                    '<tr><td colspan="6"><span class="label">DESCRIPTION:</span> ' + escapeHtml(card.description) + '</td></tr>' +
                     '<tr class="hdr">' +
                         '<th style="width:8%;">NO.</th>' +
                         '<th style="width:22%;">DATE RECEIVED/ISSUED</th>' +
@@ -874,11 +874,11 @@
             '@page{size:A4 landscape;margin:' + pageMarginTop + ' ' + pageMarginSides + ' ' + pageMarginBottom + ' ' + pageMarginSides + ';}' +
             'html,body{height:auto;min-height:0;margin:0;padding:0;}' +
             'body{font-family:' + fontReport + ';font-size:8pt;line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
-            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:28mm;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
+            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0.6mm;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
             '.print-page:last-child{page-break-after:auto;}' +
             '.print-page-cards{display:flex;flex-direction:row;gap:4mm;align-items:flex-start;justify-content:center;flex-shrink:0;}' +
             '.print-page-sig{width:100%;max-width:calc(3in + 4mm + 3in);flex-shrink:0;margin-top:0;padding-top:0;font-family:' + fontReport + ';}' +
-            '.card-slot{width:3in;height:auto;max-height:calc(210mm - ' + printVertMargins + ' - 28mm - 20mm);flex:0 0 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;}' +
+            '.card-slot{width:3in;height:6in;max-height:6in;flex:0 0 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;}' +
             '.empty-slot{border:0;min-height:0;align-self:stretch;}' +
             '.bin-table-wrap{flex:0 0 auto;width:100%;overflow:hidden;}' +
             '.no-border td,.no-border th{border:none!important;}' +
@@ -886,7 +886,7 @@
             '.bin-sig-footer td{padding:0 2px;vertical-align:bottom;}' +
             '.prepared-by-print-name{font-weight:700;font-size:8pt;display:block;}' +
             '.prepared-by-print-position{font-size:7pt;display:block;margin-top:1px;line-height:1.1;}' +
-            '.bin-sig-spacer{height:3mm;}' +
+            '.bin-sig-spacer{height:1mm;}' +
             '.bin-sig-spacer td{padding:0;border:none!important;}' +
             '.bin-form{border-collapse:collapse;width:100%;height:auto;font-size:6.8pt;table-layout:fixed;font-family:' + fontReport + ';}' +
             '.bin-form td,.bin-form th{border:1px solid #000;padding:2px 3px;vertical-align:middle;line-height:1.1;}' +

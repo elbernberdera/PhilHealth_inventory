@@ -113,11 +113,15 @@
                                 <th class="text-right">Cost / Item</th>
                                 <th class="text-right">Stock-In</th>
                                 <th class="text-right">Running Count</th>
+                                <th class="text-right">Running Cost</th>
+                                <th class="text-right">Total Released</th>
+                                <th class="text-right">Real-Time Balance</th>
+                                <th class="text-right">Total Cost</th>
                             </tr>
                         </thead>
                         <tbody id="master-inventory-tbody">
                             <tr>
-                                <td colspan="10" class="text-center text-muted py-5">
+                                <td colspan="14" class="text-center text-muted py-5">
                                     <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
                                     Loading inventory...
                                 </td>
@@ -474,6 +478,63 @@
         return isNaN(n) ? '0' : n.toLocaleString();
     }
 
+    /** Parse API numeric strings that may include commas. */
+    function parseSupplyNum(val) {
+        if (val === '' || val === null || val === undefined) return 0;
+        const n = parseFloat(String(val).replace(/,/g, ''));
+        return isNaN(n) ? 0 : n;
+    }
+
+    /**
+     * Master Inventory derived fields (same logic on screen and print):
+     * - running_count = opening_balance + stock_in (units on hand before releases)
+     * - running_cost = running_count * cost_per_item
+     * - total_released = accumulated release qty (from record)
+     * - real_time_balance = max(0, running_count - total_released)
+     * - total_cost = real_time_balance * cost_per_item
+     */
+    function computeMasterInventoryDerived(s) {
+        var ob = parseSupplyNum(s.opening_balance);
+        var si = parseSupplyNum(s.stock_in);
+        var cp = parseSupplyNum(s.cost_per_item);
+        var tr = parseSupplyNum(s.total_released);
+        var runningCount = ob + si;
+        var runningCost = runningCount * cp;
+        var realTimeBalance = runningCount - tr;
+        if (realTimeBalance < 0) realTimeBalance = 0;
+        var totalCost = realTimeBalance * cp;
+        return {
+            running_count: runningCount,
+            running_cost: runningCost,
+            total_released: tr,
+            real_time_balance: realTimeBalance,
+            total_cost: totalCost
+        };
+    }
+
+    /** Print layout only: matches sample sheet — Real Time Balance = Opening Balance − Total Release; Total Cost = RTB × cost per item. */
+    function computeMasterInventoryPrintDerived(s) {
+        var ob = parseSupplyNum(s.opening_balance);
+        var si = parseSupplyNum(s.stock_in);
+        var cp = parseSupplyNum(s.cost_per_item);
+        var tr = parseSupplyNum(s.total_released);
+        var runningCount = ob + si;
+        var realTimeBalance = ob - tr;
+        var totalCost = realTimeBalance * cp;
+        return {
+            running_count: runningCount,
+            total_released: tr,
+            real_time_balance: realTimeBalance,
+            total_cost: totalCost
+        };
+    }
+
+    function formatPrintMoney(val) {
+        var n = parseFloat(String(val).replace(/,/g, ''));
+        if (isNaN(n)) n = 0;
+        return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         const d = document.createElement('div');
@@ -540,47 +601,54 @@
 
         const today = new Date();
         const asOfStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const isCategoryPrint = String(subtitle || '').indexOf('Category: ') === 0;
+        const selectedCategoryName = isCategoryPrint ? String(subtitle).replace('Category: ', '').trim() : '';
+        const reportTitle = isCategoryPrint && selectedCategoryName
+            ? ('Office Inventory Report on ' + selectedCategoryName)
+            : 'Office Inventory Report';
 
-        // Compute grand totals similar to sample report
-        let grandOpening = 0;
-        let grandRunning = 0;
-        let grandTotalReleased = 0;
         let grandRealTime = 0;
         let grandTotalCost = 0;
 
         const rows = supplies.map(function (s, idx) {
-            const opening = parseFloat(s.opening_balance || 0) || 0;
-            const running = parseFloat(s.running_count || 0) || 0;
-            const totalReleased = parseFloat(s.total_released || 0) || 0;
-            const realTime = parseFloat(s.real_time_balance || 0) || 0;
-            const totalCost = parseFloat(s.total_cost || 0) || 0;
+            const opening = parseSupplyNum(s.opening_balance);
+            const d = computeMasterInventoryPrintDerived(s);
+            const running = d.running_count;
+            const totalReleased = d.total_released;
+            const realTime = d.real_time_balance;
+            const totalCost = d.total_cost;
 
-            grandOpening += opening;
-            grandRunning += running;
-            grandTotalReleased += totalReleased;
             grandRealTime += realTime;
             grandTotalCost += totalCost;
 
-            return '<tr>' +
+            var mainRow = '<tr>' +
                 '<td class=\"num\">' + (idx + 1) + '</td>' +
                 '<td>' + escapeHtml(s.item_code) + '</td>' +
                 '<td>' + escapeHtml(s.description) + '</td>' +
-                '<td>' + escapeHtml(s.unit) + '</td>' +
+                '<td>' + escapeHtml(s.unit || '') + '</td>' +
                 '<td class=\"num\">' + formatNum(opening) + '</td>' +
                 '<td class=\"num\">' + formatNum(running) + '</td>' +
                 '<td class=\"num\">' + formatNum(totalReleased) + '</td>' +
                 '<td class=\"num\">' + formatNum(realTime) + '</td>' +
-                '<td class=\"num\">' + formatNum(totalCost) + '</td>' +
+                '<td class=\"num\">' + formatPrintMoney(totalCost) + '</td>' +
                 '</tr>';
+            return mainRow;
         }).join('');
 
-        const totalRow = '<tr>' +
-            '<td colspan=\"4\" style=\"font-weight:bold; text-align:left;\">GRAND TOTAL&nbsp;</td>' +
-            '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandOpening) + '</td>' +
-            '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandRunning) + '</td>' +
-            '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandTotalReleased) + '</td>' +
-            '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandRealTime) + '</td>' +
-            '<td class=\"num\" style=\"font-weight:bold;\">' + formatNum(grandTotalCost) + '</td>' +
+        var categoryIntroRow = '';
+        if (isCategoryPrint && selectedCategoryName) {
+            categoryIntroRow = '<tr class=\"cat-row\">' +
+                '<td></td><td></td>' +
+                '<td class=\"cat-name-cell\"><strong>' + escapeHtml(selectedCategoryName) + '</strong></td>' +
+                '<td></td><td></td><td></td><td></td><td></td><td></td>' +
+                '</tr>';
+        }
+
+        const totalRow = '<tr class=\"grand-total-row\">' +
+            '<td colspan=\"4\" class=\"grand-total-label\">GRAND TOTAL</td>' +
+            '<td></td><td></td><td></td>' +
+            '<td class=\"num grand-total-num\">' + formatNum(grandRealTime) + '</td>' +
+            '<td class=\"num grand-total-num\">' + formatPrintMoney(grandTotalCost) + '</td>' +
             '</tr>';
 
         var fontReport = 'Georgia, "Times New Roman", Times, serif';
@@ -588,7 +656,7 @@
         var pageMarginSides = '9mm';
         var pageMarginBottom = '7mm';
 
-        const html = '<!DOCTYPE html><html><head><title>Office Inventory Report</title>' +
+        const html = '<!DOCTYPE html><html><head><title>' + escapeHtml(reportTitle) + '</title>' +
             '<style>' +
             '@page{size:A4 landscape;margin:' + pageMarginTop + ' ' + pageMarginSides + ' ' + pageMarginBottom + ' ' + pageMarginSides + ';}' +
             '*{box-sizing:border-box;}' +
@@ -596,29 +664,34 @@
             'body{font-family:' + fontReport + ';font-size:10pt;line-height:1.25;color:#000;' +
             '-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
             'h1{font-size:14pt;margin:0 0 4px;text-align:center;font-family:' + fontReport + ';font-weight:700;}' +
-            'p.sub{text-align:center;margin:0 0 12px;color:#333;}' +
-            'table{width:100%;border-collapse:collapse;margin-top:8px;font-family:' + fontReport + ';}' +
+            'p.sub{text-align:center;margin:0 0 12px;color:#333;font-style:italic;}' +
+            'table.data-sheet{width:100%;border-collapse:collapse;margin-top:8px;font-family:' + fontReport + ';table-layout:fixed;}' +
             'th,td{border:1px solid #000;padding:3px 4px;}' +
-            'th{background:#e8e8e8;font-size:9pt;text-align:center;}' +
+            'th{background:#e8e8e8;font-size:9pt;text-align:center;font-weight:700;}' +
             'td.num{text-align:right;}' +
+            'td.cat-name-cell{text-align:left;font-size:10pt;}' +
+            '.cat-row td{height:auto;}' +
+            'tr.grand-total-row td{border-top:3px solid #000;}' +
+            'td.grand-total-label{font-weight:700;text-align:left;}' +
+            'td.grand-total-num{font-weight:700;}' +
             '.no-border td{border:none;}' +
             '@media print{body,table,h1,.no-border{font-family:' + fontReport + ' !important;}}' +
             '</style></head><body>' +
-            '<h1>Office Inventory Report</h1>' +
+            '<h1>' + escapeHtml(reportTitle) + '</h1>' +
             '<p class=\"sub\">As of ' + escapeHtml(asOfStr) + '</p>' +
-            '<table>' +
+            '<table class=\"data-sheet\">' +
             '<thead><tr>' +
-            '<th>No.</th>' +
-            '<th>Item Code</th>' +
-            '<th>Description</th>' +
-            '<th>Unit</th>' +
-            '<th>Opening Balance</th>' +
-            '<th>Running Count</th>' +
-            '<th>Total Release</th>' +
-            '<th>Real Time Balance</th>' +
-            '<th>Total Cost</th>' +
+            '<th style=\"width:4%;\">No.</th>' +
+            '<th style=\"width:12%;\">Item Code</th>' +
+            '<th style=\"width:26%;\">Description</th>' +
+            '<th style=\"width:7%;\">Unit</th>' +
+            '<th style=\"width:10%;\">Opening Balance</th>' +
+            '<th style=\"width:9%;\">Running Count</th>' +
+            '<th style=\"width:10%;\">Total Release</th>' +
+            '<th style=\"width:11%;\">Real Time Balance</th>' +
+            '<th style=\"width:11%;\">Total Cost</th>' +
             '</tr></thead>' +
-            '<tbody>' + rows + totalRow + '</tbody>' +
+            '<tbody>' + categoryIntroRow + rows + totalRow + '</tbody>' +
             '</table>' +
             '<br><br>' +
             '<table class=\"no-border\" style=\"width:100%;margin-top:24px;font-size:9pt;\">' +
@@ -705,10 +778,11 @@
     function renderRows(supplies, rowOffset) {
         rowOffset = rowOffset || 0;
         if (!supplies.length) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-5">No items found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-5">No items found.</td></tr>';
             return;
         }
         tbody.innerHTML = supplies.map(function(s, i) {
+            var d = computeMasterInventoryDerived(s);
             return '<tr>' +
                 '<td>' + (rowOffset + i + 1) + '</td>' +
                 '<td>' + (s.item_code || '') + '</td>' +
@@ -719,7 +793,11 @@
                 '<td class="text-right">' + formatNum(s.opening_balance) + '</td>' +
                 '<td class="text-right">' + formatNum(s.cost_per_item) + '</td>' +
                 '<td class="text-right">' + formatNum(s.stock_in) + '</td>' +
-                '<td class="text-right">' + formatNum(s.real_time_balance) + '</td>' +
+                '<td class="text-right">' + formatNum(d.running_count) + '</td>' +
+                '<td class="text-right">' + formatNum(d.running_cost) + '</td>' +
+                '<td class="text-right">' + formatNum(d.total_released) + '</td>' +
+                '<td class="text-right">' + formatNum(d.real_time_balance) + '</td>' +
+                '<td class="text-right">' + formatNum(d.total_cost) + '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -731,7 +809,7 @@
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
         if (!total) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-5">No items found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-5">No items found.</td></tr>';
             renderPaginationFooter(0, 0);
             return;
         }
@@ -758,12 +836,12 @@
                 allSupplies = data.supplies;
                 filterSupplies();
             } else {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-5">Failed to load inventory.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="text-center text-danger py-5">Failed to load inventory.</td></tr>';
                 if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
             }
         })
         .catch(function() {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-5">Error loading inventory.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-danger py-5">Error loading inventory.</td></tr>';
             if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
         });
     }

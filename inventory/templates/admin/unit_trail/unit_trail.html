@@ -702,9 +702,8 @@
         'justify-content:space-between;' +
         'align-items:flex-start;' +
         'gap:10%;' +
-        'margin-top:12px;' +
-        'padding-top:8px;' +
-        'border-top:2px solid ' + brand + ';' +
+        'margin-top:20px;' +
+        'padding-top:2px;' +
         'page-break-inside:avoid;' +
       '}' +
       '.sig-col-left{flex:0 0 38%;max-width:40%;text-align:left;}' +
@@ -712,33 +711,21 @@
       '.sig-title{font-size:8pt;font-weight:700;margin:0 0 6px;color:' + ink + ';}' +
       '.sig-col-left .sig-title{text-align:left;}' +
       '.sig-col-right .sig-title{text-align:left;}' +
-      '.sig-stack{width:100%;text-align:center;margin-top:2px;}' +
-      '.sig-name-over-line{' +
+      '.sig-stack{width:100%;text-align:left;margin-top:2px;}' +
+      '.sig-name{' +
         'display:block;' +
         'font-weight:700;' +
         'font-size:8.5pt;' +
         'color:' + ink + ';' +
         'line-height:1.3;' +
-        'margin:0 auto 4px;' +
-        'padding:0 4px;' +
-      '}' +
-      '.sig-line{' +
-        'display:block;' +
-        'width:100%;' +
-        'border:0;' +
-        'border-bottom:1px solid ' + brand + ';' +
-        'margin:0;' +
-        'padding:0;' +
-        'height:0;' +
-        'line-height:0;' +
-        'box-sizing:border-box;' +
+        'margin:0 0 2px;' +
       '}' +
       '.pos-under{' +
         'display:block;' +
-        'text-align:center;' +
+        'text-align:left;' +
         'font-size:7.5pt;' +
         'font-weight:400;' +
-        'margin-top:4px;' +
+        'margin-top:0;' +
         'color:' + ink + ';' +
       '}' +
       '@media print{' +
@@ -754,15 +741,13 @@
       '<div class="sig-col-left">' +
       '<div class="sig-title">Prepared by:</div>' +
       '<div class="sig-stack">' +
-      '<div class="sig-name-over-line">' + esc(prepN) + '</div>' +
-      '<div class="sig-line"></div>' +
+      '<div class="sig-name">' + esc(prepN) + '</div>' +
       '<div class="pos-under">' + esc(prepP) + '</div>' +
       '</div></div>' +
       '<div class="sig-col-right">' +
       '<div class="sig-title">Verified by:</div>' +
       '<div class="sig-stack">' +
-      '<div class="sig-name-over-line">' + esc(verN) + '</div>' +
-      '<div class="sig-line"></div>' +
+      '<div class="sig-name">' + esc(verN) + '</div>' +
       '<div class="pos-under">' + esc(verP) + '</div>' +
       '</div></div>' +
       '</div>';
