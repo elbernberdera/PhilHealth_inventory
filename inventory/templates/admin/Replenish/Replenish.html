@@ -359,9 +359,10 @@ Replenish/Add New Item
                                 <!-- Action Buttons for Out of Stock -->
                                 <div class="row mb-3">
                                     <div class="col-md-12 d-flex justify-content-end align-items-center flex-wrap">
-                                        <div class="mr-2 mb-2 mb-md-0" style="min-width:220px;">
+                                        <div class="mr-2 mb-2 mb-md-0 d-flex align-items-center" style="min-width:220px;">
+                                            <span class="small font-weight-bold text-danger mr-2 text-nowrap">RIS No. </span>
                                             <input type="text" class="form-control form-control-sm" id="ris-control-number"
-                                                placeholder="RIS (023-26-000)" value="023-26-001">
+                                                placeholder="RIS (023-yy-xxx)" value="023-26-001">
                                         </div>
                                         <button type="button" class="btn btn-info btn-sm mr-2"
                                             id="print-out-of-stock-btn">
@@ -2858,11 +2859,11 @@ Replenish/Add New Item
             // Read RIS number from inline input (no popup modal needed)
             const risInput = $('#ris-control-number');
             const risNumber = String(risInput.val() || '').trim();
-            if (!/^\d{3}-\d{2}-\d{3}$/.test(risNumber)) {
+            if (!/^023-\d{2}-\d{3,}$/.test(risNumber)) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Invalid Control Number',
-                    text: 'Please enter RIS using format 023-26-000.',
+                    text: 'Please enter RIS using format 023-yy-xxx (e.g. 023-26-xxx).',
                     confirmButtonColor: '#dc3545'
                 });
                 risInput.focus();
@@ -2870,8 +2871,11 @@ Replenish/Add New Item
             }
             const enteredSeq = parseInt(risNumber.split('-')[2], 10);
             if (!Number.isNaN(enteredSeq) && enteredSeq >= 1) {
+                const risParts = risNumber.split('-');
+                const risPrefix = `${risParts[0]}-${risParts[1]}`;
+                const risDigitsLength = risParts[2].length;
                 const nextSeq = enteredSeq + 1;
-                risInput.val(`023-26-${String(nextSeq).padStart(3, '0')}`);
+                risInput.val(`${risPrefix}-${String(nextSeq).padStart(risDigitsLength, '0')}`);
             }
             const d = new Date();
             const dd = String(d.getDate()).padStart(2, '0');
@@ -3360,11 +3364,11 @@ Replenish/Add New Item
             // Read RIS number from same inline input used by Print Selected
             const risInput = $('#ris-control-number');
             const risNumber = String(risInput.val() || '').trim();
-            if (!/^\d{3}-\d{2}-\d{3}$/.test(risNumber)) {
+            if (!/^023-\d{2}-\d{3,}$/.test(risNumber)) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Invalid Control Number',
-                    text: 'Please enter RIS using format 023-26-000.',
+                    text: 'Please enter RIS using format 023-yy-xxx (e.g. 023-26-000 or 023-26-012524).',
                     confirmButtonColor: '#dc3545'
                 });
                 risInput.focus();
@@ -3393,8 +3397,11 @@ Replenish/Add New Item
                     console.log('User confirmed - starting PDF generation...');
                     const enteredSeq = parseInt(risNumber.split('-')[2], 10);
                     if (!Number.isNaN(enteredSeq) && enteredSeq >= 1) {
+                        const risParts = risNumber.split('-');
+                        const risPrefix = `${risParts[0]}-${risParts[1]}`;
+                        const risDigitsLength = risParts[2].length;
                         const nextSeq = enteredSeq + 1;
-                        risInput.val(`023-26-${String(nextSeq).padStart(3, '0')}`);
+                        risInput.val(`${risPrefix}-${String(nextSeq).padStart(risDigitsLength, '0')}`);
                     }
 
                     var logoUrl = "{% static 'image/logo.png' %}";
