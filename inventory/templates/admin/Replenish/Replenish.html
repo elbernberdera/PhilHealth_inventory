@@ -227,6 +227,12 @@ Replenish/Add New Item
                                     {% endif %}
                                 </a>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="procurement-personnel-tab" data-toggle="tab" href="#procurement-personnel"
+                                    role="tab" aria-controls="procurement-personnel" aria-selected="false">
+                                    <i class="fas fa-users mr-1"></i>Procurement Personnel
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -459,183 +465,47 @@ Replenish/Add New Item
                                         <div class="card card-outline card-success mb-0">
                                             <div class="card-header">
                                                 <h3 class="card-title float-none mb-0">
-                                                    <i class="fas fa-user-check text-success mr-2"></i>Report Signatories
+                                                    <i class="fas fa-user-check text-success mr-2"></i>Personnel Signatories
                                                 </h3>
-                                                <p class="mb-0 mt-2 small text-muted">Manage names and positions here. Choose who appears on the printed/PDF Out of Stock requisition footer.</p>
+                                                <p class="mb-0 mt-2 small text-muted">Choose who appears on the printed/PDF requisition footer. Names come from <strong>Procurement Personnel</strong></p>
                                             </div>
                                             <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-12 mb-3">
-                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                                                            <p class="mb-0 small font-weight-bold">Requested by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddRequestedModal">
-                                                                <i class="fas fa-plus mr-1"></i>Add Signatory
-                                                            </button>
-                                                        </div>
-                                                        {% if prepared_by_signatories %}
-                                                        <div class="table-responsive mt-2">
-                                                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                                                <thead class="thead-light">
-                                                                    <tr>
-                                                                        <th>Name</th>
-                                                                        <th>Position</th>
-                                                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for s in prepared_by_signatories %}
-                                                                    <tr>
-                                                                        <td class="align-middle">{{ s.name }}</td>
-                                                                        <td class="align-middle">{{ s.position }}</td>
-                                                                        <td class="align-middle text-center text-nowrap">
-                                                                            <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-requested mr-1"
-                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">
-                                                                                <i class="fas fa-edit"></i> Edit
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-requested"
-                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
-                                                                                <i class="fas fa-trash-alt"></i> Delete
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        {% endif %}
-                                                        <div class="col-md-4 col-lg-3 px-0 mt-3">
-                                                            <label for="replenish-requested-by" class="mb-0 small font-weight-bold">Requested by</label>
-                                                            <select class="form-control form-control-sm mt-1" id="replenish-requested-by">
-                                                                <option value="">-- Select name --</option>
-                                                                {% for s in prepared_by_signatories %}
-                                                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                                                                {% endfor %}
-                                                            </select>
-                                                        </div>
+                                                <div class="form-row">
+                                                    <div class="col-6 col-md-3 mb-2 mb-md-0 pr-md-2">
+                                                        <label for="replenish-requested-by" class="mb-0 small font-weight-bold">Requested by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="replenish-requested-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
                                                     </div>
-                                                    <div class="col-12 border-top mt-2 pt-3">
-                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                                                            <p class="mb-0 small font-weight-bold">Approved by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddApprovedModal">
-                                                                <i class="fas fa-plus mr-1"></i>Add Signatory
-                                                            </button>
-                                                        </div>
-                                                        {% if noted_by_signatories %}
-                                                        <div class="table-responsive mt-2">
-                                                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                                                <thead class="thead-light">
-                                                                    <tr>
-                                                                        <th>Name</th>
-                                                                        <th>Position</th>
-                                                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for s in noted_by_signatories %}
-                                                                    <tr>
-                                                                        <td class="align-middle">{{ s.name }}</td>
-                                                                        <td class="align-middle">{{ s.position }}</td>
-                                                                        <td class="align-middle text-center text-nowrap">
-                                                                            <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-approved mr-1"
-                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">
-                                                                                <i class="fas fa-edit"></i> Edit
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-approved"
-                                                                                data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
-                                                                                <i class="fas fa-trash-alt"></i> Delete
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        {% endif %}
-                                                        <div class="col-md-4 col-lg-3 px-0 mt-3">
-                                                            <label for="replenish-approved-by" class="mb-0 small font-weight-bold">Approved by</label>
-                                                            <select class="form-control form-control-sm mt-1" id="replenish-approved-by">
-                                                                <option value="">-- Select name --</option>
-                                                                {% for s in noted_by_signatories %}
-                                                                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                                                                {% endfor %}
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-12 border-top mt-2 pt-3">
-                                                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                                                                <p class="mb-0 small font-weight-bold">Issued by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddIssuedModal">
-                                                                    <i class="fas fa-plus mr-1"></i>Add Signatory
-                                                                </button>
-                                                            </div>
-                                                            {% if prepared_by_signatories %}
-                                                            <div class="table-responsive mt-2">
-                                                                <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                                                    <thead class="thead-light">
-                                                                        <tr><th>Name</th><th>Position</th><th class="text-center text-nowrap" style="width:1%;">Actions</th></tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% for s in prepared_by_signatories %}
-                                                                        <tr>
-                                                                            <td class="align-middle">{{ s.name }}</td>
-                                                                            <td class="align-middle">{{ s.position }}</td>
-                                                                            <td class="align-middle text-center text-nowrap">
-                                                                                <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-issued mr-1" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}"><i class="fas fa-edit"></i> Edit</button>
-                                                                                <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-issued" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}"><i class="fas fa-trash-alt"></i> Delete</button>
-                                                                            </td>
-                                                                        </tr>
-                                                                        {% endfor %}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                            {% endif %}
-                                                            <div class="col-md-4 col-lg-3 px-0 mt-3">
-                                                                <label for="replenish-issued-by" class="mb-0 small font-weight-bold">Issued by</label>
-                                                                <select class="form-control form-control-sm mt-1" id="replenish-issued-by">
-                                                                    <option value="">-- Select name --</option>
-                                                                    {% for s in prepared_by_signatories %}
-                                                                    <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                                                                    {% endfor %}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-12 border-top mt-2 pt-3">
-                                                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                                                                <p class="mb-0 small font-weight-bold">Received by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#replenishAddReceivedModal">
-                                                                    <i class="fas fa-plus mr-1"></i>Add Signatory
-                                                                </button>
-                                                            </div>
-                                                            {% if noted_by_signatories %}
-                                                            <div class="table-responsive mt-2">
-                                                                <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                                                    <thead class="thead-light">
-                                                                        <tr><th>Name</th><th>Position</th><th class="text-center text-nowrap" style="width:1%;">Actions</th></tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% for s in noted_by_signatories %}
-                                                                        <tr>
-                                                                            <td class="align-middle">{{ s.name }}</td>
-                                                                            <td class="align-middle">{{ s.position }}</td>
-                                                                            <td class="align-middle text-center text-nowrap">
-                                                                                <button type="button" class="btn btn-sm btn-outline-primary replenish-edit-received mr-1" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}"><i class="fas fa-edit"></i> Edit</button>
-                                                                                <button type="button" class="btn btn-sm btn-outline-danger replenish-delete-received" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}"><i class="fas fa-trash-alt"></i> Delete</button>
-                                                                            </td>
-                                                                        </tr>
-                                                                        {% endfor %}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                            {% endif %}
-                                                            <div class="col-md-4 col-lg-3 px-0 mt-3">
-                                                                <label for="replenish-received-by" class="mb-0 small font-weight-bold">Received by</label>
-                                                                <select class="form-control form-control-sm mt-1" id="replenish-received-by">
-                                                                    <option value="">-- Select name --</option>
-                                                                    {% for s in noted_by_signatories %}
-                                                                    <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                                                                    {% endfor %}
-                                                                </select>
-                                                            </div>
-                                                        </div>
+                                                    <div class="col-6 col-md-3 mb-2 mb-md-0 pr-md-2">
+                                                        <label for="replenish-approved-by" class="mb-0 small font-weight-bold">Approved by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="replenish-approved-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6 col-md-3 mb-2 mb-md-0 pr-md-2">
+                                                        <label for="replenish-issued-by" class="mb-0 small font-weight-bold">Issued by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="replenish-issued-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6 col-md-3 mb-2 mb-md-0">
+                                                        <label for="replenish-received-by" class="mb-0 small font-weight-bold">Received by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="replenish-received-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </div>
@@ -825,6 +695,56 @@ Replenish/Add New Item
                                     </table>
                                 </div>
                             </div>
+                            <!-- Procurement Personnel tab -->
+                            <div class="tab-pane fade" id="procurement-personnel" role="tabpanel"
+                                aria-labelledby="procurement-personnel-tab">
+                                <div class="row mb-3">
+                                    <div class="col-12 text-right">
+                                        <button type="button" class="btn btn-success btn-sm" id="procurement-personnel-add-btn"
+                                            data-toggle="modal" data-target="#procurementPersonnelAddModal">
+                                            <i class="fas fa-plus mr-1"></i>Add procurement Personnel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover mb-0"
+                                        style="font-size: 0.875rem;" id="procurement-personnel-table">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Name</th>
+                                                <th>Position</th>
+                                                <th class="text-center text-nowrap" style="width:1%;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for p in procurement_personnel %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ p.name }}</td>
+                                                <td>{{ p.position }}</td>
+                                                <td class="text-center text-nowrap align-middle">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary procurement-personnel-edit mr-1"
+                                                        data-pk="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}"
+                                                        title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger procurement-personnel-delete"
+                                                        data-pk="{{ p.pk }}" data-name="{{ p.name|escape }}"
+                                                        title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr class="text-center text-muted empty-procurement-personnel-row">
+                                                <td colspan="4" class="py-4">No procurement personnel listed.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -832,6 +752,102 @@ Replenish/Add New Item
         </div>
     </div>
 </section>
+
+<!-- Add Procurement Personnel -->
+<div class="modal fade" id="procurementPersonnelAddModal" tabindex="-1" role="dialog" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add procurement personnel</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="procurement_action" value="add">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="procurement_name" maxlength="200" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Position <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="procurement_position" maxlength="200" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="procurementPersonnelEditModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit procurement personnel</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="" id="procurement-personnel-edit-form">
+                {% csrf_token %}
+                <input type="hidden" name="procurement_action" value="edit">
+                <input type="hidden" name="procurement_pk" id="procurement-edit-pk" value="">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="procurement_name" id="procurement-edit-name" maxlength="200" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Position <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="procurement_position" id="procurement-edit-position" maxlength="200" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="procurementPersonnelDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete procurement personnel</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Remove <strong id="procurement-delete-display"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="procurement-personnel-delete-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+<form method="post" action="" id="procurement-personnel-delete-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="procurement_action" value="delete">
+    <input type="hidden" name="procurement_pk" id="procurement-delete-pk" value="">
+</form>
 
 <!-- Replenish Signatory Modals -->
 <div class="modal fade" id="replenishAddRequestedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -2851,6 +2867,32 @@ Replenish/Add New Item
             const f = $('#replenishAddRequestedModal form')[0];
             if (f) f.reset();
         });
+        $('#procurementPersonnelAddModal').on('hidden.bs.modal', function () {
+            const f = $('#procurementPersonnelAddModal form')[0];
+            if (f) f.reset();
+        });
+        $('#procurementPersonnelEditModal').on('hidden.bs.modal', function () {
+            const f = document.getElementById('procurement-personnel-edit-form');
+            if (f) f.reset();
+            $('#procurement-edit-pk').val('');
+        });
+        $(document).on('click', '.procurement-personnel-edit', function () {
+            const btn = $(this);
+            $('#procurement-edit-pk').val(btn.attr('data-pk') || '');
+            $('#procurement-edit-name').val(btn.attr('data-name') || '');
+            $('#procurement-edit-position').val(btn.attr('data-position') || '');
+            $('#procurementPersonnelEditModal').modal('show');
+        });
+        $(document).on('click', '.procurement-personnel-delete', function () {
+            const btn = $(this);
+            $('#procurement-delete-pk').val(btn.attr('data-pk') || '');
+            $('#procurement-delete-display').text(btn.attr('data-name') || 'this record');
+            $('#procurementPersonnelDeleteModal').modal('show');
+        });
+        $('#procurement-personnel-delete-confirm').on('click', function () {
+            if (!$('#procurement-delete-pk').val()) return;
+            $('#procurement-personnel-delete-form').submit();
+        });
         $(document).on('click', '.replenish-edit-requested', function () {
             const btn = $(this);
             $('#replenish-edit-requested-pk').val(btn.attr('data-pk') || '');
@@ -2953,7 +2995,11 @@ Replenish/Add New Item
 
             // Generate RIS number (legacy format: XXX-XX-XXX e.g. 023-26-001)
             const risNumber = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-            const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+            const d = new Date();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const currentDate = `${dd}/${mm}/${yyyy}`;
 
             // Create print window
             const printWindow = window.open('', '_blank');
@@ -2999,8 +3045,10 @@ Replenish/Add New Item
                         }
                         
                         .logo {
-                            width: 80px;
                             height: 80px;
+                            width: auto;
+                            max-width: 240px;
+                            object-fit: contain;
                             margin-right: 10px;
                         }
                         
@@ -3076,6 +3124,7 @@ Replenish/Add New Item
                             width: 100%;
                             border-collapse: collapse;
                             font-size: 8pt;
+                            table-layout: fixed; /* force 4 equal-width columns */
                         }
                         
                         .footer-table td,
@@ -3084,6 +3133,8 @@ Replenish/Add New Item
                             padding: 4px 6px;
                             vertical-align: top;
                             text-align: left;
+                            width: 25%;
+                            box-sizing: border-box;
                         }
                         
                         .footer-purpose-cell {
@@ -3094,6 +3145,52 @@ Replenish/Add New Item
                         .footer-sig-header {
                             font-weight: normal;
                             padding: 4px 6px;
+                            text-align: center;
+                        }
+                        
+                        .footer-table td.footer-sig-col {
+                            text-align: center;
+                            vertical-align: top;
+                        }
+                        
+                        .footer-sig-col .footer-sig-line {
+                            max-width: 92%;
+                            margin-left: auto;
+                            margin-right: auto;
+                            overflow: hidden;
+                        }
+                        
+                        .footer-table td.footer-sig-meta {
+                            text-align: center;
+                            vertical-align: middle;
+                            white-space: normal; /* allow wrapping */
+                            overflow-wrap: anywhere;
+                            word-break: break-word;
+                        }
+                        
+                        /* Date row spans 4 columns; keep content left-aligned */
+                        .footer-table td.footer-date-cell {
+                            text-align: left !important;
+                            justify-content: flex-start;
+                        }
+                        
+                        .footer-date-cell {
+                            padding: 8px 6px 12px;
+                            vertical-align: top;
+                        }
+                        
+                        .footer-date-label {
+                            display: block;
+                            font-size: 8pt;
+                            margin-bottom: 4px;
+                        }
+                        
+                        .footer-date-line {
+                            min-height: 26px;
+                            margin-top: 2px;
+                            max-width: 85%;
+                            margin-left: auto;
+                            margin-right: auto;
                         }
                         
                         .footer-sig-line {
@@ -3120,10 +3217,10 @@ Replenish/Add New Item
                         <div class="header">
                             <div class="header-left">
                                 <img src="{% static 'image/logo.png' %}" alt="PhilHealth Logo" class="logo" onerror="this.style.display='none'">
-                                <div>
+                                <!--<div>
                                     <span class="doc-title" style="font-size: 12pt;">PhilHealth</span><br>
                                     <span class="doc-subtitle">Your Partner in Health.</span>
-                                </div>
+                                </div>-->
                             </div>
                             <div class="header-right">
                                 <p class="doc-title">Requisition and Issue Slip (Supplies and Materials)</p>
@@ -3222,29 +3319,30 @@ Replenish/Add New Item
                                     <th class="footer-sig-header">Received by:</th>
                                 </tr>
                                 <tr>
-                                    <td>Signature<br><div class="footer-sig-line"></div></td>
-                                    <td>Signature<br><div class="footer-sig-line"></div></td>
-                                    <td>Signature<br><div class="footer-sig-line"></div></td>
-                                    <td>Signature<br><div class="footer-sig-line"></div></td>
+                                    <td class="footer-sig-col">Signature<br><div class="footer-sig-line"></div></td>
+                                    <td class="footer-sig-col">Signature<br><div class="footer-sig-line"></div></td>
+                                    <td class="footer-sig-col">Signature<br><div class="footer-sig-line"></div></td>
+                                    <td class="footer-sig-col">Signature<br><div class="footer-sig-line"></div></td>
                                 </tr>
                                 <tr>
-                                    <td>Printed Name: ${selectedSignatories.requested.name}</td>
-                                    <td>Printed Name: ${selectedSignatories.approved.name}</td>
-                                    <td>Printed Name: ${selectedSignatories.issued.name}</td>
-                                    <td>Printed Name: ${selectedSignatories.received.name}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.requested.name}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.approved.name}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.issued.name}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.received.name}</td>
                                 </tr>
                                 <tr>
-                                    <td>Designation: ${selectedSignatories.requested.position || ''}</td>
-                                    <td>Designation: ${selectedSignatories.approved.position || ''}</td>
-                                    <td>Designation: ${selectedSignatories.issued.position || ''}</td>
-                                    <td>Designation: ${selectedSignatories.received.position || ''}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.requested.position || ''}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.approved.position || ''}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.issued.position || ''}</td>
+                                    <td class="footer-sig-meta">${selectedSignatories.received.position || ''}</td>
                                 </tr>
                                 <tr>
-                                    <td>Date:</td>
-                                    <td>Date:</td>
-                                    <td>Date:</td>
-                                    <td>Date:</td>
+                                        <td colspan="4" class="footer-sig-meta footer-date-cell">
+                        
+                                        <div> Date: ${currentDate}</div>
+                                    </td>
                                 </tr>
+                                
                             </table>
                         </div>
                     </div>
@@ -3407,7 +3505,7 @@ Replenish/Add New Item
                         logoUrl = window.location.origin + (logoUrl.charAt(0) === '/' ? '' : '/') + logoUrl;
                     }
 
-                    function doGeneratePdf(logoDataUrl) {
+                    function doGeneratePdf(logoDataUrl, logoNatW, logoNatH) {
                     try {
                         if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
                             throw new Error('PDF library not loaded');
@@ -3422,7 +3520,11 @@ Replenish/Add New Item
                         const contentLeft = margin;
                         const contentRight = pageWidth - margin;
 
-                        const currentDate = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+                        const d = new Date();
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const yyyy = d.getFullYear();
+                        const currentDate = `${dd}/${mm}/${yyyy}`;
 
                         const colWidths = {
                             balanceOnHand: 24,
@@ -3448,8 +3550,19 @@ Replenish/Add New Item
                         // ----- HEADER (inside border) -----
                         // More space at top: header line lower so logo can be larger and have padding
                         const headerLineY = 32;
-                        const logoWidth = 16;
-                        const logoHeight = 16;
+                        const maxLogoW = 38;
+                        const maxLogoH = 14;
+                        let logoWidth = 16;
+                        let logoHeight = 16;
+                        if (logoDataUrl && logoNatW > 0 && logoNatH > 0) {
+                            const ratio = logoNatW / logoNatH;
+                            logoHeight = maxLogoH;
+                            logoWidth = logoHeight * ratio;
+                            if (logoWidth > maxLogoW) {
+                                logoWidth = maxLogoW;
+                                logoHeight = logoWidth / ratio;
+                            }
+                        }
                         const logoLeft = contentLeft + 1;
                         const logoTop = borderTop + 2;
                         const textLeft = logoDataUrl ? (logoLeft + logoWidth + 2) : contentLeft;
@@ -3463,10 +3576,10 @@ Replenish/Add New Item
                         }
                         doc.setFontSize(12);
                         doc.setFont('helvetica', 'bold');
-                        doc.text('PhilHealth', textLeft, textTopOffset);
+                        // doc.text('PhilHealth', textLeft, textTopOffset);
                         doc.setFontSize(8);
                         doc.setFont('helvetica', 'normal');
-                        doc.text('Your Partner in Health.', textLeft, textTopOffset + 4);
+                        // doc.text('Your Partner in Health.', textLeft, textTopOffset + 4);
 
                         doc.setFontSize(10);
                         doc.setFont('helvetica', 'bold');
@@ -3704,15 +3817,26 @@ Replenish/Add New Item
                         doc.setLineDashPattern([], 0);
                         doc.setDrawColor(0);
 
-                        // Footer Section - exact match to reference: bordered table with Purpose row + 4-column signature block
+                        // Footer Section: Purpose row + 4-column signature block (matches print layout: centered, name/position only, date line)
                         const footerTop = nothingFollowsRowBottom + 6;
 
                         const rightEdge = pageWidth - margin;
                         const sigBoxWidth = (rightEdge - margin) / 4;
                         const purposeRowHeight = 8;
-                        const sigRowHeight = 7;
-                        const sigBlockHeight = sigRowHeight * 5;
+                        const sigRowHeights = [7, 7, 7, 7, 11];
+                        const sigBlockHeight = sigRowHeights.reduce(function (a, b) { return a + b; }, 0);
                         const footerHeight = purposeRowHeight + sigBlockHeight;
+                        const colCenterX = function (colIndex) {
+                            return margin + (colIndex + 0.5) * sigBoxWidth;
+                        };
+                        const sigBlockTop = footerTop + purposeRowHeight;
+                        const rowStartY = function (rowIndex) {
+                            var y = sigBlockTop;
+                            for (var i = 0; i < rowIndex; i++) {
+                                y += sigRowHeights[i];
+                            }
+                            return y;
+                        };
 
                         // Draw outer border (single continuous frame around entire footer)
                         doc.setLineWidth(0.5);
@@ -3727,64 +3851,64 @@ Replenish/Add New Item
                         doc.setLineWidth(0.3);
                         doc.line(margin, footerTop + purposeRowHeight, rightEdge, footerTop + purposeRowHeight);
 
-                        const sigBlockTop = footerTop + purposeRowHeight;
-
                         // Draw full grid: vertical lines (5 lines for 4 columns)
                         doc.setDrawColor(0);
                         for (let c = 0; c <= 4; c++) {
                             const x = margin + (c * sigBoxWidth);
                             doc.line(x, sigBlockTop, x, sigBlockTop + sigBlockHeight);
                         }
-                        // Horizontal lines between each row (5 rows = 6 horizontal lines; top already drawn)
-                        for (let r = 1; r <= 5; r++) {
-                            const y = sigBlockTop + (r * sigRowHeight);
-                            doc.line(margin, y, rightEdge, y);
+                        let sigRowLineY = sigBlockTop;
+                        for (let r = 0; r < sigRowHeights.length; r++) {
+                            sigRowLineY += sigRowHeights[r];
+                            doc.line(margin, sigRowLineY, rightEdge, sigRowLineY);
                         }
 
-                        // Row 1: Requested by / Approved by / Issued by / Received by (all BOLD)
+                        // Row 0: Requested by / Approved by / Issued by / Received by (bold, centered per column)
                         doc.setFontSize(7);
                         doc.setFont('helvetica', 'bold');
-                        const row1Y = sigBlockTop + 4.5;
-                        doc.text('Requested by:', margin + 4, row1Y);
-                        doc.text('Approved by:', margin + sigBoxWidth + 4, row1Y);
-                        doc.text('Issued by:', margin + (sigBoxWidth * 2) + 4, row1Y);
-                        doc.text('Received by:', margin + (sigBoxWidth * 3) + 4, row1Y);
+                        const row1Y = rowStartY(0) + 4.5;
+                        doc.text('Requested by:', colCenterX(0), row1Y, { align: 'center' });
+                        doc.text('Approved by:', colCenterX(1), row1Y, { align: 'center' });
+                        doc.text('Issued by:', colCenterX(2), row1Y, { align: 'center' });
+                        doc.text('Received by:', colCenterX(3), row1Y, { align: 'center' });
 
-                        // Row 2: "Signature" label first, then line drawn under the signature
+                        // Row 1: Signature (centered) + line
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(7);
-                        const row2Top = sigBlockTop + sigRowHeight;
-                        const sigLabelY = row2Top + 3.5;
-                        const sigLineY = row2Top + 6;
-                        doc.text('Signature', margin + 4, sigLabelY);
-                        doc.line(margin + 4, sigLineY, margin + sigBoxWidth - 4, sigLineY);
-                        doc.text('Signature', margin + sigBoxWidth + 4, sigLabelY);
-                        doc.line(margin + sigBoxWidth + 4, sigLineY, margin + (sigBoxWidth * 2) - 4, sigLineY);
-                        doc.text('Signature', margin + (sigBoxWidth * 2) + 4, sigLabelY);
-                        doc.line(margin + (sigBoxWidth * 2) + 4, sigLineY, margin + (sigBoxWidth * 3) - 4, sigLineY);
-                        doc.text('Signature', margin + (sigBoxWidth * 3) + 4, sigLabelY);
-                        doc.line(margin + (sigBoxWidth * 3) + 4, sigLineY, rightEdge - 4, sigLineY);
+                        const sigLabelY = rowStartY(1) + 3.5;
+                        const sigLineY = rowStartY(1) + 6;
+                        for (let c = 0; c < 4; c++) {
+                            doc.text('Signature', colCenterX(c), sigLabelY, { align: 'center' });
+                            const lineL = margin + c * sigBoxWidth + 3;
+                            const lineR = margin + (c + 1) * sigBoxWidth - 3;
+                            doc.line(lineL, sigLineY, lineR, sigLineY);
+                        }
 
-                        // Row 3: Printed Name:
-                        const row3Y = sigBlockTop + (sigRowHeight * 2) + 4.5;
-                        doc.text('Printed Name: ' + (selectedSignatories.requested.name || ''), margin + 4, row3Y);
-                        doc.text('Printed Name: ' + (selectedSignatories.approved.name || ''), margin + sigBoxWidth + 4, row3Y);
-                        doc.text('Printed Name: ' + (selectedSignatories.issued.name || ''), margin + (sigBoxWidth * 2) + 4, row3Y);
-                        doc.text('Printed Name: ' + (selectedSignatories.received.name || ''), margin + (sigBoxWidth * 3) + 4, row3Y);
+                        // Row 2–3: Name and position only (centered; matches print preview)
+                        doc.setFontSize(7);
+                        const rowNameY = rowStartY(2) + 4.5;
+                        doc.text(String(selectedSignatories.requested.name || ''), colCenterX(0), rowNameY, { align: 'center' });
+                        doc.text(String(selectedSignatories.approved.name || ''), colCenterX(1), rowNameY, { align: 'center' });
+                        doc.text(String(selectedSignatories.issued.name || ''), colCenterX(2), rowNameY, { align: 'center' });
+                        doc.text(String(selectedSignatories.received.name || ''), colCenterX(3), rowNameY, { align: 'center' });
 
-                        // Row 4: Designation:
-                        const row4Y = sigBlockTop + (sigRowHeight * 3) + 4.5;
-                        doc.text('Designation: ' + (selectedSignatories.requested.position || ''), margin + 4, row4Y);
-                        doc.text('Designation: ' + (selectedSignatories.approved.position || ''), margin + sigBoxWidth + 4, row4Y);
-                        doc.text('Designation: ' + (selectedSignatories.issued.position || ''), margin + (sigBoxWidth * 2) + 4, row4Y);
-                        doc.text('Designation: ' + (selectedSignatories.received.position || ''), margin + (sigBoxWidth * 3) + 4, row4Y);
+                        const rowPosY = rowStartY(3) + 4.5;
+                        doc.text(String(selectedSignatories.requested.position || ''), colCenterX(0), rowPosY, { align: 'center' });
+                        doc.text(String(selectedSignatories.approved.position || ''), colCenterX(1), rowPosY, { align: 'center' });
+                        doc.text(String(selectedSignatories.issued.position || ''), colCenterX(2), rowPosY, { align: 'center' });
+                        doc.text(String(selectedSignatories.received.position || ''), colCenterX(3), rowPosY, { align: 'center' });
 
-                        // Row 5: Date:
-                        const row5Y = sigBlockTop + (sigRowHeight * 4) + 4.5;
-                        doc.text('Date:', margin + 4, row5Y);
-                        doc.text('Date:', margin + sigBoxWidth + 4, row5Y);
-                        doc.text('Date:', margin + (sigBoxWidth * 2) + 4, row5Y);
-                        doc.text('Date:', margin + (sigBoxWidth * 3) + 4, row5Y);
+                        // Row 4: Date label + date value + underline
+                        const dateLabelY = rowStartY(4) + 3.5;
+                        const dateValueY = rowStartY(4) + 6.0;
+                        const dateLineY = rowStartY(4) + 7.5;
+                        for (let c = 0; c < 4; c++) {
+                            doc.text('Date', colCenterX(c), dateLabelY, { align: 'center' });
+                            doc.text(currentDate, colCenterX(c), dateValueY, { align: 'center' });
+                            const lineL = margin + c * sigBoxWidth + 6;
+                            const lineR = margin + (c + 1) * sigBoxWidth - 6;
+                            doc.line(lineL, dateLineY, lineR, dateLineY);
+                        }
 
                         // Reset line width for rest of document
                         doc.setLineWidth(0.3);
@@ -3877,14 +4001,14 @@ Replenish/Add New Item
                             canvas.height = img.naturalHeight;
                             var ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0);
-                            doGeneratePdf(canvas.toDataURL('image/png'));
+                            doGeneratePdf(canvas.toDataURL('image/png'), img.naturalWidth, img.naturalHeight);
                         };
                         img.onerror = function() {
-                            doGeneratePdf(null);
+                            doGeneratePdf(null, 0, 0);
                         };
                         img.src = logoUrl;
                     } else {
-                        doGeneratePdf(null);
+                        doGeneratePdf(null, 0, 0);
                     }
                 } else {
                     console.log('User cancelled or dismissed dialog');
@@ -3912,165 +4036,8 @@ Replenish/Add New Item
             return JSON.parse(localStorage.getItem('pdfDownloadHistory')) || [];
         }
 
-        // Show PDF history when sidebar link is clicked
-        $(document).on('click', '#pdf-history-link', function (e) {
-            e.preventDefault();
-            const history = getPDFHistory();
-
-            if (history.length === 0) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No PDF History',
-                    text: 'No PDF downloads found in history.',
-                    confirmButtonColor: '#28a745'
-                });
-                return;
-            }
-
-            let historyHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
-            historyHTML += '<table class="table table-sm table-bordered" style="font-size: 12px;">';
-            historyHTML += '<thead><tr><th style="width: 40%;">Filename</th><th style="width: 25%;">Type</th><th style="width: 15%;">Items</th><th style="width: 20%;">Date</th></tr></thead>';
-            historyHTML += '<tbody>';
-
-            history.forEach((item, index) => {
-                historyHTML += `
-                    <tr>
-                        <td style="word-break: break-all;">${item.filename}</td>
-                        <td>${item.type}</td>
-                        <td class="text-center">${item.itemCount}</td>
-                        <td style="font-size: 10px;">${item.date}</td>
-                    </tr>
-                `;
-            });
-
-            historyHTML += '</tbody></table></div>';
-
-            Swal.fire({
-                icon: 'info',
-                title: 'PDF Download History',
-                html: historyHTML,
-                width: '800px',
-                confirmButtonColor: '#28a745',
-                showCloseButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'Close',
-                cancelButtonText: 'Clear History',
-                cancelButtonColor: '#dc3545'
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.cancel) {
-                    // Clear history
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Clear History?',
-                        text: 'Are you sure you want to clear all PDF download history?',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, Clear All',
-                        cancelButtonText: 'Cancel'
-                    }).then((confirmResult) => {
-                        if (confirmResult.isConfirmed) {
-                            localStorage.removeItem('pdfDownloadHistory');
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Cleared!',
-                                text: 'PDF history has been cleared.',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Show activity log (combined print and PDF history)
-        $(document).on('click', '#activity-log-link', function (e) {
-            e.preventDefault();
-            const pdfHistory = getPDFHistory();
-            const printHistory = getPrintHistory();
-
-            // Combine and sort by timestamp
-            const allActivities = [
-                ...pdfHistory.map(item => ({ ...item, activity: 'PDF Download' })),
-                ...printHistory.map(item => ({ ...item, activity: 'Print' }))
-            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            if (allActivities.length === 0) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No Activity Log',
-                    text: 'No activities found in history.',
-                    confirmButtonColor: '#28a745'
-                });
-                return;
-            }
-
-            let activityHTML = '<div style="text-align: left; max-height: 450px; overflow-y: auto;">';
-            activityHTML += '<table class="table table-sm table-bordered table-hover" style="font-size: 12px;">';
-            activityHTML += '<thead><tr><th style="width: 20%;">Activity</th><th style="width: 35%;">Details</th><th style="width: 15%;">Items</th><th style="width: 30%;">Date & Time</th></tr></thead>';
-            activityHTML += '<tbody>';
-
-            allActivities.forEach((item, index) => {
-                const activityBadge = item.activity === 'PDF Download'
-                    ? '<span class="badge badge-danger"><i class="fas fa-file-pdf"></i> PDF</span>'
-                    : '<span class="badge badge-info"><i class="fas fa-print"></i> Print</span>';
-
-                const details = item.filename ? item.filename.substring(0, 40) + '...' : item.type;
-
-                activityHTML += `
-                    <tr>
-                        <td>${activityBadge}</td>
-                        <td style="word-break: break-all; font-size: 11px;">${details}</td>
-                        <td class="text-center"><span class="badge badge-success">${item.itemCount}</span></td>
-                        <td style="font-size: 10px;">${item.date}</td>
-                    </tr>
-                `;
-            });
-
-            activityHTML += '</tbody></table></div>';
-            activityHTML += `<div class="mt-2 text-center"><small class="text-muted">Total Activities: ${allActivities.length}</small></div>`;
-
-            Swal.fire({
-                icon: 'info',
-                title: '<i class="fas fa-clipboard-list"></i> Activity Log',
-                html: activityHTML,
-                width: '900px',
-                confirmButtonColor: '#28a745',
-                showCloseButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'Close',
-                cancelButtonText: 'Clear All History',
-                cancelButtonColor: '#dc3545'
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.cancel) {
-                    // Clear all history
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Clear All History?',
-                        text: 'This will clear both PDF download and print history. Are you sure?',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, Clear Everything',
-                        cancelButtonText: 'Cancel'
-                    }).then((confirmResult) => {
-                        if (confirmResult.isConfirmed) {
-                            localStorage.removeItem('pdfDownloadHistory');
-                            localStorage.removeItem('printHistory');
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Cleared!',
-                                text: 'All activity history has been cleared.',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
+        
+        
         // ========== OUT OF STOCK CHECKBOX AND PRINT FUNCTIONALITY END ==========
 
         // ========== PAGINATION FUNCTIONALITY START ==========

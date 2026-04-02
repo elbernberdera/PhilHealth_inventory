@@ -449,10 +449,61 @@ def replenish_item(request):
     """Replenish/Add New Item view"""
     from django.contrib import messages
     from django.db.models import Max
-    from .models import BinCardNotedBy, BinCardPreparedBy, Category, Supply
+    from .models import (
+        BinCardNotedBy,
+        BinCardPreparedBy,
+        Category,
+        ProcurementPersonnel,
+        Supply,
+    )
     from datetime import date, timedelta
 
     if request.method == 'POST':
+        proc_action = (request.POST.get('procurement_action') or '').strip()
+        if proc_action == 'add':
+            name = (request.POST.get('procurement_name') or '').strip()
+            position = (request.POST.get('procurement_position') or '').strip()
+            if name and position:
+                next_order = (
+                    ProcurementPersonnel.objects.aggregate(m=Max('sort_order'))['m'] or 0
+                ) + 1
+                ProcurementPersonnel.objects.create(
+                    name=name, position=position, sort_order=next_order
+                )
+                messages.success(request, 'Procurement personnel added.')
+            elif not name:
+                messages.warning(request, 'Enter a name before adding.')
+            else:
+                messages.warning(request, 'Enter a position before adding.')
+            return redirect('replenish_item')
+        if proc_action == 'edit':
+            pk = request.POST.get('procurement_pk')
+            name = (request.POST.get('procurement_name') or '').strip()
+            position = (request.POST.get('procurement_position') or '').strip()
+            if pk and name and position:
+                try:
+                    obj = ProcurementPersonnel.objects.get(pk=pk)
+                    obj.name = name
+                    obj.position = position
+                    obj.save(update_fields=['name', 'position'])
+                    messages.success(request, 'Procurement personnel updated.')
+                except ProcurementPersonnel.DoesNotExist:
+                    messages.warning(request, 'That record no longer exists.')
+            elif not name:
+                messages.warning(request, 'Enter a name before saving.')
+            elif not position:
+                messages.warning(request, 'Enter a position before saving.')
+            else:
+                messages.warning(request, 'Could not update record.')
+            return redirect('replenish_item')
+        if proc_action == 'delete':
+            pk = request.POST.get('procurement_pk')
+            if pk:
+                deleted, _ = ProcurementPersonnel.objects.filter(pk=pk).delete()
+                if deleted:
+                    messages.success(request, 'Procurement personnel removed.')
+            return redirect('replenish_item')
+
         action = (request.POST.get('action') or '').strip()
         role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
         if role not in ('prepared', 'noted', 'issued', 'received'):
@@ -529,7 +580,8 @@ def replenish_item(request):
     ).order_by('expiration_date', '-id')
     prepared_by_signatories = list(BinCardPreparedBy.objects.all())
     noted_by_signatories = list(BinCardNotedBy.objects.all())
-    
+    procurement_personnel = list(ProcurementPersonnel.objects.all())
+
     context = {
         'page_title': 'Replenish/Add New Item',
         'categories': categories,
@@ -539,6 +591,7 @@ def replenish_item(request):
         'expiring_supplies': expiring_supplies,
         'prepared_by_signatories': prepared_by_signatories,
         'noted_by_signatories': noted_by_signatories,
+        'procurement_personnel': procurement_personnel,
     }
     return render(request, 'admin/Replenish/Replenish.html', context)
 

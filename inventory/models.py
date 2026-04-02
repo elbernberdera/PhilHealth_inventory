@@ -353,6 +353,24 @@ class BinCardPreparedBy(models.Model):
         return self.name
 
 
+class ProcurementPersonnel(models.Model):
+    """Procurement staff listed on the Replenish Procurement Personnel tab."""
+
+    name = models.CharField(max_length=200, verbose_name='Name')
+    position = models.CharField(max_length=200, blank=True, verbose_name='Position')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Sort order')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'procurement_personnel_tbl'
+        ordering = ['sort_order', 'name']
+        verbose_name = 'Procurement personnel'
+        verbose_name_plural = 'Procurement personnel'
+
+    def __str__(self):
+        return self.name
+
+
 class BinCardNotedBy(models.Model):
     """Signatories for Bin Card printout (Noted by line)."""
 
