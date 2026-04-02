@@ -358,7 +358,11 @@ Replenish/Add New Item
                                 aria-labelledby="out-of-stock-tab">
                                 <!-- Action Buttons for Out of Stock -->
                                 <div class="row mb-3">
-                                    <div class="col-md-12 text-right">
+                                    <div class="col-md-12 d-flex justify-content-end align-items-center flex-wrap">
+                                        <div class="mr-2 mb-2 mb-md-0" style="min-width:220px;">
+                                            <input type="text" class="form-control form-control-sm" id="ris-control-number"
+                                                placeholder="RIS (023-26-000)" value="023-26-001">
+                                        </div>
                                         <button type="button" class="btn btn-info btn-sm mr-2"
                                             id="print-out-of-stock-btn">
                                             <i class="fas fa-print mr-1"></i> Print Selected
@@ -753,6 +757,15 @@ Replenish/Add New Item
     </div>
 </section>
 
+
+
+
+
+
+
+
+
+
 <!-- Add Procurement Personnel -->
 <div class="modal fade" id="procurementPersonnelAddModal" tabindex="-1" role="dialog" aria-hidden="true"
     data-backdrop="static" data-keyboard="false">
@@ -849,170 +862,17 @@ Replenish/Add New Item
     <input type="hidden" name="procurement_pk" id="procurement-delete-pk" value="">
 </form>
 
-<!-- Replenish Signatory Modals -->
-<div class="modal fade" id="replenishAddRequestedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Requested by signatory</h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <form method="post" action="">
-                {% csrf_token %}
-                <input type="hidden" name="signatory_role" value="prepared">
-                <input type="hidden" name="action" value="add">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
-                        <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
-                    </div>
-                </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="replenishEditRequestedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Requested by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="" id="replenish-edit-requested-form">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="prepared"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-requested-pk">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-requested-name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-requested-position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishDeleteRequestedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document"><div class="modal-content">
-        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-requested-display"></strong> from Requested by list?</p></div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-requested-confirm">Delete</button></div>
-    </div></div>
-</div>
-<form method="post" action="" id="replenish-delete-requested-form" class="d-none">
-    {% csrf_token %}
-    <input type="hidden" name="signatory_role" value="prepared"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-requested-pk">
-</form>
 
-<div class="modal fade" id="replenishAddApprovedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Approved by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="add">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishEditApprovedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Approved by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="" id="replenish-edit-approved-form">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-approved-pk">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-approved-name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-approved-position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishDeleteApprovedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document"><div class="modal-content">
-        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-approved-display"></strong> from Approved by list?</p></div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-approved-confirm">Delete</button></div>
-    </div></div>
-</div>
-<form method="post" action="" id="replenish-delete-approved-form" class="d-none">
-    {% csrf_token %}
-    <input type="hidden" name="signatory_role" value="noted"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-approved-pk">
-</form>
 
-<div class="modal fade" id="replenishAddIssuedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Issued by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="add">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishEditIssuedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Issued by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-issued-pk">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-issued-name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-issued-position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishDeleteIssuedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document"><div class="modal-content">
-        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-issued-display"></strong> from Issued by list?</p></div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-issued-confirm">Delete</button></div>
-    </div></div>
-</div>
-<form method="post" action="" id="replenish-delete-issued-form" class="d-none">
-    {% csrf_token %}
-    <input type="hidden" name="signatory_role" value="issued"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-issued-pk">
-</form>
 
-<div class="modal fade" id="replenishAddReceivedModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-plus-circle mr-2"></i>Add Received by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="add">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position <span class="text-danger">*</span></label><input type="text" class="form-control" name="position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Add</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishEditReceivedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Edit Received by signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="edit"><input type="hidden" name="pk" id="replenish-edit-received-pk">
-            <div class="modal-body"><div class="row">
-                <div class="col-md-6"><div class="form-group"><label>Name</label><input type="text" class="form-control" name="name" id="replenish-edit-received-name" maxlength="200" required></div></div>
-                <div class="col-md-6"><div class="form-group"><label>Position</label><input type="text" class="form-control" name="position" id="replenish-edit-received-position" maxlength="200" required></div></div>
-            </div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
-        </form>
-    </div></div>
-</div>
-<div class="modal fade" id="replenishDeleteReceivedModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document"><div class="modal-content">
-        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div>
-        <div class="modal-body"><p class="mb-0">Remove <strong id="replenish-delete-received-display"></strong> from Received by list?</p></div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" id="replenish-delete-received-confirm">Delete</button></div>
-    </div></div>
-</div>
+
+
+
+
+
+
+
+
 <form method="post" action="" id="replenish-delete-received-form" class="d-none">
     {% csrf_token %}
     <input type="hidden" name="signatory_role" value="received"><input type="hidden" name="action" value="delete"><input type="hidden" name="pk" id="replenish-delete-received-pk">
@@ -2977,6 +2837,8 @@ Replenish/Add New Item
             $('#replenish-delete-received-form').submit();
         });
 
+
+
         // Print Selected Items - PhilHealth Requisition Format
         $('#print-out-of-stock-btn').on('click', function () {
             const selectedData = getSelectedOutOfStockData();
@@ -2993,8 +2855,24 @@ Replenish/Add New Item
             const selectedSignatories = ensureReplenishSignatoriesSelected();
             if (!selectedSignatories) return;
 
-            // Generate RIS number (legacy format: XXX-XX-XXX e.g. 023-26-001)
-            const risNumber = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+            // Read RIS number from inline input (no popup modal needed)
+            const risInput = $('#ris-control-number');
+            const risNumber = String(risInput.val() || '').trim();
+            if (!/^\d{3}-\d{2}-\d{3}$/.test(risNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Control Number',
+                    text: 'Please enter RIS using format 023-26-000.',
+                    confirmButtonColor: '#dc3545'
+                });
+                risInput.focus();
+                return;
+            }
+            const enteredSeq = parseInt(risNumber.split('-')[2], 10);
+            if (!Number.isNaN(enteredSeq) && enteredSeq >= 1) {
+                const nextSeq = enteredSeq + 1;
+                risInput.val(`023-26-${String(nextSeq).padStart(3, '0')}`);
+            }
             const d = new Date();
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -3479,13 +3357,27 @@ Replenish/Add New Item
             const selectedSignatories = ensureReplenishSignatoriesSelected();
             if (!selectedSignatories) return;
 
+            // Read RIS number from same inline input used by Print Selected
+            const risInput = $('#ris-control-number');
+            const risNumber = String(risInput.val() || '').trim();
+            if (!/^\d{3}-\d{2}-\d{3}$/.test(risNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Control Number',
+                    text: 'Please enter RIS using format 023-26-000.',
+                    confirmButtonColor: '#dc3545'
+                });
+                risInput.focus();
+                return;
+            }
+
             // Ask user confirmation before generating PDF
             console.log('Showing SweetAlert confirmation dialog...');
 
             Swal.fire({
                 icon: 'question',
                 title: 'Save as PDF',
-                text: `Generate RIS ${selectedData.length} selected item(s)?`,
+                text: `Generate PDF for RIS ${risNumber} with ${selectedData.length} selected item(s)?`,
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#6c757d',
@@ -3499,6 +3391,11 @@ Replenish/Add New Item
                 // Check both isConfirmed and value for compatibility
                 if (result.isConfirmed || result.value === true) {
                     console.log('User confirmed - starting PDF generation...');
+                    const enteredSeq = parseInt(risNumber.split('-')[2], 10);
+                    if (!Number.isNaN(enteredSeq) && enteredSeq >= 1) {
+                        const nextSeq = enteredSeq + 1;
+                        risInput.val(`023-26-${String(nextSeq).padStart(3, '0')}`);
+                    }
 
                     var logoUrl = "{% static 'image/logo.png' %}";
                     if (logoUrl && logoUrl.indexOf('http') !== 0) {
@@ -3597,9 +3494,8 @@ Replenish/Add New Item
                         doc.text('LHIO BUTUAN CITY', contentLeft + 32, 36);
 
                         // Right: RIS # (bold) on first line; Date (regular) on second line with ~4mm gap
-                        const risNum = `023-26-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
                         doc.setFont('helvetica', 'bold');
-                        doc.text('RIS #: ' + risNum, contentRight, 36, { align: 'right' });
+                        doc.text('RIS #: ' + risNumber, contentRight, 36, { align: 'right' });
                         doc.setFont('helvetica', 'normal');
                         doc.text('Date: ' + currentDate, contentRight, 41, { align: 'right' });
 
@@ -3822,8 +3718,9 @@ Replenish/Add New Item
 
                         const rightEdge = pageWidth - margin;
                         const sigBoxWidth = (rightEdge - margin) / 4;
-                        const purposeRowHeight = 8;
-                        const sigRowHeights = [7, 7, 7, 7, 11];
+                        const purposeRowHeight = 8.5;
+                        // 4 signature rows + 1 full-width date row (tuned to match print spacing)
+                        const sigRowHeights = [8, 9.5, 9, 10, 8];
                         const sigBlockHeight = sigRowHeights.reduce(function (a, b) { return a + b; }, 0);
                         const footerHeight = purposeRowHeight + sigBlockHeight;
                         const colCenterX = function (colIndex) {
@@ -3843,19 +3740,20 @@ Replenish/Add New Item
                         doc.rect(margin, footerTop, rightEdge - margin, footerHeight);
 
                         // Purpose row - full width cell with borders; "Purpose:" bold, "Operational Use" regular
-                        doc.setFontSize(8);
+                        doc.setFontSize(7.5);
                         doc.setFont('helvetica', 'bold');
-                        doc.text('Purpose:', margin + 4, footerTop + 5.5);
+                        doc.text('Purpose:', margin + 4, footerTop + 5.8);
                         doc.setFont('helvetica', 'normal');
-                        doc.text('Operational Use', margin + 26, footerTop + 5.5);
+                        doc.text('Operational Use', margin + 20, footerTop + 5.8);
                         doc.setLineWidth(0.3);
                         doc.line(margin, footerTop + purposeRowHeight, rightEdge, footerTop + purposeRowHeight);
 
-                        // Draw full grid: vertical lines (5 lines for 4 columns)
+                        // Draw vertical grid for 4 signature columns (date row is full width)
                         doc.setDrawColor(0);
+                        const dateRowTop = rowStartY(4);
                         for (let c = 0; c <= 4; c++) {
                             const x = margin + (c * sigBoxWidth);
-                            doc.line(x, sigBlockTop, x, sigBlockTop + sigBlockHeight);
+                            doc.line(x, sigBlockTop, x, dateRowTop);
                         }
                         let sigRowLineY = sigBlockTop;
                         for (let r = 0; r < sigRowHeights.length; r++) {
@@ -3864,51 +3762,51 @@ Replenish/Add New Item
                         }
 
                         // Row 0: Requested by / Approved by / Issued by / Received by (bold, centered per column)
-                        doc.setFontSize(7);
+                        doc.setFontSize(6.8);
                         doc.setFont('helvetica', 'bold');
                         const row1Y = rowStartY(0) + 4.5;
-                        doc.text('Requested by:', colCenterX(0), row1Y, { align: 'center' });
-                        doc.text('Approved by:', colCenterX(1), row1Y, { align: 'center' });
-                        doc.text('Issued by:', colCenterX(2), row1Y, { align: 'center' });
-                        doc.text('Received by:', colCenterX(3), row1Y, { align: 'center' });
+                        doc.text('Requested by:', margin + 4, row1Y);
+                        doc.text('Approved by:', margin + sigBoxWidth + 4, row1Y);
+                        doc.text('Issued by:', margin + (sigBoxWidth * 2) + 4, row1Y);
+                        doc.text('Received by:', margin + (sigBoxWidth * 3) + 4, row1Y);
 
                         // Row 1: Signature (centered) + line
                         doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(7);
-                        const sigLabelY = rowStartY(1) + 3.5;
-                        const sigLineY = rowStartY(1) + 6;
+                        doc.setFontSize(6.7);
+                        const sigLabelY = rowStartY(1) + 3.2;
+                        const sigLineY = rowStartY(1) + 8.2;
                         for (let c = 0; c < 4; c++) {
                             doc.text('Signature', colCenterX(c), sigLabelY, { align: 'center' });
-                            const lineL = margin + c * sigBoxWidth + 3;
-                            const lineR = margin + (c + 1) * sigBoxWidth - 3;
+                            const lineL = margin + c * sigBoxWidth + 4;
+                            const lineR = margin + (c + 1) * sigBoxWidth - 4;
                             doc.line(lineL, sigLineY, lineR, sigLineY);
                         }
 
-                        // Row 2–3: Name and position only (centered; matches print preview)
-                        doc.setFontSize(7);
-                        const rowNameY = rowStartY(2) + 4.5;
-                        doc.text(String(selectedSignatories.requested.name || ''), colCenterX(0), rowNameY, { align: 'center' });
-                        doc.text(String(selectedSignatories.approved.name || ''), colCenterX(1), rowNameY, { align: 'center' });
-                        doc.text(String(selectedSignatories.issued.name || ''), colCenterX(2), rowNameY, { align: 'center' });
-                        doc.text(String(selectedSignatories.received.name || ''), colCenterX(3), rowNameY, { align: 'center' });
+                        // Row 2–3: Name and position with wrapping (prevents overlap in PDF footer)
+                        const textMaxWidth = sigBoxWidth - 6;
+                        const drawCenteredWrapped = function (value, centerX, startY, maxLines, fontSize) {
+                            const raw = String(value || '').trim();
+                            if (!raw) return;
+                            doc.setFontSize(fontSize);
+                            const lines = doc.splitTextToSize(raw, textMaxWidth).slice(0, maxLines);
+                            doc.text(lines, centerX, startY, { align: 'center', lineHeightFactor: 1.05 });
+                        };
 
-                        const rowPosY = rowStartY(3) + 4.5;
-                        doc.text(String(selectedSignatories.requested.position || ''), colCenterX(0), rowPosY, { align: 'center' });
-                        doc.text(String(selectedSignatories.approved.position || ''), colCenterX(1), rowPosY, { align: 'center' });
-                        doc.text(String(selectedSignatories.issued.position || ''), colCenterX(2), rowPosY, { align: 'center' });
-                        doc.text(String(selectedSignatories.received.position || ''), colCenterX(3), rowPosY, { align: 'center' });
+                        const rowNameY = rowStartY(2) + 4.0;
+                        drawCenteredWrapped(selectedSignatories.requested.name, colCenterX(0), rowNameY, 2, 6.6);
+                        drawCenteredWrapped(selectedSignatories.approved.name, colCenterX(1), rowNameY, 2, 6.6);
+                        drawCenteredWrapped(selectedSignatories.issued.name, colCenterX(2), rowNameY, 2, 6.6);
+                        drawCenteredWrapped(selectedSignatories.received.name, colCenterX(3), rowNameY, 2, 6.6);
 
-                        // Row 4: Date label + date value + underline
-                        const dateLabelY = rowStartY(4) + 3.5;
-                        const dateValueY = rowStartY(4) + 6.0;
-                        const dateLineY = rowStartY(4) + 7.5;
-                        for (let c = 0; c < 4; c++) {
-                            doc.text('Date', colCenterX(c), dateLabelY, { align: 'center' });
-                            doc.text(currentDate, colCenterX(c), dateValueY, { align: 'center' });
-                            const lineL = margin + c * sigBoxWidth + 6;
-                            const lineR = margin + (c + 1) * sigBoxWidth - 6;
-                            doc.line(lineL, dateLineY, lineR, dateLineY);
-                        }
+                        const rowPosY = rowStartY(3) + 3.8;
+                        drawCenteredWrapped(selectedSignatories.requested.position, colCenterX(0), rowPosY, 3, 6.0);
+                        drawCenteredWrapped(selectedSignatories.approved.position, colCenterX(1), rowPosY, 3, 6.0);
+                        drawCenteredWrapped(selectedSignatories.issued.position, colCenterX(2), rowPosY, 3, 6.0);
+                        drawCenteredWrapped(selectedSignatories.received.position, colCenterX(3), rowPosY, 3, 6.0);
+
+                        // Row 4: Single full-width Date row (left-aligned, like print)
+                        const dateLabelY = rowStartY(4) + 4.8;
+                        doc.text('Date: ' + currentDate, margin + 4, dateLabelY);
 
                         // Reset line width for rest of document
                         doc.setLineWidth(0.3);
