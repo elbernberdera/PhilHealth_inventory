@@ -357,22 +357,41 @@ Replenish/Add New Item
                             <div class="tab-pane fade" id="out-of-stock" role="tabpanel"
                                 aria-labelledby="out-of-stock-tab">
                                 <!-- Action Buttons for Out of Stock -->
-                                <div class="row mb-3">
-                                    <div class="col-md-12 d-flex justify-content-end align-items-center flex-wrap">
-                                        <div class="mr-2 mb-2 mb-md-0 d-flex align-items-center" style="min-width:220px;">
-                                            <span class="small font-weight-bold text-danger mr-2 text-nowrap">RIS No. </span>
-                                            <input type="text" class="form-control form-control-sm" id="ris-control-number"
-                                                placeholder="RIS (023-yy-xxx)" value="023-26-001">
-                                        </div>
-                                        <button type="button" class="btn btn-info btn-sm mr-2"
-                                            id="print-out-of-stock-btn">
-                                            <i class="fas fa-print mr-1"></i> Print Selected
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm"
-                                            id="save-pdf-out-of-stock-btn">
-                                            <i class="fas fa-file-pdf mr-1"></i> Save as PDF
-                                        </button>
+                                <div class="d-flex justify-content-start justify-content-md-end align-items-center flex-wrap mb-3">
+                                    <div class="d-flex align-items-center flex-nowrap mr-3 mb-2 mb-md-0">
+                                        <label for="replenish-office-end-user" class="small font-weight-bold mb-0 mr-2 text-nowrap">Office End User</label>
+                                        <select class="form-control form-control-sm" id="replenish-office-end-user"
+                                            style="min-width: 13rem; width: 20rem; max-width: 100%;">
+                                            <option value="">-- Select office end user --</option>
+                                            <option value="LHIO - Butuan City">LHIO - Butuan City</option>
+                                            <option value="LHIO - San Francisco, Agusan del Sur">LHIO - San Francisco, Agusan del Sur</option>
+                                            <option value="LHIO - Surigao del Norte">LHIO - Surigao del Norte</option>
+                                            <option value="LHIO - Tandag, Surigao del Sur">LHIO - Tandag, Surigao del Sur</option>
+                                            <option value="LHIO - Bislig, Surigao del Sur">LHIO - Bislig, Surigao del Sur</option>
+                                            <option value="PRO - RVP">PRO - RVP</option>
+                                            <option value="PRO - Benefit Availment Services">PRO - Benefit Availment Services</option>
+                                            <option value="PRO - Finance">PRO - Finance</option>
+                                            <option value="PRO - HCDMD">PRO - HCDMD</option>
+                                            <option value="PRO - General Services Unit">PRO - General Services Unit</option>
+                                            <option value="PRO - Legal Unit">PRO - Legal Unit</option>
+                                            <option value="PRO - MSD">PRO - MSD</option>
+                                            <option value="PRO - Public Affairs Unit">PRO - Public Affairs Unit</option>
+                                            <option value="PRO - Planning">PRO - Planning</option>
+                                        </select>
                                     </div>
+                                    <div class="mr-2 mb-2 mb-md-0 d-flex align-items-center" style="min-width:220px;">
+                                        <span class="small font-weight-bold text-danger mr-2 text-nowrap">RIS No. </span>
+                                        <input type="text" class="form-control form-control-sm" id="ris-control-number"
+                                            placeholder="RIS (023-yy-xxx)" value="023-26-001">
+                                    </div>
+                                    <button type="button" class="btn btn-info btn-sm mr-2 mb-2 mb-md-0"
+                                        id="print-out-of-stock-btn">
+                                        <i class="fas fa-print mr-1"></i> Print Selected
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm mb-2 mb-md-0"
+                                        id="save-pdf-out-of-stock-btn">
+                                        <i class="fas fa-file-pdf mr-1"></i> Save as PDF
+                                    </button>
                                 </div>
                                 <!-- Table -->
                                 <div class="table-responsive">
@@ -2856,6 +2875,19 @@ Replenish/Add New Item
             const selectedSignatories = ensureReplenishSignatoriesSelected();
             if (!selectedSignatories) return;
 
+            const officeEndUserSelect = $('#replenish-office-end-user');
+            const officeEndUser = String(officeEndUserSelect.val() || '').trim();
+            if (!officeEndUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Office End User Required',
+                    text: 'Please select an office end user for this requisition.',
+                    confirmButtonColor: '#28a745'
+                });
+                officeEndUserSelect.focus();
+                return;
+            }
+
             // Read RIS number from inline input (no popup modal needed)
             const risInput = $('#ris-control-number');
             const risNumber = String(risInput.val() || '').trim();
@@ -3112,7 +3144,7 @@ Replenish/Add New Item
                         <!-- Info Row -->
                         <div class="info-row">
                             <div class="info-left">
-                                <strong>Office-End User:</strong> LHIO BUTUAN CITY
+                                <strong>Office-End User:</strong> ${officeEndUser.replace(/</g, '&lt;')}
                             </div>
                             <div class="info-right">
                                 <strong>RIS #:</strong> ${risNumber}<br>
@@ -3361,6 +3393,19 @@ Replenish/Add New Item
             const selectedSignatories = ensureReplenishSignatoriesSelected();
             if (!selectedSignatories) return;
 
+            const officeEndUserSelectPdf = $('#replenish-office-end-user');
+            const officeEndUserPdf = String(officeEndUserSelectPdf.val() || '').trim();
+            if (!officeEndUserPdf) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Office End User Required',
+                    text: 'Please select an office end user for this requisition.',
+                    confirmButtonColor: '#28a745'
+                });
+                officeEndUserSelectPdf.focus();
+                return;
+            }
+
             // Read RIS number from same inline input used by Print Selected
             const risInput = $('#ris-control-number');
             const risNumber = String(risInput.val() || '').trim();
@@ -3493,12 +3538,15 @@ Replenish/Add New Item
                         doc.line(contentLeft, headerLineY, contentRight, headerLineY);
 
                         // ----- OFFICE / REFERENCE SECTION -----
-                        // Left: Office-End User: (bold) LHIO BUTUAN CITY (regular), 8-9pt
                         doc.setFontSize(8);
                         doc.setFont('helvetica', 'bold');
                         doc.text('Office-End User:', contentLeft, 36);
                         doc.setFont('helvetica', 'normal');
-                        doc.text('LHIO BUTUAN CITY', contentLeft + 32, 36);
+                        const officeValueX = contentLeft + 32;
+                        const officeMaxW = Math.max(35, contentRight - officeValueX - 48);
+                        const officeLines = doc.splitTextToSize(officeEndUserPdf, officeMaxW);
+                        doc.text(officeLines, officeValueX, 36);
+                        const officeBlockBottom = 36 + (officeLines.length * 4);
 
                         // Right: RIS # (bold) on first line; Date (regular) on second line with ~4mm gap
                         doc.setFont('helvetica', 'bold');
@@ -3507,7 +3555,7 @@ Replenish/Add New Item
                         doc.text('Date: ' + currentDate, contentRight, 41, { align: 'right' });
 
                         // ----- MAIN TABLE HEADER -----
-                        let yPosition = 44;
+                        let yPosition = Math.max(44, officeBlockBottom + 5);
                         const tableStartY = yPosition;
 
                         // Grey strip - top horizontal line
