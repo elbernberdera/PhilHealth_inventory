@@ -734,7 +734,7 @@ Requested Supplies
                                                                 <span class="badge badge-light">{{ req.get_status_display }}</span>
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ req.conforme_by|default:"" }}</td>
+                                                        <td class="rs-print-blank-conforme">{{ req.conforme_by|default:"" }}</td>
                                                     </tr>
                                                 {% endfor %}
                                             {% else %}
@@ -1010,7 +1010,12 @@ Requested Supplies
         $('#requested-supplies-list-table tbody tr.rs-tab-print-row').each(function() {
             var cells = [];
             $(this).find('td').not('.rs-export-exclude').each(function() {
-                cells.push($(this).text().trim().replace(/\s+/g, ' '));
+                var $td = $(this);
+                var t = $td.text().trim().replace(/\s+/g, ' ');
+                if ($td.hasClass('rs-print-blank-conforme')) {
+                    t = '';
+                }
+                cells.push(t);
             });
             if (cells.length) {
                 rows.push(cells);
@@ -1109,19 +1114,30 @@ Requested Supplies
         var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         var subtitle = 'All requested supplies';
         var y0 = RS_TAB_LETTERHEAD_PT + 28;
+        var sideM = 24;
         doc.setFont('times', 'bold');
         doc.setFontSize(15);
         doc.text('LIST OF SUPPLY REQUESTS', pageW / 2, y0, { align: 'center' });
         doc.setFont('times', 'normal');
         doc.setFontSize(10);
         doc.text(subtitle, pageW / 2, y0 + 16, { align: 'center' });
-        doc.text('Generated on ' + today, pageW / 2, y0 + 30, { align: 'center' });
+        doc.text('As of ' + today, pageW / 2, y0 + 30, { align: 'center' });
+        // Column widths fill content area (match print layout; ~pageW - 2*sideM)
+        var tw = pageW - sideM * 2;
         doc.autoTable({
             head: [head],
             body: body,
             startY: y0 + 44,
             theme: 'grid',
-            styles: { font: 'times', fontSize: 8, cellPadding: 3, valign: 'middle', overflow: 'linebreak' },
+            styles: {
+                font: 'times',
+                fontSize: 8,
+                cellPadding: 3,
+                valign: 'middle',
+                overflow: 'linebreak',
+                lineColor: [0, 0, 0],
+                lineWidth: 0.5
+            },
             headStyles: {
                 fillColor: [239, 239, 239],
                 textColor: [0, 0, 0],
@@ -1132,35 +1148,41 @@ Requested Supplies
                 minCellHeight: 0
             },
             columnStyles: {
-                0: { halign: 'center', cellWidth: 26 },
-                1: { halign: 'center', cellWidth: 50 },
-                2: { halign: 'center', cellWidth: 92 },
-                3: { halign: 'left', cellWidth: 100 },
-                4: { halign: 'left', cellWidth: 128 },
-                5: { halign: 'center', cellWidth: 32 },
-                6: { halign: 'center', cellWidth: 26 },
-                7: { halign: 'center', cellWidth: 54 },
-                8: { halign: 'center', cellWidth: 48 },
-                9: { halign: 'left', cellWidth: 68 }
+                0: { halign: 'center', cellWidth: 28 },
+                1: { halign: 'center', cellWidth: 52 },
+                2: { halign: 'center', cellWidth: 96 },
+                3: { halign: 'left', cellWidth: 102 },
+                4: { halign: 'left', cellWidth: tw - (28 + 52 + 96 + 102 + 34 + 28 + 56 + 50 + 78) },
+                5: { halign: 'center', cellWidth: 34 },
+                6: { halign: 'center', cellWidth: 28 },
+                7: { halign: 'center', cellWidth: 56 },
+                8: { halign: 'center', cellWidth: 50 },
+                9: { halign: 'left', cellWidth: 78 }
             },
-            margin: { left: 24, right: 24, top: 36 }
+            margin: { left: sideM, right: sideM, top: 36 }
         });
-        var y = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : y0 + 44) + 14;
+        var y = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : y0 + 44) + 10;
         if (y > 500) {
             y = 500;
         }
+        // "Verified by:" lines up with Unit column (same as sample layout)
+        var colW = [28, 52, 96, 102];
+        var descW = tw - (28 + 52 + 96 + 102 + 34 + 28 + 56 + 50 + 78);
+        var verifiedX = sideM + colW[0] + colW[1] + colW[2] + colW[3] + descW;
+        var prepName = (prep.name || '').toUpperCase();
+        var verName = (ver.name || '').toUpperCase();
         doc.setFontSize(10);
         doc.setFont('times', 'normal');
-        doc.text('Prepared by:', 40, y);
-        doc.text('Verified by:', pageW - 280, y);
-        var sigGap = 22;
+        doc.text('Prepared by:', sideM, y);
+        doc.text('Verified by:', verifiedX, y);
+        var sigGap = 36;
         doc.setFont('times', 'bold');
-        doc.text(prep.name, 40, y + sigGap);
-        doc.text(ver.name, pageW - 280, y + sigGap);
+        doc.text(prepName, sideM, y + sigGap);
+        doc.text(verName, verifiedX, y + sigGap);
         doc.setFont('times', 'normal');
         doc.setFontSize(9);
-        doc.text(prep.position || 'Position', 40, y + sigGap + 14);
-        doc.text(ver.position || 'Position', pageW - 280, y + sigGap + 14);
+        doc.text(prep.position || 'Position', sideM, y + sigGap + 14);
+        doc.text(ver.position || 'Position', verifiedX, y + sigGap + 14);
         doc.save('all_requested_supplies_' + now.toISOString().slice(0, 10) + '.pdf');
     });
 
@@ -1226,7 +1248,7 @@ Requested Supplies
             '<div class="rs-tab-letterhead-spacer" aria-hidden="true"></div>' +
             '<h1>LIST OF SUPPLY REQUESTS</h1>' +
             '<p class="sub">' + rsEscapeHtml(subtitle) + '</p>' +
-            '<p class="muted">Printed on ' + rsEscapeHtml(today) + '</p>' +
+            '<p class="muted">As of ' + rsEscapeHtml(today) + '</p>' +
             '<table class="rs-tab-print"><thead>' + theadHtml + '</thead><tbody>' + tbodyHtml + '</tbody></table>' +
             sigHtml +
             '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>' +
