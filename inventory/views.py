@@ -766,10 +766,12 @@ def bin_card(request):
 @login_required
 def requested_supplies(request):
     """Requested Supplies view - FIFO (First In First Out) ordering"""
+    from datetime import date as date_class
+
     from django.core.paginator import Paginator
     from django.db.models import Q
 
-    from .models import RequestSupply
+    from .models import ProcurementPersonnel, RequestSupply
 
     q = (request.GET.get('q') or '').strip()
 
@@ -798,6 +800,40 @@ def requested_supplies(request):
         return Paginator(qs, 10).get_page(p)
 
     page_obj_all = _pg('page_all', requests_qs)
+
+    # "All Requested Supplies" tab: optional status filter (rs_filter), date range (rs_*), pager (page_rs)
+    rs_filter = (request.GET.get("rs_filter") or "").strip().lower()
+    rs_filter_map = {
+        "approved": "approved",
+        "pending": "pending",
+        "rejected": "rejected",
+        "oos": "Out of Stocks",
+    }
+    rs_start_raw = (request.GET.get("rs_start_date") or "").strip()
+    rs_end_raw = (request.GET.get("rs_end_date") or "").strip()
+    rs_start_d = None
+    rs_end_d = None
+    try:
+        if rs_start_raw:
+            rs_start_d = date_class.fromisoformat(rs_start_raw)
+    except ValueError:
+        rs_start_d = None
+    try:
+        if rs_end_raw:
+            rs_end_d = date_class.fromisoformat(rs_end_raw)
+    except ValueError:
+        rs_end_d = None
+    if rs_start_d and rs_end_d and rs_start_d > rs_end_d:
+        rs_start_d, rs_end_d = rs_end_d, rs_start_d
+
+    rs_list_qs = requests_qs
+    if rs_filter in rs_filter_map:
+        rs_list_qs = rs_list_qs.filter(status=rs_filter_map[rs_filter])
+    if rs_start_d:
+        rs_list_qs = rs_list_qs.filter(date__gte=rs_start_d)
+    if rs_end_d:
+        rs_list_qs = rs_list_qs.filter(date__lte=rs_end_d)
+    page_obj_requested_supplies = _pg("page_rs", rs_list_qs)
     page_obj_approved = _pg('page_approved', requests_qs.filter(status='approved'))
     page_obj_pending = _pg('page_pending', requests_qs.filter(status='pending'))
     page_obj_rejected = _pg('page_rejected', requests_qs.filter(status='rejected'))
@@ -808,6 +844,9 @@ def requested_supplies(request):
     rejected_count = requests_qs.filter(status='rejected').count()
     out_of_stock_count = requests_qs.filter(status='Out of Stocks').count()
 
+    requested_supplies_count = requests_qs.count()
+    procurement_personnel = list(ProcurementPersonnel.objects.all())
+
     context = {
         'page_title': 'Requested Supplies',
         'page_obj_all': page_obj_all,
@@ -815,10 +854,16 @@ def requested_supplies(request):
         'page_obj_pending': page_obj_pending,
         'page_obj_rejected': page_obj_rejected,
         'page_obj_oos': page_obj_oos,
+        'page_obj_requested_supplies': page_obj_requested_supplies,
         'approved_count': approved_count,
         'pending_count': pending_count,
         'rejected_count': rejected_count,
         'out_of_stock_count': out_of_stock_count,
+        'requested_supplies_count': requested_supplies_count,
+        'rs_list_filter': rs_filter if rs_filter in rs_filter_map else '',
+        'rs_start_date': rs_start_raw if rs_start_d else '',
+        'rs_end_date': rs_end_raw if rs_end_d else '',
+        'procurement_personnel': procurement_personnel,
     }
     return render(request, 'admin/requested_supplies/requested_supplies.html', context)
 

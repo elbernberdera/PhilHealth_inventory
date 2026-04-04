@@ -161,6 +161,14 @@ Requested Supplies
                                     <span class="badge badge-danger ml-1">{{ out_of_stock_count }}</span>
                                 </a>
                             </li>
+
+                            <!-- requted supplies -->
+                             <li class="nav-item">
+                                <a class="nav-link" id="requested-supplies-tab" data-toggle="tab" href="#requested-supplies" role="tab" aria-controls="requested-supplies" aria-selected="false">
+                                    <i class="fas fa-users mr-1"></i>All Requested Supplies
+                                    <span class="badge badge-success ml-1">{{ requested_supplies_count }}</span>
+                                </a>
+                             </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -614,6 +622,169 @@ Requested Supplies
                                 </div>
                                 {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_oos page_key='page_oos' %}
                             </div>
+
+                            <!-- Requested Supplies Tab: full list with history-style columns -->
+                            <div class="tab-pane fade" id="requested-supplies" role="tabpanel" aria-labelledby="requested-supplies-tab">
+                                <div class="bg-light border rounded px-3 py-3 mb-3">
+                                    <div class="row align-items-end">
+                                        <div class="col-12 col-xl mb-3 mb-xl-0">
+                                            <form method="get" action="{% url 'requested_supplies' %}" id="rs-date-filter-form" class="form-row align-items-end">
+                                                <input type="hidden" name="tab" value="requested-supplies">
+                                                {% if request.GET.q %}
+                                                    <input type="hidden" name="q" value="{{ request.GET.q }}">
+                                                {% endif %}
+                                                {% if rs_list_filter %}
+                                                    <input type="hidden" name="rs_filter" value="{{ rs_list_filter }}">
+                                                {% endif %}
+                                                <input type="hidden" name="page_rs" value="1">
+                                                <div class="form-group col-sm-6 col-md-4 col-lg-3 mb-2 mb-md-0">
+                                                    <label for="rs-start-date" class="mb-1 d-block"><i class="far fa-calendar-alt mr-1"></i>Start Date:</label>
+                                                    <input type="date" class="form-control form-control-sm" id="rs-start-date" name="rs_start_date" value="{{ rs_start_date }}">
+                                                </div>
+                                                <div class="form-group col-sm-6 col-md-4 col-lg-3 mb-2 mb-md-0">
+                                                    <label for="rs-end-date" class="mb-1 d-block"><i class="far fa-calendar-alt mr-1"></i>End Date:</label>
+                                                    <input type="date" class="form-control form-control-sm" id="rs-end-date" name="rs_end_date" value="{{ rs_end_date }}">
+                                                </div>
+                                                <div class="form-group col-12 col-md-4 col-lg-auto mb-0">
+                                                    <button type="submit" class="btn btn-success btn-sm mr-2">
+                                                        <i class="fas fa-search mr-1"></i>Apply
+                                                    </button>
+                                                    <a href="{% url 'requested_supplies' %}?tab=requested-supplies{% if request.GET.q %}&amp;q={{ request.GET.q|urlencode }}{% endif %}{% if rs_list_filter %}&amp;rs_filter={{ rs_list_filter }}{% endif %}" class="btn btn-secondary btn-sm">
+                                                        <i class="fas fa-undo mr-1"></i>Reset
+                                                    </a>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="col-12 col-xl-auto">
+                                            <div class="d-flex flex-wrap align-items-end justify-content-xl-end">
+                                                <div class="mr-3 mb-2 mb-xl-0">
+                                                    <label for="rs-list-status-filter" class="mb-1 d-block small text-muted">Filter by status</label>
+                                                    <select id="rs-list-status-filter" class="form-control form-control-sm" style="min-width: 200px;" title="Show only requests with this status">
+                                                        <option value="" {% if not rs_list_filter %}selected{% endif %}>All statuses</option>
+                                                        <option value="approved" {% if rs_list_filter == 'approved' %}selected{% endif %}>Approved</option>
+                                                        <option value="pending" {% if rs_list_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                                        <option value="rejected" {% if rs_list_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                                                        <option value="oos" {% if rs_list_filter == 'oos' %}selected{% endif %}>Out of Stock</option>
+                                                    </select>
+                                                </div>
+                                                <div class="d-flex flex-nowrap mb-2 mb-xl-0">
+                                                    <button class="btn btn-primary btn-sm mr-2" id="btn-print-requested-supplies-tab" type="button">
+                                                        <i class="fas fa-print mr-1"></i> Print
+                                                    </button>
+                                                    <button class="btn btn-success btn-sm " id="btn-pdf-requested-supplies-tab" type="button">
+                                                        <i class="fas fa-file-pdf mr-1"></i> Save to PDF
+                                                    </button>
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table id="requested-supplies-list-table" class="table table-bordered table-striped table-hover" style="font-size: 0.875rem;">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center align-middle rs-export-exclude" style="width: 40px;" scope="col">
+                                                    <input type="checkbox" id="select-all-requested-supplies"
+                                                        class="align-middle" title="Select all rows on this page"
+                                                        aria-label="Select all rows on this page">
+                                                </th>
+                                                <th style="width: 44px;">No.</th>
+                                                <th style="width: 88px;">Date</th>
+                                                <th style="width: 100px;">Transaction No.</th>
+                                                <th>Name of Requester</th>
+                                                {# Item Code: rs-export-exclude = omit from Save PDF / Print only #}
+                                                <th class="rs-export-exclude" style="width: 120px;">Item Code</th>
+                                                <th>Description</th>
+                                                <th style="width: 72px;">Unit</th>
+                                                <th style="width: 56px;">Qty</th>
+                                                <th style="width: 100px;">Stock-In-Out</th>
+                                                <th style="width: 110px;">Status</th>
+                                                <th style="width: 120px;">Conforme by</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if page_obj_requested_supplies.paginator.count > 0 %}
+                                                {% for req in page_obj_requested_supplies %}
+                                                    <tr class="rs-tab-print-row">
+                                                        <td class="text-center align-middle rs-export-exclude">
+                                                            <input type="checkbox" class="rs-row-checkbox" name="requested_supply_select"
+                                                                value="{{ req.id }}" title="Select row"
+                                                                aria-label="Select request {{ req.transaction_no|default:req.id }}">
+                                                        </td>
+                                                        <td class="text-center">{{ forloop.counter0|add:page_obj_requested_supplies.start_index }}</td>
+                                                        <td class="text-center">{{ req.date|date:"m/d/Y" }}</td>
+                                                        <td class="text-center">{{ req.transaction_no }}</td>
+                                                        <td>{{ req.requester_name }}</td>
+                                                        <td class="text-center rs-export-exclude">{{ req.item_code }}</td>
+                                                        <td>{{ req.description }}</td>
+                                                        <td class="text-center">{{ req.unit }}</td>
+                                                        <td class="text-center">{{ req.quantity }}</td>
+                                                        <td class="text-center">{{ req.get_stock_in_out_display }}</td>
+                                                        <td class="text-center">
+                                                            {% if req.status == 'approved' %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif req.status == 'pending' %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif req.status == 'rejected' %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% elif req.status == 'Out of Stocks' %}
+                                                                <span class="badge badge-secondary">Out of Stock</span>
+                                                            {% else %}
+                                                                <span class="badge badge-light">{{ req.get_status_display }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ req.conforme_by|default:"" }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="12" class="text-center text-muted">
+                                                        No requested supplies found.
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_requested_supplies page_key='page_rs' %}
+
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card card-outline card-success mb-0">
+                                            <div class="card-header">
+                                                <h3 class="card-title float-none mb-0">
+                                                    <i class="fas fa-user-check text-success mr-2"></i>Personnel Signatories
+                                                </h3>
+                                                <p class="mb-0 mt-2 small text-muted">Select <strong>Prepared by</strong> and <strong>Verified by</strong> for the <strong>Save to PDF</strong> and <strong>Print</strong></p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="form-row">
+                                                    <div class="col-12 col-md-6 mb-2 mb-md-0 pr-md-2">
+                                                        <label for="rs-prepared-by" class="mb-0 small font-weight-bold">Prepared by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="rs-prepared-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-12 col-md-6 mb-2 mb-md-0">
+                                                        <label for="rs-verified-by" class="mb-0 small font-weight-bold">Verified by</label>
+                                                        <select class="form-control form-control-sm mt-1" id="rs-verified-by">
+                                                            <option value="">-- Select name --</option>
+                                                            {% for p in procurement_personnel %}
+                                                            <option value="{{ p.pk }}" data-name="{{ p.name|escape }}" data-position="{{ p.position|escape }}">{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -628,8 +799,55 @@ Requested Supplies
 {% block custom_js %}
 <!-- SweetAlert2 JS -->
 <script src="{% static 'sweetalert2/sweetalert2.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script>
-    // Display current date
+    var REQUEST_SUPPLIES_TAB_PANES = ['all', 'approved', 'pending', 'rejected', 'outofstock', 'requested-supplies'];
+
+    /** Reserved letterhead space — same as requested_supplies_history (print: mm; PDF: pt). */
+    var RS_TAB_LETTERHEAD_MM = 28;
+    var RS_TAB_LETTERHEAD_PT = Math.round(RS_TAB_LETTERHEAD_MM * 2.83465);
+
+    function rsEscapeHtml(str) {
+        if (str === null || str === undefined) {
+            return '';
+        }
+        var d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+    }
+
+    /** Column alignment for landscape print/PDF (Item Code column omitted — 10 cols). */
+    function rsPrintTdClass(i) {
+        if (i === 3 || i === 4 || i === 9) {
+            return ' class="rsh-l"';
+        }
+        return ' class="rsh-c"';
+    }
+
+    function getRequestSuppliesActivePaneId() {
+        var href = $('#request-tabs .nav-link.active').attr('href') || '#all';
+        var id = (href || '').replace(/^#/, '');
+        return REQUEST_SUPPLIES_TAB_PANES.indexOf(id) !== -1 ? id : 'all';
+    }
+
+    /** Keep ?tab= in sync so search, pagination, and reload stay on the same tab. */
+    function setTabParamOnUrl(url) {
+        var paneId = getRequestSuppliesActivePaneId();
+        if (paneId !== 'all') {
+            url.searchParams.set('tab', paneId);
+        } else {
+            url.searchParams.delete('tab');
+        }
+    }
+
+    function requestSuppliesReloadKeepingTab() {
+        var u = new URL(window.location.href);
+        setTabParamOnUrl(u);
+        window.location.href = u.pathname + u.search;
+    }
+
+    // Display current date + restore tab from URL + keep tab in address bar when switching
     $(document).ready(function() {
         var today = new Date();
         var options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -637,9 +855,26 @@ Requested Supplies
         if (dateElement) {
             dateElement.textContent = today.toLocaleDateString('en-US', options);
         }
+
+        var params = new URLSearchParams(window.location.search);
+        var tab = params.get('tab');
+        if (tab && REQUEST_SUPPLIES_TAB_PANES.indexOf(tab) !== -1 && tab !== 'all') {
+            var $link = $('#request-tabs a[href="#' + tab + '"]');
+            if ($link.length) {
+                $link.tab('show');
+            }
+        }
+
+        $('#request-tabs a[data-toggle="tab"]').on('shown.bs.tab', function() {
+            if (history.replaceState) {
+                var u = new URL(window.location.href);
+                setTabParamOnUrl(u);
+                history.replaceState(null, '', u.pathname + u.search);
+            }
+        });
     });
 
-    // Search: server-side filter + pagination (reset all tab pages to 1)
+    // Search: server-side filter + pagination (reset all tab pages to 1); preserve active tab via ?tab=
     var reqSearchTimer = null;
     $('#search-requests').on('keyup', function() {
         var el = $(this);
@@ -652,11 +887,26 @@ Requested Supplies
             } else {
                 u.searchParams.delete('q');
             }
-            ['page_all', 'page_approved', 'page_pending', 'page_rejected', 'page_oos'].forEach(function(k) {
+            ['page_all', 'page_approved', 'page_pending', 'page_rejected', 'page_oos', 'page_rs'].forEach(function(k) {
                 u.searchParams.set(k, '1');
             });
+            setTabParamOnUrl(u);
             window.location.href = u.pathname + u.search;
         }, 450);
+    });
+
+    // All Requested Supplies tab: status filter (server-side)
+    $('#rs-list-status-filter').on('change', function() {
+        var u = new URL(window.location.href);
+        var v = ($(this).val() || '').trim();
+        if (v) {
+            u.searchParams.set('rs_filter', v);
+        } else {
+            u.searchParams.delete('rs_filter');
+        }
+        u.searchParams.set('page_rs', '1');
+        u.searchParams.set('tab', 'requested-supplies');
+        window.location.href = u.pathname + u.search;
     });
 
     // Update Status Dropdown Handler - Automatic update on click
@@ -698,12 +948,10 @@ Requested Supplies
                             timer: 3000,
                             showConfirmButton: false
                         }).then(function() {
-                            // Reload page to show updated data from database
-                            location.reload();
+                            requestSuppliesReloadKeepingTab();
                         });
                     } else {
-                        // For other statuses, just reload
-                        location.reload();
+                        requestSuppliesReloadKeepingTab();
                     }
                 } else {
                     Swal.fire({
@@ -754,6 +1002,242 @@ Requested Supplies
                 dropdownBtn.prop('disabled', false).html(originalHtml);
             }
         });
+    });
+
+    // All Requested Supplies tab: print / PDF (current page rows)
+    function rsTabBuildRows() {
+        var rows = [];
+        $('#requested-supplies-list-table tbody tr.rs-tab-print-row').each(function() {
+            var cells = [];
+            $(this).find('td').not('.rs-export-exclude').each(function() {
+                cells.push($(this).text().trim().replace(/\s+/g, ' '));
+            });
+            if (cells.length) {
+                rows.push(cells);
+            }
+        });
+        return rows;
+    }
+
+    function rsTabHeadCols() {
+        var headers = [];
+        $('#requested-supplies-list-table thead th').not('.rs-export-exclude').each(function() {
+            headers.push($(this).text().trim());
+        });
+        return headers;
+    }
+
+    function rsSignatoryFromSelect(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel || sel.selectedIndex < 0) {
+            return { name: '', position: '' };
+        }
+        var opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) {
+            return { name: '', position: '' };
+        }
+        return {
+            name: (opt.getAttribute('data-name') || '').trim(),
+            position: (opt.getAttribute('data-position') || '').trim()
+        };
+    }
+
+    function getRsTabSignatories() {
+        return {
+            prepared: rsSignatoryFromSelect('rs-prepared-by'),
+            verified: rsSignatoryFromSelect('rs-verified-by')
+        };
+    }
+
+    function ensureRsTabSignatoriesSelected() {
+        var sig = getRsTabSignatories();
+        var missing = [];
+        if (!sig.prepared.name) {
+            missing.push('Prepared by');
+        }
+        if (!sig.verified.name) {
+            missing.push('Verified by');
+        }
+        if (missing.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Signatories required',
+                text: 'Please select: ' + missing.join(', ') + '.',
+                confirmButtonColor: '#28a745'
+            });
+            return null;
+        }
+        return sig;
+    }
+
+    $(document).on('change', '#select-all-requested-supplies', function() {
+        var on = $(this).prop('checked');
+        $('#requested-supplies-list-table tbody .rs-row-checkbox').prop('checked', on);
+        $(this).prop('indeterminate', false);
+    });
+
+    $(document).on('change', '#requested-supplies-list-table tbody .rs-row-checkbox', function() {
+        var $cb = $('#requested-supplies-list-table tbody .rs-row-checkbox');
+        var total = $cb.length;
+        var n = $cb.filter(':checked').length;
+        var $all = $('#select-all-requested-supplies');
+        $all.prop('checked', total > 0 && n === total);
+        $all.prop('indeterminate', n > 0 && n < total);
+    });
+
+    $('#btn-pdf-requested-supplies-tab').on('click', function() {
+        if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+            Swal.fire({ icon: 'error', title: 'PDF unavailable', text: 'PDF library failed to load. Please refresh and try again.' });
+            return;
+        }
+        var sig = ensureRsTabSignatoriesSelected();
+        if (!sig) {
+            return;
+        }
+        var head = rsTabHeadCols();
+        var body = rsTabBuildRows();
+        if (!body.length) {
+            Swal.fire({ icon: 'warning', title: 'Nothing to export', text: 'No rows on this page to save as PDF.' });
+            return;
+        }
+        var prep = sig.prepared;
+        var ver = sig.verified;
+        var jsPDFCtor = window.jspdf.jsPDF;
+        var doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+        var pageW = doc.internal.pageSize.getWidth();
+        var now = new Date();
+        var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        var subtitle = 'All requested supplies';
+        var y0 = RS_TAB_LETTERHEAD_PT + 28;
+        doc.setFont('times', 'bold');
+        doc.setFontSize(15);
+        doc.text('LIST OF SUPPLY REQUESTS', pageW / 2, y0, { align: 'center' });
+        doc.setFont('times', 'normal');
+        doc.setFontSize(10);
+        doc.text(subtitle, pageW / 2, y0 + 16, { align: 'center' });
+        doc.text('Generated on ' + today, pageW / 2, y0 + 30, { align: 'center' });
+        doc.autoTable({
+            head: [head],
+            body: body,
+            startY: y0 + 44,
+            theme: 'grid',
+            styles: { font: 'times', fontSize: 8, cellPadding: 3, valign: 'middle', overflow: 'linebreak' },
+            headStyles: {
+                fillColor: [239, 239, 239],
+                textColor: [0, 0, 0],
+                halign: 'center',
+                fontStyle: 'bold',
+                cellPadding: 2,
+                valign: 'middle',
+                minCellHeight: 0
+            },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 26 },
+                1: { halign: 'center', cellWidth: 50 },
+                2: { halign: 'center', cellWidth: 92 },
+                3: { halign: 'left', cellWidth: 100 },
+                4: { halign: 'left', cellWidth: 128 },
+                5: { halign: 'center', cellWidth: 32 },
+                6: { halign: 'center', cellWidth: 26 },
+                7: { halign: 'center', cellWidth: 54 },
+                8: { halign: 'center', cellWidth: 48 },
+                9: { halign: 'left', cellWidth: 68 }
+            },
+            margin: { left: 24, right: 24, top: 36 }
+        });
+        var y = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : y0 + 44) + 14;
+        if (y > 500) {
+            y = 500;
+        }
+        doc.setFontSize(10);
+        doc.setFont('times', 'normal');
+        doc.text('Prepared by:', 40, y);
+        doc.text('Verified by:', pageW - 280, y);
+        var sigGap = 22;
+        doc.setFont('times', 'bold');
+        doc.text(prep.name, 40, y + sigGap);
+        doc.text(ver.name, pageW - 280, y + sigGap);
+        doc.setFont('times', 'normal');
+        doc.setFontSize(9);
+        doc.text(prep.position || 'Position', 40, y + sigGap + 14);
+        doc.text(ver.position || 'Position', pageW - 280, y + sigGap + 14);
+        doc.save('all_requested_supplies_' + now.toISOString().slice(0, 10) + '.pdf');
+    });
+
+    $('#btn-print-requested-supplies-tab').on('click', function() {
+        var sig = ensureRsTabSignatoriesSelected();
+        if (!sig) {
+            return;
+        }
+        var head = rsTabHeadCols();
+        var body = rsTabBuildRows();
+        if (!body.length) {
+            Swal.fire({ icon: 'warning', title: 'Nothing to print', text: 'No rows on this page to print.' });
+            return;
+        }
+        var prep = sig.prepared;
+        var ver = sig.verified;
+        var theadHtml = '<tr>' + head.map(function(h) {
+            return '<th>' + rsEscapeHtml(h) + '</th>';
+        }).join('') + '</tr>';
+        var tbodyHtml = body.map(function(row) {
+            return '<tr>' + row.map(function(c, i) {
+                return '<td' + rsPrintTdClass(i) + '>' + rsEscapeHtml(c) + '</td>';
+            }).join('') + '</tr>';
+        }).join('');
+        var sigHtml =
+            '<br>' +
+            '<table class="no-border" style="width:100%;margin-top:8px;font-size:9pt;border-collapse:collapse;">' +
+            '<tr>' +
+            '<td style="width:40%;text-align:left;border:none;vertical-align:bottom;padding:0 8px 2px 0;">Prepared by:</td>' +
+            '<td style="width:20%;border:none;"></td>' +
+            '<td style="width:40%;text-align:left;border:none;vertical-align:bottom;padding:0 8px 2px 0;">Verified by:</td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td style="border:none;height:9mm;min-height:9mm;padding:0 8px 0 0;vertical-align:bottom;line-height:1.2;">&nbsp;</td>' +
+            '<td style="border:none;"></td>' +
+            '<td style="border:none;height:9mm;min-height:9mm;padding:0 8px 0 0;vertical-align:bottom;line-height:1.2;">&nbsp;</td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td style="text-align:left;border:none;padding:2px 8px 0 0;">' + rsEscapeHtml(prep.name) + '<br><span style="font-size:8pt;">' + rsEscapeHtml(prep.position || 'Position') + '</span></td>' +
+            '<td style="border:none;"></td>' +
+            '<td style="text-align:left;border:none;padding:2px 8px 0 0;">' + rsEscapeHtml(ver.name) + '<br><span style="font-size:8pt;">' + rsEscapeHtml(ver.position || 'Position') + '</span></td>' +
+            '</tr>' +
+            '</table>';
+        var now = new Date();
+        var today = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        var subtitle = 'All requested supplies';
+        var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>List of Supply Requests</title>' +
+            '<style>' +
+            '@page{size:A4 landscape;margin:12mm 14mm 14mm 14mm;}' +
+            'body{font-family:Georgia, "Times New Roman", serif;color:#000;font-size:10pt;margin:0;}' +
+            '.rs-tab-letterhead-spacer{height:' + RS_TAB_LETTERHEAD_MM + 'mm;min-height:' + RS_TAB_LETTERHEAD_MM + 'mm;}' +
+            'h1{font-size:16pt;margin:0 0 4px;text-align:center;}' +
+            '.sub{margin:0 0 2px;text-align:center;}' +
+            '.muted{margin:0 0 12px;text-align:center;color:#444;}' +
+            'table{width:100%;border-collapse:collapse;}' +
+            'th,td{border:1px solid #000;vertical-align:middle;}' +
+            'th{background:#efefef;text-align:center;font-weight:bold;font-size:9pt;line-height:1.15;padding:3px 5px;white-space:nowrap;}' +
+            'td{padding:4px 6px;}' +
+            'td.rsh-c{text-align:center;}' +
+            'td.rsh-l{text-align:left;}' +
+            'table.rs-tab-print{table-layout:auto;width:100%;word-wrap:break-word;}' +
+            '</style></head><body>' +
+            '<div class="rs-tab-letterhead-spacer" aria-hidden="true"></div>' +
+            '<h1>LIST OF SUPPLY REQUESTS</h1>' +
+            '<p class="sub">' + rsEscapeHtml(subtitle) + '</p>' +
+            '<p class="muted">Printed on ' + rsEscapeHtml(today) + '</p>' +
+            '<table class="rs-tab-print"><thead>' + theadHtml + '</thead><tbody>' + tbodyHtml + '</tbody></table>' +
+            sigHtml +
+            '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>' +
+            '</body></html>';
+        var win = window.open('', '_blank');
+        if (!win) {
+            Swal.fire({ icon: 'error', title: 'Pop-up blocked', text: 'Please allow pop-ups to print.' });
+            return;
+        }
+        win.document.write(html);
+        win.document.close();
     });
 
     // Helper function to get CSRF token from cookie
