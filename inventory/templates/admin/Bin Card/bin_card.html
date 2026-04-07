@@ -9,8 +9,9 @@
     .card.card-outline.card-success { border-top: 3px solid #28a745 !important; }
     .card.card-outline.card-success .card-header { border-bottom: 1px solid #dee2e6; background-color: #f8f9fa; }
     .bin-preview-wrap { padding: 14px; background: #f8f9fa; }
-    .bin-form { border-collapse: collapse; width: 100%; max-width: 820px; margin: 0 auto; font-size: 9pt; background: #fff; }
-    .bin-form td, .bin-form th { border: 1px solid #000; padding: 3px 4px; vertical-align: middle; }
+    /* One consistent rule weight for bin card grid (matches print) */
+    .bin-form { border-collapse: collapse; border-spacing: 0; width: 100%; max-width: 820px; margin: 0 auto; font-size: 9pt; background: #fff; box-sizing: border-box; border-width: 1px; border-style: solid; border-color: #000; }
+    .bin-form td, .bin-form th { padding: 3px 4px; vertical-align: middle; box-sizing: border-box; border-width: 1px; border-style: solid; border-color: #000; }
     .header-cell { height: 28px; vertical-align: middle; }
     .head-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; box-sizing: border-box; gap: 8px; }
     .head-wrap { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
@@ -18,7 +19,7 @@
     .logo { width: 38px; height: 22px; object-fit: contain; }
     .title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
     .label { font-weight: 700; white-space: nowrap; }
-    .hdr th { text-align: center; font-size: 8.5pt; }
+    .hdr th { text-align: center; vertical-align: middle; font-size: 8.5pt; }
     .num { text-align: right; }
     .open-label { font-size: 8pt; font-weight: 700; text-align: center; }
     .total-row td { font-weight: 700; }
@@ -271,62 +272,6 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-12 border-top mt-3 pt-3">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                            <p class="mb-0 small font-weight-bold">Noted by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#addNotedSignatoryModal">
-                                <i class="fas fa-plus mr-1"></i>Add Signatory
-                            </button>
-                        </div>
-                        {% if noted_by_signatories %}
-                        <div class="table-responsive mt-2">
-                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Position</th>
-                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for s in noted_by_signatories %}
-                                    <tr>
-                                        <td class="align-middle">{{ s.name }}</td>
-                                        <td class="align-middle">{{ s.position }}</td>
-                                        <td class="align-middle text-center text-nowrap">
-                                            <button type="button" class="btn btn-sm btn-outline-primary bin-card-edit-noted-signatory mr-1"
-                                                data-pk="{{ s.pk }}"
-                                                data-name="{{ s.name|escape }}"
-                                                data-position="{{ s.position|escape }}"
-                                                title="Edit">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger bin-card-delete-noted-signatory" title="Delete"
-                                                data-pk="{{ s.pk }}"
-                                                data-name="{{ s.name|escape }}">
-                                                <i class="fas fa-trash-alt"></i> Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <p class="text-muted small mb-0 mt-2">No noted-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
-                        {% endif %}
-                        <div class="row mt-2">
-                            <div class="col-md-5 col-lg-4">
-                                <label for="bin-card-noted-by" class="mb-0 small font-weight-bold">Noted by <span class="text-muted font-weight-normal">(on printed form)</span></label>
-                                <select class="form-control form-control-sm mt-1" id="bin-card-noted-by">
-                                    <option value="">-- Select name --</option>
-                                    {% for s in noted_by_signatories %}
-                                    <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -465,139 +410,7 @@
     <input type="hidden" name="pk" id="delete-signatory-pk" value="">
 </form>
 
-<!-- Noted by: Add modal -->
-<div class="modal fade" id="addNotedSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="addNotedSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="addNotedSignatoryModalLabel">
-                    <i class="fas fa-plus-circle mr-2"></i>Add Noted by signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="post" action="" id="bin-card-add-noted-signatory-form">
-                {% csrf_token %}
-                <input type="hidden" name="signatory_role" value="noted">
-                <input type="hidden" name="action" value="add">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="noted-signatory-name">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="noted-signatory-name" name="name" maxlength="200"
-                                    placeholder="Enter full name" autocomplete="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="noted-signatory-position">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="noted-signatory-position" name="position" maxlength="200"
-                                    placeholder="Enter position or title" autocomplete="organization-title" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save mr-1"></i>Add Signatory
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Noted by: Edit modal -->
-<div class="modal fade" id="editNotedSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="editNotedSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editNotedSignatoryModalLabel">
-                    <i class="fas fa-edit mr-2"></i>Edit Noted by signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="post" action="" id="bin-card-edit-noted-signatory-form">
-                {% csrf_token %}
-                <input type="hidden" name="signatory_role" value="noted">
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="pk" id="edit-noted-signatory-pk" value="">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="edit-noted-signatory-name">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="edit-noted-signatory-name" name="name" maxlength="200"
-                                    placeholder="Enter full name" autocomplete="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="edit-noted-signatory-position">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="edit-noted-signatory-position" name="position" maxlength="200"
-                                    placeholder="Enter position or title" autocomplete="organization-title" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save mr-1"></i>Save changes
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Noted by: Delete confirmation -->
-<div class="modal fade" id="deleteNotedSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="deleteNotedSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteNotedSignatoryModalLabel">
-                    <i class="fas fa-trash-alt mr-2"></i>Delete Noted by signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0">Are you sure you want to remove <strong id="delete-noted-signatory-display-name"></strong> from the Noted by list? This cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times mr-1"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="bin-card-delete-noted-signatory-confirm">
-                    <i class="fas fa-trash-alt mr-1"></i>Delete
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form method="post" action="" id="bin-card-delete-noted-signatory-form" class="d-none">
-    {% csrf_token %}
-    <input type="hidden" name="signatory_role" value="noted">
-    <input type="hidden" name="action" value="delete">
-    <input type="hidden" name="pk" id="delete-noted-signatory-pk" value="">
-</form>
-
-<!-- Print: missing Prepared by / Noted by selection -->
+<!-- Print: missing Prepared by selection -->
 <div class="modal fade" id="binCardPrintSignatoriesRequiredModal" tabindex="-1" role="dialog"
     aria-labelledby="binCardPrintSignatoriesRequiredModalLabel" aria-hidden="true" data-backdrop="true" data-keyboard="true">
     <div class="modal-dialog" role="document">
@@ -611,7 +424,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="mb-2">Select a name in each of these dropdowns (under the signatory tables), then try printing again:</p>
+                <p class="mb-2">Select <strong>Prepared by</strong> (on printed form), then try printing again:</p>
                 <ul class="mb-0 pl-3" id="bin-card-print-sig-modal-list"></ul>
             </div>
             <div class="modal-footer">
@@ -693,6 +506,27 @@
         return d.innerHTML;
     }
 
+    /** Print layout: dd/mm/yy (source rows use mm/dd/yyyy from server). */
+    function formatDateDdMmYy(val) {
+        if (val === null || val === undefined) return '';
+        var s = String(val).trim();
+        if (!s) return '';
+        var parts = s.split('/');
+        if (parts.length === 3) {
+            var mm = parseInt(parts[0], 10);
+            var dd = parseInt(parts[1], 10);
+            var ystr = String(parts[2] || '').trim();
+            if (isNaN(mm) || isNaN(dd)) return s;
+            var yy = ystr.length >= 4 ? ystr.slice(-2) : (ystr.length === 2 ? ystr : ystr.padStart(2, '0'));
+            return String(dd).padStart(2, '0') + '/' + String(mm).padStart(2, '0') + '/' + yy;
+        }
+        var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (iso) {
+            return iso[3] + '/' + iso[2] + '/' + iso[1].slice(-2);
+        }
+        return s;
+    }
+
     function toBinCardEntries(rows) {
         return rows.map(function(r) {
             const qty = Number(r.quantity || 0) || 0;
@@ -700,7 +534,7 @@
             const isIssued = st === 'approved';
             const isReceived = st.indexOf('stock-in') !== -1;
             return {
-                date: r.date || '',
+                date: formatDateDdMmYy(r.date || ''),
                 transaction_no: r.transaction_no || '',
                 received: isReceived ? qty : '',
                 issued: isIssued ? qty : '',
@@ -724,7 +558,7 @@
             if (issued !== '') totalIssued += Number(issued) || 0;
             rows.push(
                 '<tr><td class="num">' + (i + 1) + '</td>' +
-                '<td>' + escapeHtml(e.date) + '</td>' +
+                '<td><span class="bin-print-date">' + escapeHtml(e.date) + '</span></td>' +
                 '<td>' + escapeHtml(e.transaction_no) + '</td>' +
                 '<td class="num">' + escapeHtml(received) + '</td>' +
                 '<td class="num">' + escapeHtml(issued) + '</td>' +
@@ -737,7 +571,7 @@
 
         // Ruled lines for handwriting; fixed count only — does not pad to fill the 7in card
         const blankRowHtml = '<tr class="bin-blank-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
-        const blankRowsAfterTotal = 23;
+        const blankRowsAfterTotal = 25;
         for (let b = 0; b < blankRowsAfterTotal; b++) {
             rows.push(blankRowHtml);
         }
@@ -765,12 +599,12 @@
                     '<tr><td colspan="6"><span class="label">ARTICLE:</span> ' + escapeHtml(card.article) + '</td></tr>' +
                     '<tr><td colspan="6"><span class="label">DESCRIPTION:</span> ' + escapeHtml(card.description) + '</td></tr>' +
                     '<tr class="hdr">' +
-                        '<th style="width:8%;">NO.</th>' +
-                        '<th style="width:22%;">DATE RECEIVED/ISSUED</th>' +
-                        '<th style="width:30%;">R.I.S / TRANSACTION NO.</th>' +
-                        '<th style="width:13%;">RECEIVED</th>' +
-                        '<th style="width:13%;">ISSUED</th>' +
-                        '<th style="width:14%;">ON HAND</th>' +
+                        '<th class="bin-h-no">NO.</th>' +
+                        '<th class="bin-h-date">DATE RECEIVED/<br>ISSUED</th>' +
+                        '<th class="bin-h-ris">R.I.S /<br>TRANS NO.</th>' +
+                        '<th class="bin-h-rx">RECEIVED</th>' +
+                        '<th class="bin-h-is">ISSUED</th>' +
+                        '<th class="bin-h-oh">ON HAND</th>' +
                     '</tr>' +
                     bodyRows +
                 '</table>' +
@@ -788,23 +622,19 @@
         return '__________________________';
     }
 
-    function renderPrintPageSignatureFooter(preparedName, preparedPosition, notedName, notedPosition) {
-        var leftThird = renderSigBlock(preparedName, preparedPosition);
-        var rightThird = renderSigBlock(notedName, notedPosition);
+    function renderPrintPageSignatureFooter(preparedName, preparedPosition) {
+        var sigBlock = renderSigBlock(preparedName, preparedPosition);
         return '<div class="print-page-sig">' +
-            '<table class="bin-sig-footer no-border">' +
-                '<tr>' +
-                    '<td style="width:40%;text-align:left;">Prepared by:</td>' +
-                    '<td style="width:20%;"></td>' +
-                    '<td style="width:40%;text-align:left;">Noted by:</td>' +
-                '</tr>' +
-                '<tr class="bin-sig-spacer"><td colspan="3"></td></tr>' +
-                '<tr>' +
-                    '<td style="text-align:left;">' + leftThird + '</td>' +
-                    '<td></td>' +
-                    '<td style="text-align:left;">' + rightThird + '</td>' +
-                '</tr>' +
-            '</table>' +
+            '<div class="bin-sig-connected">' +
+                '<div class="bin-sig-box">' +
+                    '<div class="bin-sig-label-line">Prepared by:</div>' +
+                    '<div class="bin-sig-names">' + sigBlock + '</div>' +
+                '</div>' +
+                '<div class="bin-sig-box">' +
+                    '<div class="bin-sig-label-line">Prepared by:</div>' +
+                    '<div class="bin-sig-names">' + sigBlock + '</div>' +
+                '</div>' +
+            '</div>' +
             '</div>';
     }
 
@@ -839,16 +669,6 @@
                 preparedPosition = String(opt.getAttribute('data-position') || '').trim();
             }
         }
-        var notedName = '';
-        var notedPosition = '';
-        var notedSelect = document.getElementById('bin-card-noted-by');
-        if (notedSelect && notedSelect.value) {
-            var nopt = notedSelect.options[notedSelect.selectedIndex];
-            if (nopt) {
-                notedName = String(nopt.getAttribute('data-name') || nopt.textContent || '').trim();
-                notedPosition = String(nopt.getAttribute('data-position') || '').trim();
-            }
-        }
         const pages = [];
         for (let i = 0; i < cards.length; i += 2) {
             const leftCard = '<div class="card-slot">' + renderBinCardSheet(cards[i]) + '</div>';
@@ -857,39 +677,42 @@
                 : '<div class="card-slot empty-slot"></div>';
             pages.push(
                 '<div class="print-page">' +
-                    '<div class="print-page-cards">' + leftCard + rightCard + '</div>' +
-                    renderPrintPageSignatureFooter(preparedName, preparedPosition, notedName, notedPosition) +
+                    '<div class="print-page-block">' +
+                        '<div class="print-page-cards">' + leftCard + rightCard + '</div>' +
+                        renderPrintPageSignatureFooter(preparedName, preparedPosition) +
+                    '</div>' +
                 '</div>'
             );
         }
         const sheets = pages.join('');
         var fontReport = 'Georgia, "Times New Roman", Times, serif';
-        var pageMarginTop = '26mm';
+        var pageMarginTop = '9mm';
         var pageMarginSides = '9mm';
-        var pageMarginBottom = '7mm';
-        /* A4 landscape short edge 210mm minus top+bottom @page margins (letterhead + bottom). */
-        var printVertMargins = '33mm';
+        var pageMarginBottom = '9mm';
         const html = '<!doctype html><html><head><title>Bin Card</title>' +
             '<style>' +
             '@page{size:A4 landscape;margin:' + pageMarginTop + ' ' + pageMarginSides + ' ' + pageMarginBottom + ' ' + pageMarginSides + ';}' +
             'html,body{height:auto;min-height:0;margin:0;padding:0;}' +
             'body{font-family:' + fontReport + ';font-size:8pt;line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
-            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0.6mm;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
+            '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
             '.print-page:last-child{page-break-after:auto;}' +
-            '.print-page-cards{display:flex;flex-direction:row;gap:4mm;align-items:flex-start;justify-content:center;flex-shrink:0;}' +
-            '.print-page-sig{width:100%;max-width:calc(3in + 4mm + 3in);flex-shrink:0;margin-top:0;padding-top:0;font-family:' + fontReport + ';}' +
-            '.card-slot{width:3in;height:6in;max-height:6in;flex:0 0 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;}' +
+            '.print-page-block{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:calc(3.4in + 4mm + 3.4in);gap:0;box-sizing:border-box;}' +
+            '.print-page-cards{display:flex;flex-direction:row;gap:4mm;align-items:stretch;justify-content:center;flex-shrink:0;}' +
+            '.print-page-sig{width:100%;max-width:none;flex-shrink:0;margin:0;padding:0;font-family:' + fontReport + ';}' +
+            '.bin-sig-connected{display:flex;flex-direction:row;width:100%;box-sizing:border-box;border-width:2px;border-style:solid;border-color:#000;border-image:none;}' +
+            '.bin-sig-box{flex:1 1 0;min-width:0;box-sizing:border-box;padding:6px 10px;text-align:left;}' +
+            '.bin-sig-box+.bin-sig-box{border-left-width:2px;border-left-style:solid;border-left-color:#000;border-top:none;border-right:none;border-bottom:none;}' +
+            '.bin-sig-label-line{font-weight:700;font-size:8pt;margin-bottom:0.95cm;line-height:1.2;}' +
+            '.bin-sig-names{font-size:8pt;line-height:1.15;text-align:left;}' +
+            '.card-slot{width:3.4in;height:auto;max-height:6in;min-height:0;flex:1 1 auto;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;}' +
             '.empty-slot{border:0;min-height:0;align-self:stretch;}' +
-            '.bin-table-wrap{flex:0 0 auto;width:100%;overflow:hidden;}' +
-            '.no-border td,.no-border th{border:none!important;}' +
-            '.bin-sig-footer{width:100%;border-collapse:collapse;font-size:8pt;line-height:1.1;font-family:' + fontReport + ';}' +
-            '.bin-sig-footer td{padding:0 2px;vertical-align:bottom;}' +
+            '.bin-table-wrap{flex:0 0 auto;width:100%;overflow:hidden;box-sizing:border-box;border-width:2px;border-style:solid;border-color:#000;border-image:none;border-bottom-width:0;}' +
             '.prepared-by-print-name{font-weight:700;font-size:8pt;display:block;}' +
             '.prepared-by-print-position{font-size:7pt;display:block;margin-top:1px;line-height:1.1;}' +
-            '.bin-sig-spacer{height:1mm;}' +
-            '.bin-sig-spacer td{padding:0;border:none!important;}' +
-            '.bin-form{border-collapse:collapse;width:100%;height:auto;font-size:6.8pt;table-layout:fixed;font-family:' + fontReport + ';}' +
-            '.bin-form td,.bin-form th{border:1px solid #000;padding:2px 3px;vertical-align:middle;line-height:1.1;}' +
+            '.bin-form{border-collapse:collapse;border-spacing:0;border:none;width:100%;height:auto;font-size:6.8pt;table-layout:fixed;font-family:' + fontReport + ';box-sizing:border-box;}' +
+            '.bin-form td,.bin-form th{border-right-width:2px;border-right-style:solid;border-right-color:#000;border-bottom-width:2px;border-bottom-style:solid;border-bottom-color:#000;border-top:none;border-left:none;padding:2px 3px;vertical-align:middle;line-height:1.2;box-sizing:border-box;border-image:none;}' +
+            '.bin-form td:last-child,.bin-form th:last-child{border-right:none}' +
+            '.bin-form tr:last-child td,.bin-form tr:last-child th{border-bottom:none}' +
             '.header-cell{height:auto;min-height:18px;padding:2px 3px;vertical-align:middle;}' +
             '.head-row{display:flex;justify-content:space-between;align-items:flex-start;width:100%;box-sizing:border-box;gap:4px;}' +
             '.head-wrap{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;}' +
@@ -897,15 +720,27 @@
             '.logo{width:28px;height:16px;object-fit:contain;}' +
             '.title{font-size:12px;font-weight:700;letter-spacing:0.3px;}' +
             '.label{font-weight:700;font-size:6.1pt;white-space:nowrap;line-height:1.05;word-break:normal;overflow-wrap:normal;}' +
-            '.hdr th{text-align:center;font-size:5.9pt;line-height:1.05;white-space:normal;word-break:break-word;overflow-wrap:anywhere;}' +
-            '.bin-form tr:nth-child(2) td,.bin-form tr:nth-child(3) td{font-size:6.4pt;line-height:1.05;padding-top:3px;padding-bottom:3px;}' +
+            '.bin-form tr.hdr th{vertical-align:middle;text-align:center;font-size:5.9pt;line-height:1.35;font-weight:700;padding:4px 2px;word-break:normal;overflow-wrap:normal;hyphens:none;}' +
+            '.bin-form th:nth-child(1),.bin-form td:nth-child(1){width:4%;}' +
+            '.bin-form th:nth-child(2),.bin-form td:nth-child(2){width:15%;}' +
+            '.bin-form th:nth-child(3),.bin-form td:nth-child(3){width:46%;}' +
+            '.bin-form th:nth-child(4),.bin-form td:nth-child(4){width:9%;}' +
+            '.bin-form th:nth-child(5),.bin-form td:nth-child(5){width:9%;}' +
+            '.bin-form th:nth-child(6),.bin-form td:nth-child(6){width:17%;}' +
+            '.hdr th.bin-h-no{white-space:nowrap;}' +
+            '.hdr th.bin-h-ris{font-size:5.6pt;line-height:1.4;padding-left:2px;padding-right:2px;}' +
+            '.hdr th.bin-h-rx{white-space:nowrap;}' +
+            '.hdr th.bin-h-is{white-space:nowrap;}' +
+            '.hdr th.bin-h-oh{white-space:nowrap;}' +
+            '.bin-form tr:nth-child(2) td,.bin-form tr:nth-child(3) td{font-size:6.4pt;line-height:1.05;padding-top:3px;padding-bottom:3px;text-align:left;}' +
             '.bin-form tr:nth-child(2) td:first-child,.bin-form tr:nth-child(3) td:first-child{width:16mm;}' +
             '.num{text-align:right;}' +
+            '.bin-print-date{font-size:7pt;line-height:1.1;display:inline-block;}' +
             '.open-label{font-size:5.8pt;font-weight:700;text-align:center;line-height:1.05;}' +
             '.total-row td{font-weight:700;}' +
             '.total-label{text-align:center;}' +
             '.bin-form tr.hdr~tr{height:auto;min-height:11px;}' +
-            '@media print{body,.print-page,.bin-form,.bin-sig-footer{font-family:' + fontReport + ' !important;}}' +
+            '@media print{body,.print-page,.bin-form,.print-page-sig{font-family:' + fontReport + ' !important;}}' +
             '</style></head><body>' +
             sheets +
             '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script></body></html>';
@@ -1069,28 +904,16 @@
                 return;
             }
             var preparedSel = document.getElementById('bin-card-prepared-by');
-            var notedSel = document.getElementById('bin-card-noted-by');
             var missingPrepared = !preparedSel || !String(preparedSel.value || '').trim();
-            var missingNoted = !notedSel || !String(notedSel.value || '').trim();
-            if (missingPrepared || missingNoted) {
+            if (missingPrepared) {
                 var listEl = document.getElementById('bin-card-print-sig-modal-list');
                 if (listEl) {
-                    var items = [];
-                    if (missingPrepared) {
-                        items.push('<li><strong>Prepared by</strong> (on printed form)</li>');
-                    }
-                    if (missingNoted) {
-                        items.push('<li><strong>Noted by</strong> (on printed form)</li>');
-                    }
-                    listEl.innerHTML = items.join('');
+                    listEl.innerHTML = '<li><strong>Prepared by</strong> (on printed form)</li>';
                 }
                 if (typeof window.jQuery !== 'undefined' && window.jQuery.fn && window.jQuery.fn.modal) {
                     window.jQuery('#binCardPrintSignatoriesRequiredModal').modal('show');
                 } else {
-                    var fallback = 'Please select: ';
-                    if (missingPrepared) fallback += 'Prepared by. ';
-                    if (missingNoted) fallback += 'Noted by.';
-                    alert(fallback);
+                    alert('Please select Prepared by (on printed form).');
                 }
                 return;
             }
@@ -1153,38 +976,6 @@ jQuery(function () {
     jQuery('#deleteSignatoryModal').on('hidden.bs.modal', function () {
         jQuery('#delete-signatory-pk').val('');
         jQuery('#delete-signatory-display-name').text('');
-    });
-
-    jQuery('#addNotedSignatoryModal').on('hidden.bs.modal', function () {
-        var f = document.getElementById('bin-card-add-noted-signatory-form');
-        if (f) f.reset();
-    });
-    jQuery('#editNotedSignatoryModal').on('hidden.bs.modal', function () {
-        var f = document.getElementById('bin-card-edit-noted-signatory-form');
-        if (f) f.reset();
-        jQuery('#edit-noted-signatory-pk').val('');
-    });
-    jQuery(document).on('click', '.bin-card-edit-noted-signatory', function () {
-        var btn = jQuery(this);
-        jQuery('#edit-noted-signatory-pk').val(btn.attr('data-pk') || '');
-        jQuery('#edit-noted-signatory-name').val(btn.attr('data-name') || '');
-        jQuery('#edit-noted-signatory-position').val(btn.attr('data-position') || '');
-        jQuery('#editNotedSignatoryModal').modal('show');
-    });
-    jQuery(document).on('click', '.bin-card-delete-noted-signatory', function () {
-        var btn = jQuery(this);
-        jQuery('#delete-noted-signatory-pk').val(btn.attr('data-pk') || '');
-        jQuery('#delete-noted-signatory-display-name').text(btn.attr('data-name') || 'this signatory');
-        jQuery('#deleteNotedSignatoryModal').modal('show');
-    });
-    jQuery('#bin-card-delete-noted-signatory-confirm').on('click', function () {
-        var pk = jQuery('#delete-noted-signatory-pk').val();
-        if (!pk) return;
-        jQuery('#bin-card-delete-noted-signatory-form').submit();
-    });
-    jQuery('#deleteNotedSignatoryModal').on('hidden.bs.modal', function () {
-        jQuery('#delete-noted-signatory-pk').val('');
-        jQuery('#delete-noted-signatory-display-name').text('');
     });
 });
 </script>

@@ -664,15 +664,12 @@ def master_inventory(request):
 @login_required
 def bin_card(request):
     """Bin Card history by item, with option to print selected or all."""
-    from .models import BinCardNotedBy, BinCardPreparedBy, Category, RequestSupply
+    from .models import BinCardPreparedBy, Category, RequestSupply
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
-        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
-        if role not in ('prepared', 'noted'):
-            role = 'prepared'
-        SignModel = BinCardNotedBy if role == 'noted' else BinCardPreparedBy
-        label = 'Noted by' if role == 'noted' else 'Prepared by'
+        SignModel = BinCardPreparedBy
+        label = 'Prepared by'
 
         if action == 'add':
             name = (request.POST.get('name') or '').strip()
@@ -750,7 +747,6 @@ def bin_card(request):
     all_rows = [_row(r) for r in all_rows_qs]
 
     prepared_by_signatories = list(BinCardPreparedBy.objects.all())
-    noted_by_signatories = list(BinCardNotedBy.objects.all())
 
     context = {
         'page_title': 'Bin Card',
@@ -758,7 +754,6 @@ def bin_card(request):
         'rows': all_rows,
         'all_rows': all_rows,
         'prepared_by_signatories': prepared_by_signatories,
-        'noted_by_signatories': noted_by_signatories,
     }
     return render(request, 'admin/Bin Card/bin_card.html', context)
 
@@ -2566,10 +2561,10 @@ def ppe_report_config(request):
     """Report Configuration: on-screen list like All Assets; print = formal physical inventory form."""
     from django.contrib import messages
     from django.core.paginator import Paginator
-    from django.db.models import Max, Q
+    from django.db.models import Max, OuterRef, Q, Subquery
     from django.shortcuts import redirect
 
-    from .models import PPEAsset, PpeReportSignatory
+    from .models import PPEAsset, PPEAssetAssignmentLog, PpeReportSignatory
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
@@ -2663,6 +2658,16 @@ def ppe_report_config(request):
         assets_qs = assets_qs.exclude(end_user__isnull=True).exclude(end_user='')
     elif status_filter == 'unassigned':
         assets_qs = assets_qs.filter(Q(end_user__isnull=True) | Q(end_user=''))
+    elif status_filter == 'return':
+        # Latest Unit Trail / transfer log action is "Return" (Transfer/Assignment page).
+        latest_action_sq = (
+            PPEAssetAssignmentLog.objects.filter(asset_id=OuterRef('pk'))
+            .order_by('-logged_at')
+            .values('action')[:1]
+        )
+        assets_qs = assets_qs.annotate(
+            _latest_assign_action=Subquery(latest_action_sq)
+        ).filter(_latest_assign_action__iexact='Return')
 
     paginator = Paginator(assets_qs, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -2722,6 +2727,8 @@ def ppe_report_config(request):
         _pf_parts.append('Status: Assigned')
     elif status_filter == 'unassigned':
         _pf_parts.append('Status: Unassigned')
+    elif status_filter == 'return':
+        _pf_parts.append('Status: Return')
     if search_query:
         _pf_parts.append(f'Search: {search_query}')
     print_filter_summary = '; '.join(_pf_parts)

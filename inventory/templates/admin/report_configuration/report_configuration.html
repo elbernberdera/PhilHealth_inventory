@@ -66,14 +66,14 @@
   }
   .pir-print .pir-table .num { text-align: right; }
   .pir-print .pir-table-wrap {
-    margin-bottom: 1.25cm;
+    margin-bottom: 0.65cm;
   }
   .pir-print .pir-signatures {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    margin-top: 2.35cm;
-    padding-top: 0.6cm;
+    margin-top: 0.55cm;
+    padding-top: 0;
     font-size: 0.82rem;
   }
   .pir-print .pir-print-filters {
@@ -82,7 +82,12 @@
     color: #333;
   }
   .pir-print .pir-sig-col { flex: 1 1 0; min-width: 0; }
-  .pir-print .pir-sig-label { font-weight: 700; margin-bottom: 0.3rem; text-align: left; }
+  /* Space below role labels for signature line / breathing room before printed name */
+  .pir-print .pir-sig-label {
+    font-weight: 700;
+    margin-bottom: 0.95cm;
+    text-align: left;
+  }
   .pir-print .pir-sig-line {
     min-height: 1.75rem;
     margin-bottom: 0.2rem;
@@ -310,6 +315,7 @@
                         <option value="" {% if not status_filter %}selected{% endif %}>All</option>
                         <option value="assigned" {% if status_filter == 'assigned' %}selected{% endif %}>Assigned</option>
                         <option value="unassigned" {% if status_filter == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                        <option value="return" {% if status_filter == 'return' %}selected{% endif %}>Return</option>
                       </select>
                     </div>
                     <div class="form-group col-6 col-md-4 col-lg-2 mb-2 mb-lg-0">
@@ -690,7 +696,7 @@
     <div class="pir-print" aria-hidden="true">
       <div class="pir-print-inner">
         <h1 class="pir-title">Physical Inventory Report on {{ print_report_title_category }}</h1>
-        <p class="pir-date-line">(<span>{% now "F j, Y" %}</span>)</p>
+        <p class="pir-date-line">As of <span>{% now "F j, Y" %}</span></p>
         <p class="pir-subtitle">List of Physical Inventory per Accountable Person/End User/Current User</p>
         {% if print_filter_summary %}
         <p class="pir-print-filters"><strong>Applied filters:</strong> {{ print_filter_summary }}</p>
