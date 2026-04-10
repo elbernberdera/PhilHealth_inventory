@@ -1,7 +1,11 @@
 from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from functools import wraps
+
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -23,6 +27,35 @@ def get_dashboard_redirect(user):
     if getattr(user, 'is_staff', False):
         return 'staff_dashboard'
     return 'admin_dashboard'
+
+
+def superuser_required(view_func):
+    """Only Django superusers (app admin role). Authenticated non-superusers get 403."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        if not getattr(request.user, 'is_superuser', False):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def staff_or_superuser_required(view_func):
+    """Staff or superuser — catalog/list APIs used by staff request flow and admin pages."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        u = request.user
+        if not (getattr(u, 'is_staff', False) or getattr(u, 'is_superuser', False)):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 @login_required
@@ -54,7 +87,7 @@ def login(request):
 
     return render(request, 'login.html')
 
-@login_required
+@superuser_required
 def admin_dashboard(request):
     """Admin dashboard view"""
     from django.contrib.auth.models import User
@@ -145,7 +178,7 @@ def admin_dashboard(request):
     }
     return render(request, 'admin/admin_dashboard.html', context)
 
-@login_required
+@superuser_required
 def update_profile(request):
     """Update user profile view"""
     user = request.user
@@ -192,7 +225,7 @@ def update_profile(request):
     }
     return render(request, 'admin/update_profile.html', context)
 
-@login_required
+@superuser_required
 def users_list(request):
     """List all users"""
     from django.contrib.auth.models import User
@@ -226,7 +259,7 @@ def users_list(request):
     }
     return render(request, 'admin/users_list.html', context)
 
-@login_required
+@superuser_required
 def user_create(request):
     """Create new user"""
     from django.contrib.auth.models import User
@@ -319,7 +352,7 @@ def user_create(request):
     }
     return render(request, 'admin/user_form.html', context)
 
-@login_required
+@superuser_required
 def user_edit(request, user_id):
     """Edit existing user"""
     from django.contrib.auth.models import User
@@ -402,7 +435,7 @@ def user_edit(request, user_id):
     }
     return render(request, 'admin/user_form.html', context)
 
-@login_required
+@superuser_required
 def user_delete(request, user_id):
     """Delete user"""
     from django.contrib.auth.models import User
@@ -435,7 +468,7 @@ def logout(request):
 
 
 # balhin sa taas kay pang admin pane
-@login_required
+@superuser_required
 def request_supply_module(request):
     """Request Supply Module view"""
     # Placeholder data - to be implemented with actual models
@@ -444,7 +477,7 @@ def request_supply_module(request):
     }
     return render(request, 'admin/request_supply_module/request_supply_module.html', context)
 
-@login_required
+@superuser_required
 def replenish_item(request):
     """Replenish/Add New Item view"""
     from django.contrib import messages
@@ -596,7 +629,7 @@ def replenish_item(request):
     return render(request, 'admin/Replenish/Replenish.html', context)
 
 
-@login_required
+@superuser_required
 def master_inventory(request):
     """Master Inventory: view all stocks including out-of-stock (no balance filter)."""
     from django.contrib import messages
@@ -661,7 +694,7 @@ def master_inventory(request):
     return render(request, 'admin/Master_Inventory/master_inventory.html', context)
 
 
-@login_required
+@superuser_required
 def bin_card(request):
     """Bin Card history by item, with option to print selected or all."""
     from .models import BinCardNotedBy, BinCardPreparedBy, Category, RequestSupply
@@ -763,7 +796,7 @@ def bin_card(request):
     return render(request, 'admin/Bin Card/bin_card.html', context)
 
 
-@login_required
+@superuser_required
 def requested_supplies(request):
     """Requested Supplies view - FIFO (First In First Out) ordering"""
     from datetime import date as date_class
@@ -868,7 +901,7 @@ def requested_supplies(request):
     return render(request, 'admin/requested_supplies/requested_supplies.html', context)
 
 
-@login_required
+@superuser_required
 def requested_supplies_history(request):
     """All requested supplies (all statuses) with date filters, search, and pagination."""
     from datetime import date as date_class
@@ -1020,7 +1053,7 @@ def requested_supplies_history(request):
     }
     return render(request, 'admin/requested_supplies_history/requested_supplies_history.html', context)
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def request_supply_update_status(request, request_id):
     """Update the status of a RequestSupply"""
@@ -1118,7 +1151,7 @@ def request_supply_update_status(request, request_id):
         }, status=500)
 
 # Category API Views
-@login_required
+@superuser_required
 @require_http_methods(["GET"])
 def category_list(request):
     """Get list of all categories"""
@@ -1141,7 +1174,7 @@ def category_list(request):
             'error': str(e)
         }, status=500)
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def category_create(request):
     """Create a new category"""
@@ -1189,7 +1222,7 @@ def category_create(request):
             'error': str(e)
         }, status=500)
 
-@login_required
+@superuser_required
 @require_http_methods(["POST", "PUT"])
 def category_update(request, category_id):
     """Update an existing category"""
@@ -1242,7 +1275,7 @@ def category_update(request, category_id):
             'error': str(e)
         }, status=500)
 
-@login_required
+@superuser_required
 @require_http_methods(["DELETE", "POST"])
 def category_delete(request, category_id):
     """Delete a category (soft delete by setting is_active=False)"""
@@ -1271,7 +1304,7 @@ def category_delete(request, category_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def category_delete_permanently(request, category_id):
     """Permanently delete a category from database"""
@@ -1315,7 +1348,7 @@ def category_delete_permanently(request, category_id):
 
 
 # Supply API endpoints
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["GET"])
 def supply_list(request):
     """Get all supplies - FIFO (First In First Out) ordering"""
@@ -1358,7 +1391,7 @@ def supply_list(request):
         }, status=500)
 
 
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["POST"])
 def request_supply_create(request):
     """
@@ -1464,7 +1497,7 @@ def request_supply_create(request):
             'out_of_stock': False
         }, status=500)
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_create(request):
     """Create a new supply"""
@@ -1559,7 +1592,7 @@ def supply_create(request):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["GET"])
 def supply_detail(request, supply_id):
     """Get details of a single supply"""
@@ -1598,7 +1631,7 @@ def supply_detail(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_update(request, supply_id):
     """Update an existing supply"""
@@ -1691,7 +1724,7 @@ def supply_update(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_add_stock(request, supply_id):
     """
@@ -1748,7 +1781,7 @@ def supply_add_stock(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_delete(request, supply_id):
     """Delete (soft delete) a supply"""
@@ -1769,7 +1802,7 @@ def supply_delete(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_restore(request, supply_id):
     """Restore a soft-deleted supply"""
@@ -1790,7 +1823,7 @@ def supply_restore(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["GET"])
 def generate_item_code(request):
     """Generate the next item code in format ITMmmddyy00000 with continuous sequential numbering"""
@@ -1841,7 +1874,7 @@ def generate_item_code(request):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_delete_permanently(request, supply_id):
     """Permanently delete a supply from database"""
@@ -1926,7 +1959,7 @@ def staff_request_supplies(request):
     return render(request, 'staff/request_supplies/request_supplies.html', context)
 
 
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["GET"])
 def request_supply_list(request):
     """Get paginated request supplies - for admin: all requests, for staff: only their requests"""
@@ -2045,7 +2078,7 @@ def staff_update_profile(request):
 # ---------------------------------------------------------------------------
 # Print History
 # ---------------------------------------------------------------------------
-@login_required
+@superuser_required
 def print_history(request):
     """
     Print History — shows all approved RequestSupply records (items that
@@ -2085,7 +2118,7 @@ def print_history(request):
 # ---------------------------------------------------------------------------
 # Activity Log
 # ---------------------------------------------------------------------------
-@login_required
+@superuser_required
 def activity_log(request):
     """
     Activity Log — shows all RequestSupply records ordered by most recently
@@ -2127,10 +2160,10 @@ def activity_log(request):
 
 
 
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # ppe na akoa ge usab Asset — New Asset Entry Form
 # ---------------------------------------------------------------------------
-@login_required
+@superuser_required
 def ppe_asset_entry(request):
     """PPE Asset Entry — list saved assets and handle new asset creation."""
     from .models import PPEAsset, PPEAssetAssignmentLog
@@ -2166,40 +2199,52 @@ def ppe_asset_entry(request):
             unit_value = parse_decimal(request.POST.get('unit_value', ''))
             quantity   = int(request.POST.get('quantity', 1) or 1)
 
-            pdf_file = request.FILES.get('pdf_file') or None
+            from .ppe_pdf_validation import validate_ppe_pdf_upload
 
-            asset = PPEAsset.objects.create(
-                ics_number      = ics_number,
-                ics_date        = parse_date(request.POST.get('ics_date', '')),
-                property_number = request.POST.get('property_number', '').strip() or None,
-                serial_number   = request.POST.get('serial_number', '').strip() or None,
-                category        = request.POST.get('category', 'IT EQUIPMENTS'),
-                asset_name      = asset_name,
-                date_acquired   = parse_date(request.POST.get('date_acquired', '')),
-                tech_specs      = request.POST.get('tech_specs', '').strip() or None,
-                unit_value      = unit_value,
-                quantity        = quantity,
-                total_value     = unit_value * quantity,
-                location        = request.POST.get('location', '').strip() or None,
-                end_user        = request.POST.get('end_user', '').strip() or None,
-                supplier        = request.POST.get('supplier', '').strip() or None,
-                order_no        = request.POST.get('order_no', '').strip() or None,
-                delivery_no     = request.POST.get('delivery_no', '').strip() or None,
-                iar_no          = request.POST.get('iar_no', '').strip() or None,
-                remarks         = request.POST.get('remarks', '').strip() or None,
-                pdf_file        = pdf_file,
-                created_by      = request.user,
-            )
-            PPEAssetAssignmentLog.objects.create(
-                asset=asset,
-                action='Registered',
-                assignee=asset.end_user or 'Unassigned',
-                previous_assignee='',
-                location=asset.location or '',
-                performed_by=request.user,
-            )
-            messages.success(request, f'Asset "{ics_number} — {asset_name}" saved successfully!')
-            return redirect('ppe_asset_entry')
+            pdf_file = request.FILES.get('pdf_file') or None
+            pdf_ok = True
+            if pdf_file:
+                pdf_err = validate_ppe_pdf_upload(pdf_file)
+                if pdf_err:
+                    messages.error(request, pdf_err)
+                    pdf_ok = False
+
+            if pdf_ok:
+                asset = PPEAsset.objects.create(
+                    ics_number      = ics_number,
+                    ics_date        = parse_date(request.POST.get('ics_date', '')),
+                    property_number = request.POST.get('property_number', '').strip() or None,
+                    serial_number   = request.POST.get('serial_number', '').strip() or None,
+                    category        = request.POST.get('category', 'IT EQUIPMENTS'),
+                    asset_name      = asset_name,
+                    date_acquired   = parse_date(request.POST.get('date_acquired', '')),
+                    tech_specs      = request.POST.get('tech_specs', '').strip() or None,
+                    unit_value      = unit_value,
+                    quantity        = quantity,
+                    total_value     = unit_value * quantity,
+                    location        = request.POST.get('location', '').strip() or None,
+                    end_user        = request.POST.get('end_user', '').strip() or None,
+                    supplier        = request.POST.get('supplier', '').strip() or None,
+                    order_no        = request.POST.get('order_no', '').strip() or None,
+                    delivery_no     = request.POST.get('delivery_no', '').strip() or None,
+                    iar_no          = request.POST.get('iar_no', '').strip() or None,
+                    remarks         = request.POST.get('remarks', '').strip() or None,
+                    pdf_file        = pdf_file,
+                    created_by      = request.user,
+                )
+                PPEAssetAssignmentLog.objects.create(
+                    asset=asset,
+                    action='Registered',
+                    assignee=asset.end_user or 'Unassigned',
+                    previous_assignee='',
+                    location=asset.location or '',
+                    performed_by=request.user,
+                )
+                messages.success(
+                    request,
+                    f'Asset "{ics_number} — {asset_name}" saved successfully!',
+                )
+                return redirect('ppe_asset_entry')
 
     # Generate next ICS number by finding the highest existing number for this year
     year = datetime.date.today().year % 100
@@ -2244,7 +2289,7 @@ def ppe_asset_entry(request):
     return render(request, 'admin/new_asset_entry_form/new_asset_entry_form.html', context)
 
 
-@login_required
+@superuser_required
 def ppe_asset_edit(request):
     """Handle PPEAsset update from the Edit modal form."""
     from .models import PPEAsset
@@ -2299,6 +2344,12 @@ def ppe_asset_edit(request):
 
     new_pdf = request.FILES.get('pdf_file')
     if new_pdf:
+        from .ppe_pdf_validation import validate_ppe_pdf_upload
+
+        pdf_err = validate_ppe_pdf_upload(new_pdf)
+        if pdf_err:
+            messages.error(request, pdf_err)
+            return redirect('ppe_asset_entry')
         asset.pdf_file = new_pdf
 
     asset.save()
@@ -2306,7 +2357,7 @@ def ppe_asset_edit(request):
     return redirect('ppe_asset_entry')
 
 
-@login_required
+@superuser_required
 def ppe_asset_delete(request, asset_id):
     """Hard-delete a PPEAsset and return a JSON response for the AJAX call."""
     from django.http import JsonResponse
@@ -2334,7 +2385,7 @@ def ppe_asset_delete(request, asset_id):
 
 # sugod drea transfer /assignment na it lang ne kay nag chnage c maam og new ppe daw 
 
-@login_required
+@superuser_required
 @ensure_csrf_cookie
 def ppe_transfer_assignment(request):
     from django.contrib.auth.models import User
@@ -2348,7 +2399,7 @@ def ppe_transfer_assignment(request):
     })
 
 
-@login_required
+@superuser_required
 def ppe_asset_search(request):
     """Search a PPEAsset by ICS number and return its details as JSON."""
     from django.http import JsonResponse
@@ -2373,7 +2424,7 @@ def ppe_asset_search(request):
         return JsonResponse({'success': False, 'error': f'No active asset found with ICS "{ics}".'})
 
 
-@login_required
+@superuser_required
 def ppe_asset_transfer(request):
     """Transfer/assign a PPEAsset to a new end user."""
     from django.http import JsonResponse
@@ -2419,7 +2470,7 @@ def ppe_asset_transfer(request):
     })
 
 
-@login_required
+@superuser_required
 def ppe_unit_trail(request):
     """Item / unit trail: search by ICS, view details & assignment history, print report."""
     import urllib.parse
@@ -2561,7 +2612,7 @@ def ppe_unit_trail(request):
     )
 
 
-@login_required
+@superuser_required
 def ppe_report_config(request):
     """Report Configuration: on-screen list like All Assets; print = formal physical inventory form."""
     from django.contrib import messages
