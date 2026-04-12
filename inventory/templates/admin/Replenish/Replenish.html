@@ -3130,7 +3130,7 @@ Replenish/Add New Item
                         <!-- Header -->
                         <div class="header">
                             <div class="header-left">
-                                <img src="{% static 'image/logo.png' %}" alt="PhilHealth Logo" class="logo" onerror="this.style.display='none'">
+                                <img src="{% static 'image/logo1.png' %}" alt="PhilHealth Logo" class="logo" onerror="this.style.display='none'">
                                 <!--<div>
                                     <span class="doc-title" style="font-size: 12pt;">PhilHealth</span><br>
                                     <span class="doc-subtitle">Your Partner in Health.</span>
@@ -3449,7 +3449,7 @@ Replenish/Add New Item
                         risInput.val(`${risPrefix}-${String(nextSeq).padStart(risDigitsLength, '0')}`);
                     }
 
-                    var logoUrl = "{% static 'image/logo.png' %}";
+                    var logoUrl = "{% static 'image/logo1.png' %}";
                     if (logoUrl && logoUrl.indexOf('http') !== 0) {
                         logoUrl = window.location.origin + (logoUrl.charAt(0) === '/' ? '' : '/') + logoUrl;
                     }
