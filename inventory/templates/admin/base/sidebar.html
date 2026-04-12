@@ -116,47 +116,6 @@
 
 
 
-              <!-- history -->
-                <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}menu-open{% endif %}">
-                  <a href="#"
-                    class="nav-link {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}text-dark{% endif %}"
-                    style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies_history' or request.resolver_match.url_name == 'print_history' or request.resolver_match.url_name == 'activity_log' %}background: #1e5d3f!important;{% endif %}">
-                    <i class="nav-icon fas fa-history" style="color: #fbf8f8!important;"></i>
-                    <p>
-                      History
-                      <i class="fas fa-angle-left right"></i>
-                    </p>
-                  </a>
-                  <ul class="nav nav-treeview" style="padding-left: 15px;">
-                    <li class="nav-item">
-                      <a href="{% url 'requested_supplies_history' %}"
-                        class="nav-link {% if request.resolver_match.url_name == 'requested_supplies_history' %}text-dark{% endif %}"
-                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'requested_supplies_history' %}background: #1e5d3f!important;{% endif %}">
-                        <i class="far fa-file-pdf nav-icon" style="color: #fbf8f8!important;"></i>
-                        <p>Requested History</p>
-                      </a>
-                    </li>
-                    <!-- <li class="nav-item">
-                      <a href="{% url 'print_history' %}"
-                        class="nav-link {% if request.resolver_match.url_name == 'print_history' %}text-dark{% endif %}"
-                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'print_history' %}background: #1e5d3f!important;{% endif %}">
-                        <i class="fas fa-print nav-icon" style="color: #fbf8f8!important;"></i>
-                        <p>Print History</p>
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="{% url 'activity_log' %}"
-                        class="nav-link {% if request.resolver_match.url_name == 'activity_log' %}text-dark{% endif %}"
-                        style="color: #fdfafa!important; {% if request.resolver_match.url_name == 'activity_log' %}background: #1e5d3f!important;{% endif %}">
-                        <i class="fas fa-clipboard-list nav-icon" style="color: #fbf8f8!important;"></i>
-                        <p>Activity Log</p>
-                      </a>
-                    </li> -->
-                  </ul>
-                </li>
-
-
-
 
 
             <!-- Physical Inventory for Property , Plant & Equipment (PPE) -->

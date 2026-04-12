@@ -26,13 +26,6 @@ urlpatterns = [
 
     # Requested Supplies
     path('admin/supply/requested/', views.requested_supplies, name='requested_supplies'),
-    path('admin/supply/requested/history/', views.requested_supplies_history, name='requested_supplies_history'),
-
-    # History Print 
-    path('admin/history/print/', views.print_history, name='print_history'),
-
-    # Activity Log
-    path('admin/history/activity-log/', views.activity_log, name='activity_log'),
 
     # PPE Equipments
     path('admin/ppe/asset-entry/', views.ppe_asset_entry, name='ppe_asset_entry'),
