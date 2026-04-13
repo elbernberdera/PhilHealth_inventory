@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils import timezone
@@ -1000,200 +1000,132 @@ def request_supply_update_status(request, request_id):
         }, status=500)
 
 # Category API Views
-@superuser_required
-@require_http_methods(["GET"])
-def category_list(request):
-    """Get list of all categories"""
-    from .models import Category
-    try:
-        categories = Category.objects.filter(is_active=True).order_by('id')
-        categories_data = [{
-            'id': cat.id,
-            'name': cat.name,
-            'created_at': timezone.localtime(cat.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-        } for cat in categories]
-        
-        return JsonResponse({
-            'success': True,
-            'categories': categories_data
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+# Resource: /api/categories/          → GET (list), POST (create)
+# Resource: /api/categories/<id>/     → GET (detail), PUT (update), DELETE (hard delete)
 
 @superuser_required
-@require_http_methods(["POST"])
-def category_create(request):
-    """Create a new category"""
+@require_http_methods(["GET", "POST"])
+def category_list_create(request):
+    """
+    GET  /api/categories/ → 200  list of active categories
+    POST /api/categories/ → 201  create and return new category
+    """
     from .models import Category
-    
+
+    if request.method == 'GET':
+        try:
+            categories = Category.objects.filter(is_active=True).order_by('id')
+            categories_data = [
+                {
+                    'id': cat.id,
+                    'name': cat.name,
+                    'created_at': timezone.localtime(cat.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                }
+                for cat in categories
+            ]
+            return JsonResponse({'success': True, 'categories': categories_data}, status=200)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    # POST — create
     try:
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            data = request.POST
-        
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
         name = data.get('name', '').strip()
-        
         if not name:
-            return JsonResponse({
-                'success': False,
-                'error': 'Category name is required.'
-            }, status=400)
-        
-        # Check if category already exists
+            return JsonResponse({'success': False, 'error': 'Category name is required.'}, status=400)
+
         if Category.objects.filter(name__iexact=name).exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'A category with this name already exists.'
-            }, status=400)
-        
-        # Create category
-        category = Category.objects.create(
-            name=name,
-            created_by=request.user
+            return JsonResponse(
+                {'success': False, 'error': 'A category with this name already exists.'}, status=400
+            )
+
+        category = Category.objects.create(name=name, created_by=request.user)
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': 'Category created successfully!',
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                },
+            },
+            status=201,
         )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category created successfully!',
-            'category': {
-                'id': category.id,
-                'name': category.name,
-                'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-            }
-        })
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@superuser_required
-@require_http_methods(["POST", "PUT"])
-def category_update(request, category_id):
-    """Update an existing category"""
-    from .models import Category
-    
-    try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            data = request.POST
-        
-        name = data.get('name', '').strip()
-        
-        if not name:
-            return JsonResponse({
-                'success': False,
-                'error': 'Category name is required.'
-            }, status=400)
-        
-        # Check if another category with the same name exists
-        if Category.objects.filter(name__iexact=name).exclude(id=category_id).exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'A category with this name already exists.'
-            }, status=400)
-        
-        # Update category
-        category.name = name
-        category.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category updated successfully!',
-            'category': {
-                'id': category.id,
-                'name': category.name,
-                'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
-            }
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@superuser_required
-@require_http_methods(["DELETE", "POST"])
-def category_delete(request, category_id):
-    """Delete a category (soft delete by setting is_active=False)"""
-    from .models import Category
-    
-    try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        # Soft delete - set is_active to False
-        category.is_active = False
-        category.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category deleted successfully!'
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @superuser_required
-@require_http_methods(["POST"])
-def category_delete_permanently(request, category_id):
-    """Permanently delete a category from database"""
+@require_http_methods(["GET", "PUT", "DELETE"])
+def category_detail(request, category_id):
+    """
+    GET    /api/categories/<id>/ → 200  single category
+    PUT    /api/categories/<id>/ → 200  update name
+    DELETE /api/categories/<id>/ → 204  hard delete (nullifies FK references first)
+    """
     from .models import Category, Supply, RequestSupply
     from django.db import transaction
-    
+
+    category = get_object_or_404(Category, id=category_id)
+
+    if request.method == 'GET':
+        return JsonResponse(
+            {
+                'success': True,
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                    'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
+                },
+            },
+            status=200,
+        )
+
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
+            name = data.get('name', '').strip()
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Category name is required.'}, status=400)
+
+            if Category.objects.filter(name__iexact=name).exclude(id=category_id).exists():
+                return JsonResponse(
+                    {'success': False, 'error': 'A category with this name already exists.'}, status=400
+                )
+
+            category.name = name
+            category.save()
+
+            return JsonResponse(
+                {
+                    'success': True,
+                    'message': 'Category updated successfully!',
+                    'category': {
+                        'id': category.id,
+                        'name': category.name,
+                        'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
+                    },
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    # DELETE — hard delete with FK nullification
     try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        # Use transaction to ensure data consistency
         with transaction.atomic():
-            # Check if there are related Supply records
-            related_supplies = Supply.objects.filter(main_category=category)
-            
-            # Check if there are related RequestSupply records
-            related_requests = RequestSupply.objects.filter(main_category=category)
-            
-            if related_supplies.exists() or related_requests.exists():
-                # Set main_category to None for related records
-                # This allows the Category to be deleted even with foreign key relationships
-                related_supplies.update(main_category=None)
-                related_requests.update(main_category=None)
-            
-            # Now perform the hard delete
+            Supply.objects.filter(main_category=category).update(main_category=None)
+            RequestSupply.objects.filter(main_category=category).update(main_category=None)
             category.delete()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category permanently deleted from database!'
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
+        # 204 No Content: successful deletion has no response body
+        return HttpResponse(status=204)
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 # Supply API endpoints

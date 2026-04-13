@@ -37,12 +37,9 @@ urlpatterns = [
     path('admin/ppe/unit-trail/', views.ppe_unit_trail, name='ppe_unit_trail'),
     path('admin/ppe/report-configuration/', views.ppe_report_config, name='ppe_report_config'),
     
-    # Category API endpoints
-    path('api/categories/', views.category_list, name='category_list'),
-    path('api/categories/create/', views.category_create, name='category_create'),
-    path('api/categories/<int:category_id>/update/', views.category_update, name='category_update'),
-    path('api/categories/<int:category_id>/delete/', views.category_delete, name='category_delete'),
-    path('api/categories/<int:category_id>/delete-permanently/', views.category_delete_permanently, name='category_delete_permanently'),
+    # Category API endpoints (RESTful)
+    path('api/categories/', views.category_list_create, name='category_list_create'),
+    path('api/categories/<int:category_id>/', views.category_detail, name='category_detail'),
     
     # Supply API endpoints
     path('api/supplies/', views.supply_list, name='supply_list'),

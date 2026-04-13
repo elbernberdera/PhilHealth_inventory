@@ -1808,16 +1808,17 @@ Replenish/Add New Item
                 return;
             }
 
+            // POST /api/categories/ — create a new category resource (201 Created)
             $.ajax({
-                url: '/api/categories/create/',
+                url: '/api/categories/',
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify({ name: categoryName }),
-                success: function (response) {
-                    if (response.success) {
+                success: function (response, _status, xhr) {
+                    if (xhr.status === 201) {
                         $('#add-main-category-form')[0].reset();
                         addCategoryToTable(response.category);
                         refreshCategoriesList();
@@ -1853,9 +1854,10 @@ Replenish/Add New Item
                 return;
             }
 
+            // PUT /api/categories/<id>/ — replace the category resource (200 OK)
             $.ajax({
-                url: '/api/categories/' + categoryId + '/update/',
-                method: 'POST',
+                url: '/api/categories/' + categoryId + '/',
+                method: 'PUT',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),
                     'Content-Type': 'application/json'
@@ -1917,21 +1919,19 @@ Replenish/Add New Item
                 if (result.value || result.isConfirmed) {
                     console.log('User confirmed deletion, making AJAX call');
 
+                    // DELETE /api/categories/<id>/ — destroy the resource (204 No Content)
                     $.ajax({
-                        url: '/api/categories/' + categoryId + '/delete-permanently/',
-                        method: 'POST',
+                        url: '/api/categories/' + categoryId + '/',
+                        method: 'DELETE',
                         headers: {
-                            'X-CSRFToken': csrfToken,
-                            'Content-Type': 'application/json'
+                            'X-CSRFToken': csrfToken
                         },
-                        success: function (response) {
-                            console.log('Delete response:', response);
-                            if (response.success) {
+                        success: function (_data, _status, xhr) {
+                            // 204 No Content means deletion succeeded; no JSON body is returned
+                            if (xhr.status === 204) {
                                 removeCategoryFromTable(categoryId);
                                 refreshCategoriesList();
                                 showSwalAlert('success', 'Deleted!', 'Category deleted successfully.', 2000);
-                            } else {
-                                showSwalAlert('error', 'Error', response.error || response.message || 'Failed to delete category.');
                             }
                         },
                         error: function (xhr) {
