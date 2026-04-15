@@ -218,52 +218,7 @@
                     </div>
                 </div>
                 <div class="row px-3 pt-2 pb-3 border-top bg-light">
-                    <div class="col-12 mb-3">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                            <p class="mb-0 small font-weight-bold">Prepared by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#addSignatoryModal" id="bin-card-open-add-signatory">
-                                <i class="fas fa-plus mr-1"></i>Add Signatory
-                            </button>
-                        </div>
-                        {% if prepared_by_signatories %}
-                        <div class="table-responsive mt-2">
-                            <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Position</th>
-                                        <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for s in prepared_by_signatories %}
-                                    <tr>
-                                        <td class="align-middle">{{ s.name }}</td>
-                                        <td class="align-middle">{{ s.position }}</td>
-                                        <td class="align-middle text-center text-nowrap">
-                                            <button type="button" class="btn btn-sm btn-outline-primary bin-card-edit-signatory mr-1"
-                                                data-pk="{{ s.pk }}"
-                                                data-name="{{ s.name|escape }}"
-                                                data-position="{{ s.position|escape }}"
-                                                title="Edit">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger bin-card-delete-signatory" title="Delete"
-                                                data-pk="{{ s.pk }}"
-                                                data-name="{{ s.name|escape }}">
-                                                <i class="fas fa-trash-alt"></i> Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <p class="text-muted small mb-0 mt-2">No signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-5 col-lg-4 mt-3 mt-md-0">
+                    <div class="col-md-5 col-lg-4">
                         <label for="bin-card-prepared-by" class="mb-0 small font-weight-bold">Prepared by <span class="text-muted font-weight-normal">(on printed form)</span></label>
                         <select class="form-control form-control-sm mt-1" id="bin-card-prepared-by">
                             <option value="">-- Select name --</option>
@@ -271,144 +226,15 @@
                             <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
                             {% endfor %}
                         </select>
+                        {% if not prepared_by_signatories %}
+                        <p class="text-muted small mb-0 mt-2">No procurement personnel found. Add names in <strong>Replenish → Procurement Personnel</strong>.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
-<!-- Add Signatory Modal (matches Replenish “Add New Supplies” style) -->
-<div class="modal fade" id="addSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="addSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="addSignatoryModalLabel">
-                    <i class="fas fa-plus-circle mr-2"></i>Add New Signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="post" action="" id="bin-card-add-signatory-form">
-                {% csrf_token %}
-                <input type="hidden" name="signatory_role" value="prepared">
-                <input type="hidden" name="action" value="add">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="signatory-name">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="signatory-name" name="name" maxlength="200"
-                                    placeholder="Enter full name" autocomplete="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="signatory-position">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="signatory-position" name="position" maxlength="200"
-                                    placeholder="Enter position or title" autocomplete="organization-title" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save mr-1"></i>Add Signatory
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Signatory Modal -->
-<div class="modal fade" id="editSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="editSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editSignatoryModalLabel">
-                    <i class="fas fa-edit mr-2"></i>Edit Signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="post" action="" id="bin-card-edit-signatory-form">
-                {% csrf_token %}
-                <input type="hidden" name="signatory_role" value="prepared">
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="pk" id="edit-signatory-pk" value="">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="edit-signatory-name">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="edit-signatory-name" name="name" maxlength="200"
-                                    placeholder="Enter full name" autocomplete="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="edit-signatory-position">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="edit-signatory-position" name="position" maxlength="200"
-                                    placeholder="Enter position or title" autocomplete="organization-title" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save mr-1"></i>Save changes
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Signatory confirmation modal -->
-<div class="modal fade" id="deleteSignatoryModal" tabindex="-1" role="dialog" aria-labelledby="deleteSignatoryModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteSignatoryModalLabel">
-                    <i class="fas fa-trash-alt mr-2"></i>Delete signatory
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0">Are you sure you want to remove <strong id="delete-signatory-display-name"></strong> from the list? This cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times mr-1"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="bin-card-delete-signatory-confirm">
-                    <i class="fas fa-trash-alt mr-1"></i>Delete
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form method="post" action="" id="bin-card-delete-signatory-form" class="d-none">
-    {% csrf_token %}
-    <input type="hidden" name="signatory_role" value="prepared">
-    <input type="hidden" name="action" value="delete">
-    <input type="hidden" name="pk" id="delete-signatory-pk" value="">
-</form>
 
 <!-- Print: missing Prepared by selection -->
 <div class="modal fade" id="binCardPrintSignatoriesRequiredModal" tabindex="-1" role="dialog"
@@ -939,44 +765,6 @@
 </script>
 {% endblock main_content %}
 
-{# Signatory modals use jQuery; base.html loads jQuery after main_content, so this must run in custom_js. #}
 {% block custom_js %}
 {% include 'admin/shared/django_messages_sweetalert_js.html' %}
-<script>
-jQuery(function () {
-    jQuery('#addSignatoryModal').on('hidden.bs.modal', function () {
-        var f = document.getElementById('bin-card-add-signatory-form');
-        if (f) f.reset();
-    });
-    jQuery('#editSignatoryModal').on('hidden.bs.modal', function () {
-        var f = document.getElementById('bin-card-edit-signatory-form');
-        if (f) f.reset();
-        jQuery('#edit-signatory-pk').val('');
-    });
-    jQuery(document).on('click', '.bin-card-edit-signatory', function () {
-        var btn = jQuery(this);
-        jQuery('#edit-signatory-pk').val(btn.attr('data-pk') || '');
-        jQuery('#edit-signatory-name').val(btn.attr('data-name') || '');
-        jQuery('#edit-signatory-position').val(btn.attr('data-position') || '');
-        jQuery('#editSignatoryModal').modal('show');
-    });
-    jQuery(document).on('click', '.bin-card-delete-signatory', function () {
-        var btn = jQuery(this);
-        var pk = btn.attr('data-pk') || '';
-        var nm = btn.attr('data-name') || '';
-        jQuery('#delete-signatory-pk').val(pk);
-        jQuery('#delete-signatory-display-name').text(nm || 'this signatory');
-        jQuery('#deleteSignatoryModal').modal('show');
-    });
-    jQuery('#bin-card-delete-signatory-confirm').on('click', function () {
-        var pk = jQuery('#delete-signatory-pk').val();
-        if (!pk) return;
-        jQuery('#bin-card-delete-signatory-form').submit();
-    });
-    jQuery('#deleteSignatoryModal').on('hidden.bs.modal', function () {
-        jQuery('#delete-signatory-pk').val('');
-        jQuery('#delete-signatory-display-name').text('');
-    });
-});
-</script>
 {% endblock %}

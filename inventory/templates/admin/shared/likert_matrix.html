@@ -1,0 +1,30 @@
+{# Likert matrix: one radio group per row (name = row.id), values 1..n left to right. #}
+{# Required: likert_rows — list of dicts with keys: id (unique), text (statement). #}
+{# Optional: likert_scale_labels — list of column headers (default 5-point agreement). #}
+<div class="table-responsive likert-matrix-wrap">
+  <table class="table table-bordered table-sm likert-matrix mb-0">
+    <thead>
+      <tr>
+        <th scope="col" class="likert-matrix-stmt align-middle" style="min-width: 14rem;">Statement</th>
+        {% for label in likert_scale_labels %}
+        <th scope="col" class="text-center align-middle likert-matrix-scale" style="min-width: 5.5rem;">
+          <span class="d-inline-block" style="max-width: 6rem;">{{ label }}</span>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in likert_rows %}
+      <tr>
+        <th scope="row" class="align-middle font-weight-normal">{{ row.text }}</th>
+        {% for label in likert_scale_labels %}
+        <td class="text-center align-middle">
+          <label class="sr-only">{{ row.text }} — {{ label }}</label>
+          <input type="radio" name="{{ row.id }}" value="{{ forloop.counter }}" {% if forloop.first %}required{% endif %}>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

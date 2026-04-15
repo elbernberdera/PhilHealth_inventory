@@ -26,13 +26,6 @@ urlpatterns = [
 
     # Requested Supplies
     path('admin/supply/requested/', views.requested_supplies, name='requested_supplies'),
-    path('admin/supply/requested/history/', views.requested_supplies_history, name='requested_supplies_history'),
-
-    # History Print 
-    path('admin/history/print/', views.print_history, name='print_history'),
-
-    # Activity Log
-    path('admin/history/activity-log/', views.activity_log, name='activity_log'),
 
     # PPE Equipments
     path('admin/ppe/asset-entry/', views.ppe_asset_entry, name='ppe_asset_entry'),
@@ -43,13 +36,11 @@ urlpatterns = [
     path('admin/ppe/asset-transfer/', views.ppe_asset_transfer, name='ppe_asset_transfer'),
     path('admin/ppe/unit-trail/', views.ppe_unit_trail, name='ppe_unit_trail'),
     path('admin/ppe/report-configuration/', views.ppe_report_config, name='ppe_report_config'),
+    path('admin/tools/likert-matrix/', views.likert_matrix, name='likert_matrix'),
     
-    # Category API endpoints
-    path('api/categories/', views.category_list, name='category_list'),
-    path('api/categories/create/', views.category_create, name='category_create'),
-    path('api/categories/<int:category_id>/update/', views.category_update, name='category_update'),
-    path('api/categories/<int:category_id>/delete/', views.category_delete, name='category_delete'),
-    path('api/categories/<int:category_id>/delete-permanently/', views.category_delete_permanently, name='category_delete_permanently'),
+    # Category API endpoints (RESTful)
+    path('api/categories/', views.category_list_create, name='category_list_create'),
+    path('api/categories/<int:category_id>/', views.category_detail, name='category_detail'),
     
     # Supply API endpoints
     path('api/supplies/', views.supply_list, name='supply_list'),

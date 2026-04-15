@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
@@ -457,8 +458,10 @@ class PPEAsset(models.Model):
     # Attached Document
     pdf_file = models.FileField(
         upload_to='ppe_assets/pdf/',
-        blank=True, null=True,
+        blank=True,
+        null=True,
         verbose_name="Uploaded PDF",
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
     )
 
     # Metadata

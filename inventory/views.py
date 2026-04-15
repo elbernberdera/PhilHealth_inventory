@@ -1,9 +1,13 @@
 from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from functools import wraps
+
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils import timezone
@@ -23,6 +27,35 @@ def get_dashboard_redirect(user):
     if getattr(user, 'is_staff', False):
         return 'staff_dashboard'
     return 'admin_dashboard'
+
+
+def superuser_required(view_func):
+    """Only Django superusers (app admin role). Authenticated non-superusers get 403."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        if not getattr(request.user, 'is_superuser', False):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def staff_or_superuser_required(view_func):
+    """Staff or superuser — catalog/list APIs used by staff request flow and admin pages."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        u = request.user
+        if not (getattr(u, 'is_staff', False) or getattr(u, 'is_superuser', False)):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 @login_required
@@ -54,7 +87,7 @@ def login(request):
 
     return render(request, 'login.html')
 
-@login_required
+@superuser_required
 def admin_dashboard(request):
     """Admin dashboard view"""
     from django.contrib.auth.models import User
@@ -145,7 +178,7 @@ def admin_dashboard(request):
     }
     return render(request, 'admin/admin_dashboard.html', context)
 
-@login_required
+@superuser_required
 def update_profile(request):
     """Update user profile view"""
     user = request.user
@@ -192,7 +225,7 @@ def update_profile(request):
     }
     return render(request, 'admin/update_profile.html', context)
 
-@login_required
+@superuser_required
 def users_list(request):
     """List all users"""
     from django.contrib.auth.models import User
@@ -226,7 +259,7 @@ def users_list(request):
     }
     return render(request, 'admin/users_list.html', context)
 
-@login_required
+@superuser_required
 def user_create(request):
     """Create new user"""
     from django.contrib.auth.models import User
@@ -319,7 +352,7 @@ def user_create(request):
     }
     return render(request, 'admin/user_form.html', context)
 
-@login_required
+@superuser_required
 def user_edit(request, user_id):
     """Edit existing user"""
     from django.contrib.auth.models import User
@@ -402,7 +435,7 @@ def user_edit(request, user_id):
     }
     return render(request, 'admin/user_form.html', context)
 
-@login_required
+@superuser_required
 def user_delete(request, user_id):
     """Delete user"""
     from django.contrib.auth.models import User
@@ -435,7 +468,7 @@ def logout(request):
 
 
 # balhin sa taas kay pang admin pane
-@login_required
+@superuser_required
 def request_supply_module(request):
     """Request Supply Module view"""
     # Placeholder data - to be implemented with actual models
@@ -444,14 +477,12 @@ def request_supply_module(request):
     }
     return render(request, 'admin/request_supply_module/request_supply_module.html', context)
 
-@login_required
+@superuser_required
 def replenish_item(request):
     """Replenish/Add New Item view"""
     from django.contrib import messages
     from django.db.models import Max
     from .models import (
-        BinCardNotedBy,
-        BinCardPreparedBy,
         Category,
         ProcurementPersonnel,
         Supply,
@@ -508,19 +539,13 @@ def replenish_item(request):
         role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
         if role not in ('prepared', 'noted', 'issued', 'received'):
             role = 'prepared'
-        model_map = {
-            'prepared': BinCardPreparedBy,
-            'issued': BinCardPreparedBy,
-            'noted': BinCardNotedBy,
-            'received': BinCardNotedBy,
-        }
         label_map = {
             'prepared': 'Requested by',
             'noted': 'Approved by',
             'issued': 'Issued by',
             'received': 'Received by',
         }
-        SignModel = model_map[role]
+        SignModel = ProcurementPersonnel
         label = label_map[role]
 
         if action == 'add':
@@ -578,8 +603,8 @@ def replenish_item(request):
         expiration_date__isnull=False,
         expiration_date__lte=date_threshold
     ).order_by('expiration_date', '-id')
-    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
-    noted_by_signatories = list(BinCardNotedBy.objects.all())
+    prepared_by_signatories = list(ProcurementPersonnel.objects.all())
+    noted_by_signatories = list(ProcurementPersonnel.objects.all())
     procurement_personnel = list(ProcurementPersonnel.objects.all())
 
     context = {
@@ -596,19 +621,19 @@ def replenish_item(request):
     return render(request, 'admin/Replenish/Replenish.html', context)
 
 
-@login_required
+@superuser_required
 def master_inventory(request):
     """Master Inventory: view all stocks including out-of-stock (no balance filter)."""
     from django.contrib import messages
     from django.db.models import Max
-    from .models import BinCardNotedBy, BinCardPreparedBy, Category
+    from .models import Category, ProcurementPersonnel
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
         role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
         if role not in ('prepared', 'verified'):
             role = 'prepared'
-        SignModel = BinCardNotedBy if role == 'verified' else BinCardPreparedBy
+        SignModel = ProcurementPersonnel
         label = 'Verified by' if role == 'verified' else 'Prepared by'
 
         if action == 'add':
@@ -650,8 +675,8 @@ def master_inventory(request):
         return redirect('master_inventory')
 
     categories = Category.objects.filter(is_active=True).order_by('name')
-    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
-    verified_by_signatories = list(BinCardNotedBy.objects.all())
+    prepared_by_signatories = list(ProcurementPersonnel.objects.all())
+    verified_by_signatories = list(ProcurementPersonnel.objects.all())
     context = {
         'page_title': 'Master Inventory',
         'categories': categories,
@@ -661,55 +686,10 @@ def master_inventory(request):
     return render(request, 'admin/Master_Inventory/master_inventory.html', context)
 
 
-@login_required
+@superuser_required
 def bin_card(request):
     """Bin Card history by item, with option to print selected or all."""
-    from .models import BinCardPreparedBy, Category, RequestSupply
-
-    if request.method == 'POST':
-        action = (request.POST.get('action') or '').strip()
-        SignModel = BinCardPreparedBy
-        label = 'Prepared by'
-
-        if action == 'add':
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if name and position:
-                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
-                SignModel.objects.create(
-                    name=name, position=position, sort_order=next_order
-                )
-                messages.success(request, f'{label} signatory added.')
-            elif not name:
-                messages.warning(request, 'Enter a name before adding.')
-            else:
-                messages.warning(request, 'Enter a position before adding.')
-        elif action == 'edit':
-            pk = request.POST.get('pk')
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if pk and name and position:
-                try:
-                    obj = SignModel.objects.get(pk=pk)
-                    obj.name = name
-                    obj.position = position
-                    obj.save(update_fields=['name', 'position'])
-                    messages.success(request, f'{label} signatory updated.')
-                except SignModel.DoesNotExist:
-                    messages.warning(request, 'That signatory no longer exists.')
-            elif not name:
-                messages.warning(request, 'Enter a name before saving.')
-            elif not position:
-                messages.warning(request, 'Enter a position before saving.')
-            else:
-                messages.warning(request, 'Could not update signatory.')
-        elif action == 'delete':
-            pk = request.POST.get('pk')
-            if pk:
-                deleted, _ = SignModel.objects.filter(pk=pk).delete()
-                if deleted:
-                    messages.success(request, f'{label} signatory removed.')
-        return redirect('bin_card')
+    from .models import Category, ProcurementPersonnel, RequestSupply
 
     categories = Category.objects.filter(is_active=True).order_by('name')
 
@@ -746,7 +726,7 @@ def bin_card(request):
 
     all_rows = [_row(r) for r in all_rows_qs]
 
-    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
+    prepared_by_signatories = list(ProcurementPersonnel.objects.all())
 
     context = {
         'page_title': 'Bin Card',
@@ -758,7 +738,7 @@ def bin_card(request):
     return render(request, 'admin/Bin Card/bin_card.html', context)
 
 
-@login_required
+@superuser_required
 def requested_supplies(request):
     """Requested Supplies view - FIFO (First In First Out) ordering"""
     from datetime import date as date_class
@@ -863,159 +843,8 @@ def requested_supplies(request):
     return render(request, 'admin/requested_supplies/requested_supplies.html', context)
 
 
-@login_required
-def requested_supplies_history(request):
-    """All requested supplies (all statuses) with date filters, search, and pagination."""
-    from datetime import date as date_class
-    from calendar import monthrange
-    from django.contrib import messages
-    from django.db.models import Max, Q
-    from .models import BinCardNotedBy, BinCardPreparedBy, RequestSupply
 
-    if request.method == 'POST':
-        action = (request.POST.get('action') or '').strip()
-        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
-        if role not in ('prepared', 'verified'):
-            role = 'prepared'
-        SignModel = BinCardNotedBy if role == 'verified' else BinCardPreparedBy
-        label = 'Verified by' if role == 'verified' else 'Prepared by'
-
-        if action == 'add':
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if name and position:
-                next_order = (SignModel.objects.aggregate(m=Max('sort_order'))['m'] or 0) + 1
-                SignModel.objects.create(name=name, position=position, sort_order=next_order)
-                messages.success(request, f'{label} signatory added.')
-            elif not name:
-                messages.warning(request, 'Enter a name before adding.')
-            else:
-                messages.warning(request, 'Enter a position before adding.')
-        elif action == 'edit':
-            pk = request.POST.get('pk')
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if pk and name and position:
-                try:
-                    obj = SignModel.objects.get(pk=pk)
-                    obj.name = name
-                    obj.position = position
-                    obj.save(update_fields=['name', 'position'])
-                    messages.success(request, f'{label} signatory updated.')
-                except SignModel.DoesNotExist:
-                    messages.warning(request, 'That signatory no longer exists.')
-            elif not name:
-                messages.warning(request, 'Enter a name before saving.')
-            elif not position:
-                messages.warning(request, 'Enter a position before saving.')
-            else:
-                messages.warning(request, 'Could not update signatory.')
-        elif action == 'delete':
-            pk = request.POST.get('pk')
-            if pk:
-                deleted, _ = SignModel.objects.filter(pk=pk).delete()
-                if deleted:
-                    messages.success(request, f'{label} signatory removed.')
-        return redirect(request.get_full_path())
-
-    # All active request records (pending, approved, rejected, out of stock, etc.)
-    qs = RequestSupply.objects.filter(is_active=True).order_by('-date', '-created_at')
-
-    filter_type = request.GET.get('filter_type', 'all').strip() or 'all'
-    start_date = request.GET.get('start_date', '').strip()
-    end_date = request.GET.get('end_date', '').strip()
-    start_month = request.GET.get('start_month', '').strip()
-    end_month = request.GET.get('end_month', '').strip()
-    start_year = request.GET.get('start_year', '').strip()
-    end_year = request.GET.get('end_year', '').strip()
-    search_query = request.GET.get('search', '').strip()
-
-    filtered_date = ''
-
-    if filter_type == 'day':
-        if start_date:
-            try:
-                d0 = date_class.fromisoformat(start_date)
-                qs = qs.filter(date__gte=d0)
-            except ValueError:
-                pass
-        if end_date:
-            try:
-                d1 = date_class.fromisoformat(end_date)
-                qs = qs.filter(date__lte=d1)
-            except ValueError:
-                pass
-        if start_date or end_date:
-            filtered_date = f"{start_date or '…'} to {end_date or '…'}"
-
-    elif filter_type == 'month':
-        if start_month and len(start_month) >= 7:
-            try:
-                y, m = map(int, start_month.split('-')[:2])
-                qs = qs.filter(date__gte=date_class(y, m, 1))
-            except (ValueError, TypeError):
-                pass
-        if end_month and len(end_month) >= 7:
-            try:
-                y, m = map(int, end_month.split('-')[:2])
-                last_d = monthrange(y, m)[1]
-                qs = qs.filter(date__lte=date_class(y, m, last_d))
-            except (ValueError, TypeError):
-                pass
-        if start_month or end_month:
-            filtered_date = f"{start_month or '…'} to {end_month or '…'}"
-
-    elif filter_type == 'year':
-        if start_year.isdigit():
-            qs = qs.filter(date__year__gte=int(start_year))
-        if end_year.isdigit():
-            qs = qs.filter(date__year__lte=int(end_year))
-        if start_year or end_year:
-            filtered_date = f"{start_year or '…'} to {end_year or '…'}"
-
-    if search_query:
-        qs = qs.filter(
-            Q(transaction_no__icontains=search_query) |
-            Q(requester_name__icontains=search_query) |
-            Q(item_code__icontains=search_query) |
-            Q(description__icontains=search_query)
-        )
-
-    try:
-        per_page = int(request.GET.get('per_page', '10'))
-    except (TypeError, ValueError):
-        per_page = 10
-    if per_page not in (10, 20, 50, 100, 200, 500):
-        per_page = 10
-
-    paginator = Paginator(qs, per_page)
-    page_number = request.GET.get('page') or 1
-    page_obj = paginator.get_page(page_number)
-
-    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
-    verified_by_signatories = list(BinCardNotedBy.objects.all())
-
-    context = {
-        'page_title': 'Requested Supplies History',
-        'page_obj': page_obj,
-        'requests': page_obj.object_list,
-        'total_count': paginator.count,
-        'filter_type': filter_type,
-        'start_date': start_date,
-        'end_date': end_date,
-        'start_month': start_month,
-        'end_month': end_month,
-        'start_year': start_year,
-        'end_year': end_year,
-        'filtered_date': filtered_date,
-        'per_page': per_page,
-        'search_query': search_query,
-        'prepared_by_signatories': prepared_by_signatories,
-        'verified_by_signatories': verified_by_signatories,
-    }
-    return render(request, 'admin/requested_supplies_history/requested_supplies_history.html', context)
-
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def request_supply_update_status(request, request_id):
     """Update the status of a RequestSupply"""
@@ -1113,204 +942,136 @@ def request_supply_update_status(request, request_id):
         }, status=500)
 
 # Category API Views
-@login_required
-@require_http_methods(["GET"])
-def category_list(request):
-    """Get list of all categories"""
-    from .models import Category
-    try:
-        categories = Category.objects.filter(is_active=True).order_by('id')
-        categories_data = [{
-            'id': cat.id,
-            'name': cat.name,
-            'created_at': timezone.localtime(cat.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-        } for cat in categories]
-        
-        return JsonResponse({
-            'success': True,
-            'categories': categories_data
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+# Resource: /api/categories/          → GET (list), POST (create)
+# Resource: /api/categories/<id>/     → GET (detail), PUT (update), DELETE (hard delete)
 
-@login_required
-@require_http_methods(["POST"])
-def category_create(request):
-    """Create a new category"""
+@superuser_required
+@require_http_methods(["GET", "POST"])
+def category_list_create(request):
+    """
+    GET  /api/categories/ → 200  list of active categories
+    POST /api/categories/ → 201  create and return new category
+    """
     from .models import Category
-    
+
+    if request.method == 'GET':
+        try:
+            categories = Category.objects.filter(is_active=True).order_by('id')
+            categories_data = [
+                {
+                    'id': cat.id,
+                    'name': cat.name,
+                    'created_at': timezone.localtime(cat.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                }
+                for cat in categories
+            ]
+            return JsonResponse({'success': True, 'categories': categories_data}, status=200)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    # POST — create
     try:
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            data = request.POST
-        
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
         name = data.get('name', '').strip()
-        
         if not name:
-            return JsonResponse({
-                'success': False,
-                'error': 'Category name is required.'
-            }, status=400)
-        
-        # Check if category already exists
+            return JsonResponse({'success': False, 'error': 'Category name is required.'}, status=400)
+
         if Category.objects.filter(name__iexact=name).exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'A category with this name already exists.'
-            }, status=400)
-        
-        # Create category
-        category = Category.objects.create(
-            name=name,
-            created_by=request.user
+            return JsonResponse(
+                {'success': False, 'error': 'A category with this name already exists.'}, status=400
+            )
+
+        category = Category.objects.create(name=name, created_by=request.user)
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': 'Category created successfully!',
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                },
+            },
+            status=201,
         )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category created successfully!',
-            'category': {
-                'id': category.id,
-                'name': category.name,
-                'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-            }
-        })
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@login_required
-@require_http_methods(["POST", "PUT"])
-def category_update(request, category_id):
-    """Update an existing category"""
-    from .models import Category
-    
-    try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            data = request.POST
-        
-        name = data.get('name', '').strip()
-        
-        if not name:
-            return JsonResponse({
-                'success': False,
-                'error': 'Category name is required.'
-            }, status=400)
-        
-        # Check if another category with the same name exists
-        if Category.objects.filter(name__iexact=name).exclude(id=category_id).exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'A category with this name already exists.'
-            }, status=400)
-        
-        # Update category
-        category.name = name
-        category.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category updated successfully!',
-            'category': {
-                'id': category.id,
-                'name': category.name,
-                'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
-            }
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@login_required
-@require_http_methods(["DELETE", "POST"])
-def category_delete(request, category_id):
-    """Delete a category (soft delete by setting is_active=False)"""
-    from .models import Category
-    
-    try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        # Soft delete - set is_active to False
-        category.is_active = False
-        category.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category deleted successfully!'
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@login_required
-@require_http_methods(["POST"])
-def category_delete_permanently(request, category_id):
-    """Permanently delete a category from database"""
+@superuser_required
+@require_http_methods(["GET", "PUT", "DELETE"])
+def category_detail(request, category_id):
+    """
+    GET    /api/categories/<id>/ → 200  single category
+    PUT    /api/categories/<id>/ → 200  update name
+    DELETE /api/categories/<id>/ → 204  hard delete (nullifies FK references first)
+    """
     from .models import Category, Supply, RequestSupply
     from django.db import transaction
-    
+
+    category = get_object_or_404(Category, id=category_id)
+
+    if request.method == 'GET':
+        return JsonResponse(
+            {
+                'success': True,
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'created_at': timezone.localtime(category.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                    'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
+                },
+            },
+            status=200,
+        )
+
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
+            name = data.get('name', '').strip()
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Category name is required.'}, status=400)
+
+            if Category.objects.filter(name__iexact=name).exclude(id=category_id).exists():
+                return JsonResponse(
+                    {'success': False, 'error': 'A category with this name already exists.'}, status=400
+                )
+
+            category.name = name
+            category.save()
+
+            return JsonResponse(
+                {
+                    'success': True,
+                    'message': 'Category updated successfully!',
+                    'category': {
+                        'id': category.id,
+                        'name': category.name,
+                        'updated_at': timezone.localtime(category.updated_at).strftime('%Y-%m-%d %H:%M:%S'),
+                    },
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    # DELETE — hard delete with FK nullification
     try:
-        category = get_object_or_404(Category, id=category_id)
-        
-        # Use transaction to ensure data consistency
         with transaction.atomic():
-            # Check if there are related Supply records
-            related_supplies = Supply.objects.filter(main_category=category)
-            
-            # Check if there are related RequestSupply records
-            related_requests = RequestSupply.objects.filter(main_category=category)
-            
-            if related_supplies.exists() or related_requests.exists():
-                # Set main_category to None for related records
-                # This allows the Category to be deleted even with foreign key relationships
-                related_supplies.update(main_category=None)
-                related_requests.update(main_category=None)
-            
-            # Now perform the hard delete
+            Supply.objects.filter(main_category=category).update(main_category=None)
+            RequestSupply.objects.filter(main_category=category).update(main_category=None)
             category.delete()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Category permanently deleted from database!'
-        })
-    except Category.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Category not found.'
-        }, status=404)
+        # 204 No Content: successful deletion has no response body
+        return HttpResponse(status=204)
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 # Supply API endpoints
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["GET"])
 def supply_list(request):
     """Get all supplies - FIFO (First In First Out) ordering"""
@@ -1353,7 +1114,7 @@ def supply_list(request):
         }, status=500)
 
 
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["POST"])
 def request_supply_create(request):
     """
@@ -1459,7 +1220,7 @@ def request_supply_create(request):
             'out_of_stock': False
         }, status=500)
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_create(request):
     """Create a new supply"""
@@ -1554,7 +1315,7 @@ def supply_create(request):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["GET"])
 def supply_detail(request, supply_id):
     """Get details of a single supply"""
@@ -1593,7 +1354,7 @@ def supply_detail(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_update(request, supply_id):
     """Update an existing supply"""
@@ -1686,7 +1447,7 @@ def supply_update(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_add_stock(request, supply_id):
     """
@@ -1743,7 +1504,7 @@ def supply_add_stock(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_delete(request, supply_id):
     """Delete (soft delete) a supply"""
@@ -1764,7 +1525,7 @@ def supply_delete(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_restore(request, supply_id):
     """Restore a soft-deleted supply"""
@@ -1785,46 +1546,39 @@ def supply_restore(request, supply_id):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["GET"])
 def generate_item_code(request):
-    """Generate the next item code in format ITMmmddyy00000 with continuous sequential numbering"""
+    """Generate the next item code in format OS 023-yy-xxx."""
     try:
         from .models import Supply
         from datetime import date
-        
-        # Get today's date
-        today = date.today()
-        
-        # Format: ITMmmddyy00000
-        # mm = month (2 digits), dd = day (2 digits), yy = year (2 digits)
-        date_prefix = f"ITM{today.strftime('%m%d%y')}"
-        
-        # Find ALL existing item codes that start with "ITM" (not just today's)
-        # This ensures continuous numbering across different dates
+        import re
+
+        yy = date.today().strftime('%y')
+        code_prefix = f"OS 023-{yy}-"
+        pattern = re.compile(rf"^OS 023-{yy}-(\d{{3}})$")
+
         existing_codes = Supply.objects.filter(
-            item_code__startswith="ITM"
+            item_code__startswith=code_prefix
         ).values_list('item_code', flat=True)
-        
-        # Extract the numeric part and find the maximum across ALL dates
+
         max_number = 0
         for code in existing_codes:
+            match = pattern.match((code or "").strip())
+            if not match:
+                continue
             try:
-                # Extract the 5-digit number at the end (last 5 characters)
-                number_part = code[-5:]
-                number = int(number_part)
+                number = int(match.group(1))
                 if number > max_number:
                     max_number = number
-            except (ValueError, IndexError):
-                # Skip invalid codes
+            except ValueError:
                 continue
-        
-        # Increment for the next item code (continues from the highest number found)
+
         next_number = max_number + 1
-        
-        # Format the new item code: ITMmmddyy00000 (today's date + continuous sequential number)
-        new_item_code = f"{date_prefix}{next_number:05d}"
-        
+
+        new_item_code = f"{code_prefix}{next_number:03d}"
+
         return JsonResponse({
             'success': True,
             'item_code': new_item_code
@@ -1836,7 +1590,7 @@ def generate_item_code(request):
         }, status=500)
 
 
-@login_required
+@superuser_required
 @require_http_methods(["POST"])
 def supply_delete_permanently(request, supply_id):
     """Permanently delete a supply from database"""
@@ -1921,7 +1675,7 @@ def staff_request_supplies(request):
     return render(request, 'staff/request_supplies/request_supplies.html', context)
 
 
-@login_required
+@staff_or_superuser_required
 @require_http_methods(["GET"])
 def request_supply_list(request):
     """Get paginated request supplies - for admin: all requests, for staff: only their requests"""
@@ -2037,95 +1791,11 @@ def staff_update_profile(request):
 
 
 
-# ---------------------------------------------------------------------------
-# Print History
-# ---------------------------------------------------------------------------
-@login_required
-def print_history(request):
-    """
-    Print History — shows all approved RequestSupply records (items that
-    were issued / released), with search and pagination.
-    """
-    from .models import RequestSupply
-    from django.db.models import Q
-
-    search_query = request.GET.get('search', '').strip()
-
-    qs = RequestSupply.objects.filter(
-        is_active=True,
-        status='approved'
-    ).order_by('-updated_at', '-date')
-
-    if search_query:
-        qs = qs.filter(
-            Q(transaction_no__icontains=search_query) |
-            Q(requester_name__icontains=search_query) |
-            Q(item_code__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(conforme_by__icontains=search_query)
-        )
-
-    paginator = Paginator(qs, 15)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    context = {
-        'page_title': 'Print History',
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'total_records': paginator.count,
-    }
-    return render(request, 'admin/print_history/print_history.html', context)
-
 
 # ---------------------------------------------------------------------------
-# Activity Log
-# ---------------------------------------------------------------------------
-@login_required
-def activity_log(request):
-    """
-    Activity Log — shows all RequestSupply records ordered by most recently
-    updated, with status badge, actor, and search/pagination.
-    """
-    from .models import RequestSupply
-    from django.db.models import Q
-
-    search_query = request.GET.get('search', '').strip()
-    status_filter = request.GET.get('status', '').strip()
-
-    qs = RequestSupply.objects.filter(
-        is_active=True
-    ).select_related('created_by').order_by('-updated_at', '-created_at')
-
-    if search_query:
-        qs = qs.filter(
-            Q(transaction_no__icontains=search_query) |
-            Q(requester_name__icontains=search_query) |
-            Q(item_code__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(conforme_by__icontains=search_query)
-        )
-
-    if status_filter:
-        qs = qs.filter(status=status_filter)
-
-    paginator = Paginator(qs, 15)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    context = {
-        'page_title': 'Activity Log',
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'total_records': paginator.count,
-    }
-    return render(request, 'admin/activity_log/activity_log.html', context)
-
-
-
-    # ---------------------------------------------------------------------------
 # ppe na akoa ge usab Asset — New Asset Entry Form
 # ---------------------------------------------------------------------------
-@login_required
+@superuser_required
 def ppe_asset_entry(request):
     """PPE Asset Entry — list saved assets and handle new asset creation."""
     from .models import PPEAsset, PPEAssetAssignmentLog
@@ -2161,40 +1831,52 @@ def ppe_asset_entry(request):
             unit_value = parse_decimal(request.POST.get('unit_value', ''))
             quantity   = int(request.POST.get('quantity', 1) or 1)
 
-            pdf_file = request.FILES.get('pdf_file') or None
+            from .ppe_pdf_validation import validate_ppe_pdf_upload
 
-            asset = PPEAsset.objects.create(
-                ics_number      = ics_number,
-                ics_date        = parse_date(request.POST.get('ics_date', '')),
-                property_number = request.POST.get('property_number', '').strip() or None,
-                serial_number   = request.POST.get('serial_number', '').strip() or None,
-                category        = request.POST.get('category', 'IT EQUIPMENTS'),
-                asset_name      = asset_name,
-                date_acquired   = parse_date(request.POST.get('date_acquired', '')),
-                tech_specs      = request.POST.get('tech_specs', '').strip() or None,
-                unit_value      = unit_value,
-                quantity        = quantity,
-                total_value     = unit_value * quantity,
-                location        = request.POST.get('location', '').strip() or None,
-                end_user        = request.POST.get('end_user', '').strip() or None,
-                supplier        = request.POST.get('supplier', '').strip() or None,
-                order_no        = request.POST.get('order_no', '').strip() or None,
-                delivery_no     = request.POST.get('delivery_no', '').strip() or None,
-                iar_no          = request.POST.get('iar_no', '').strip() or None,
-                remarks         = request.POST.get('remarks', '').strip() or None,
-                pdf_file        = pdf_file,
-                created_by      = request.user,
-            )
-            PPEAssetAssignmentLog.objects.create(
-                asset=asset,
-                action='Registered',
-                assignee=asset.end_user or 'Unassigned',
-                previous_assignee='',
-                location=asset.location or '',
-                performed_by=request.user,
-            )
-            messages.success(request, f'Asset "{ics_number} — {asset_name}" saved successfully!')
-            return redirect('ppe_asset_entry')
+            pdf_file = request.FILES.get('pdf_file') or None
+            pdf_ok = True
+            if pdf_file:
+                pdf_err = validate_ppe_pdf_upload(pdf_file)
+                if pdf_err:
+                    messages.error(request, pdf_err)
+                    pdf_ok = False
+
+            if pdf_ok:
+                asset = PPEAsset.objects.create(
+                    ics_number      = ics_number,
+                    ics_date        = parse_date(request.POST.get('ics_date', '')),
+                    property_number = request.POST.get('property_number', '').strip() or None,
+                    serial_number   = request.POST.get('serial_number', '').strip() or None,
+                    category        = request.POST.get('category', 'IT EQUIPMENTS'),
+                    asset_name      = asset_name,
+                    date_acquired   = parse_date(request.POST.get('date_acquired', '')),
+                    tech_specs      = request.POST.get('tech_specs', '').strip() or None,
+                    unit_value      = unit_value,
+                    quantity        = quantity,
+                    total_value     = unit_value * quantity,
+                    location        = request.POST.get('location', '').strip() or None,
+                    end_user        = request.POST.get('end_user', '').strip() or None,
+                    supplier        = request.POST.get('supplier', '').strip() or None,
+                    order_no        = request.POST.get('order_no', '').strip() or None,
+                    delivery_no     = request.POST.get('delivery_no', '').strip() or None,
+                    iar_no          = request.POST.get('iar_no', '').strip() or None,
+                    remarks         = request.POST.get('remarks', '').strip() or None,
+                    pdf_file        = pdf_file,
+                    created_by      = request.user,
+                )
+                PPEAssetAssignmentLog.objects.create(
+                    asset=asset,
+                    action='Registered',
+                    assignee=asset.end_user or 'Unassigned',
+                    previous_assignee='',
+                    location=asset.location or '',
+                    performed_by=request.user,
+                )
+                messages.success(
+                    request,
+                    f'Asset "{ics_number} — {asset_name}" saved successfully!',
+                )
+                return redirect('ppe_asset_entry')
 
     # Generate next ICS number by finding the highest existing number for this year
     year = datetime.date.today().year % 100
@@ -2226,20 +1908,21 @@ def ppe_asset_entry(request):
             Q(location__icontains=search_query)
         )
 
-    paginator = Paginator(assets_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
+    # Client-side table pagination in the template expects the full row set.
+    # Returning only one server-side page (10 rows) causes Next/Previous to appear broken.
+    assets = list(assets_qs.order_by('ics_number'))
 
     context = {
-        'page_obj'      : page_obj,
+        'assets'        : assets,
         'search_query'  : search_query,
-        'total_records' : paginator.count,
+        'total_records' : len(assets),
         'category_choices': PPEAsset.CATEGORY_CHOICES,
         'suggested_ics' : suggested_ics,
     }
     return render(request, 'admin/new_asset_entry_form/new_asset_entry_form.html', context)
 
 
-@login_required
+@superuser_required
 def ppe_asset_edit(request):
     """Handle PPEAsset update from the Edit modal form."""
     from .models import PPEAsset
@@ -2294,6 +1977,12 @@ def ppe_asset_edit(request):
 
     new_pdf = request.FILES.get('pdf_file')
     if new_pdf:
+        from .ppe_pdf_validation import validate_ppe_pdf_upload
+
+        pdf_err = validate_ppe_pdf_upload(new_pdf)
+        if pdf_err:
+            messages.error(request, pdf_err)
+            return redirect('ppe_asset_entry')
         asset.pdf_file = new_pdf
 
     asset.save()
@@ -2301,7 +1990,7 @@ def ppe_asset_edit(request):
     return redirect('ppe_asset_entry')
 
 
-@login_required
+@superuser_required
 def ppe_asset_delete(request, asset_id):
     """Hard-delete a PPEAsset and return a JSON response for the AJAX call."""
     from django.http import JsonResponse
@@ -2329,7 +2018,7 @@ def ppe_asset_delete(request, asset_id):
 
 # sugod drea transfer /assignment na it lang ne kay nag chnage c maam og new ppe daw 
 
-@login_required
+@superuser_required
 @ensure_csrf_cookie
 def ppe_transfer_assignment(request):
     from django.contrib.auth.models import User
@@ -2343,7 +2032,7 @@ def ppe_transfer_assignment(request):
     })
 
 
-@login_required
+@superuser_required
 def ppe_asset_search(request):
     """Search a PPEAsset by ICS number and return its details as JSON."""
     from django.http import JsonResponse
@@ -2368,7 +2057,7 @@ def ppe_asset_search(request):
         return JsonResponse({'success': False, 'error': f'No active asset found with ICS "{ics}".'})
 
 
-@login_required
+@superuser_required
 def ppe_asset_transfer(request):
     """Transfer/assign a PPEAsset to a new end user."""
     from django.http import JsonResponse
@@ -2414,7 +2103,7 @@ def ppe_asset_transfer(request):
     })
 
 
-@login_required
+@superuser_required
 def ppe_unit_trail(request):
     """Item / unit trail: search by ICS, view details & assignment history, print report."""
     import urllib.parse
@@ -2424,7 +2113,7 @@ def ppe_unit_trail(request):
     from django.shortcuts import redirect
     from django.urls import reverse
 
-    from .models import BinCardNotedBy, BinCardPreparedBy, PPEAsset
+    from .models import PPEAsset, ProcurementPersonnel
 
     if request.method == 'POST':
         ics_redirect = (request.POST.get('ics') or '').strip()
@@ -2432,7 +2121,7 @@ def ppe_unit_trail(request):
         role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
         if role not in ('prepared', 'noted'):
             role = 'prepared'
-        SignModel = BinCardNotedBy if role == 'noted' else BinCardPreparedBy
+        SignModel = ProcurementPersonnel
         label = 'Verified by' if role == 'noted' else 'Prepared by'
 
         if action == 'add':
@@ -2495,8 +2184,8 @@ def ppe_unit_trail(request):
         except PPEAsset.DoesNotExist:
             messages.warning(request, f'No active asset found with ICS number "{ics}".')
 
-    prepared_by_signatories = list(BinCardPreparedBy.objects.all())
-    noted_by_signatories = list(BinCardNotedBy.objects.all())
+    prepared_by_signatories = list(ProcurementPersonnel.objects.all())
+    noted_by_signatories = list(ProcurementPersonnel.objects.all())
 
     trail_print_data = None
     if asset:
@@ -2556,68 +2245,13 @@ def ppe_unit_trail(request):
     )
 
 
-@login_required
+@superuser_required
 def ppe_report_config(request):
     """Report Configuration: on-screen list like All Assets; print = formal physical inventory form."""
-    from django.contrib import messages
     from django.core.paginator import Paginator
-    from django.db.models import Max, OuterRef, Q, Subquery
-    from django.shortcuts import redirect
+    from django.db.models import OuterRef, Q, Subquery
 
-    from .models import PPEAsset, PPEAssetAssignmentLog, PpeReportSignatory
-
-    if request.method == 'POST':
-        action = (request.POST.get('action') or '').strip()
-        role = (request.POST.get('signatory_role') or 'prepared').strip().lower()
-        if role not in ('prepared', 'verified', 'noted'):
-            role = 'prepared'
-        label_map = {
-            'prepared': 'Prepared by',
-            'verified': 'Verified by',
-            'noted': 'Noted by',
-        }
-        label = label_map[role]
-        role_qs = PpeReportSignatory.objects.filter(role=role)
-
-        if action == 'add':
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if name and position:
-                next_order = (role_qs.aggregate(m=Max('sort_order'))['m'] or 0) + 1
-                PpeReportSignatory.objects.create(
-                    role=role, name=name, position=position, sort_order=next_order
-                )
-                messages.success(request, f'{label} signatory added.')
-            elif not name:
-                messages.warning(request, 'Enter a name before adding.')
-            else:
-                messages.warning(request, 'Enter a position before adding.')
-        elif action == 'edit':
-            pk = request.POST.get('pk')
-            name = (request.POST.get('name') or '').strip()
-            position = (request.POST.get('position') or '').strip()
-            if pk and name and position:
-                try:
-                    obj = PpeReportSignatory.objects.get(pk=pk, role=role)
-                    obj.name = name
-                    obj.position = position
-                    obj.save(update_fields=['name', 'position'])
-                    messages.success(request, f'{label} signatory updated.')
-                except PpeReportSignatory.DoesNotExist:
-                    messages.warning(request, 'That signatory no longer exists.')
-            elif not name:
-                messages.warning(request, 'Enter a name before saving.')
-            elif not position:
-                messages.warning(request, 'Enter a position before saving.')
-            else:
-                messages.warning(request, 'Could not update signatory.')
-        elif action == 'delete':
-            pk = request.POST.get('pk')
-            if pk:
-                deleted, _ = PpeReportSignatory.objects.filter(pk=pk, role=role).delete()
-                if deleted:
-                    messages.success(request, f'{label} signatory removed.')
-        return redirect(request.get_full_path())
+    from .models import PPEAsset, PPEAssetAssignmentLog, ProcurementPersonnel
 
     def fmt_date(d):
         if not d:
@@ -2710,9 +2344,6 @@ def ppe_report_config(request):
                 'status_date': fmt_date(a.ics_date),
             }
         )
-    for _ in range(3):
-        print_report_rows.append(None)
-
     print_report_title_category = (
         category_filter if category_filter else 'ALL CATEGORIES'
     )
@@ -2733,15 +2364,9 @@ def ppe_report_config(request):
         _pf_parts.append(f'Search: {search_query}')
     print_filter_summary = '; '.join(_pf_parts)
 
-    ppe_prepared_signatories = list(
-        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_PREPARED)
-    )
-    ppe_verified_signatories = list(
-        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_VERIFIED)
-    )
-    ppe_noted_signatories = list(
-        PpeReportSignatory.objects.filter(role=PpeReportSignatory.ROLE_NOTED)
-    )
+    ppe_prepared_signatories = list(ProcurementPersonnel.objects.all())
+    ppe_verified_signatories = list(ProcurementPersonnel.objects.all())
+    ppe_noted_signatories = list(ProcurementPersonnel.objects.all())
 
     return render(
         request,
@@ -2764,5 +2389,43 @@ def ppe_report_config(request):
             'ppe_prepared_signatories': ppe_prepared_signatories,
             'ppe_verified_signatories': ppe_verified_signatories,
             'ppe_noted_signatories': ppe_noted_signatories,
+        },
+    )
+
+
+@superuser_required
+def likert_matrix(request):
+    """
+    Demo page: statement × Likert scale matrix (5-point agreement).
+    Reuse `admin/shared/likert_matrix.html` elsewhere by passing the same context keys.
+    """
+    likert_scale_labels = [
+        'Strongly Disagree',
+        'Disagree',
+        'Neutral',
+        'Agree',
+        'Strongly Agree',
+    ]
+    likert_rows = [
+        {'id': 'likert_q1', 'text': 'The inventory system is easy to use.'},
+        {'id': 'likert_q2', 'text': 'Stock levels are updated in a timely manner.'},
+        {'id': 'likert_q3', 'text': 'Reports and records are accurate and reliable.'},
+        {'id': 'likert_q4', 'text': 'Support staff respond to concerns effectively.'},
+    ]
+
+    if request.method == 'POST':
+        messages.success(
+            request,
+            'Likert responses received (demo only). Wire this POST to your model or export as needed.',
+        )
+        return redirect('likert_matrix')
+
+    return render(
+        request,
+        'admin/likert_matrix/likert_matrix.html',
+        {
+            'page_title': 'Likert matrix',
+            'likert_scale_labels': likert_scale_labels,
+            'likert_rows': likert_rows,
         },
     )

@@ -17,8 +17,7 @@
   .pir-print-inner {
     font-family: Georgia, "Times New Roman", Times, serif;
     color: #000;
-    /* Extra space below page top margin so body text clears pre-printed letterhead */
-    padding-top: 0.8cm;
+    padding-top: 0;
     box-sizing: border-box;
   }
   .pir-print .pir-title {
@@ -154,10 +153,9 @@
       break-inside: avoid;
     }
   }
-  /* Top margin: room for institutional letterhead; bottom/sides for binding & trim */
   @page {
     size: legal landscape;
-    margin: 4cm 2cm 2.2cm 2cm;
+    margin: 2cm 2cm 2.2cm 2cm;
   }
 
   /* Solid white like other admin pages (AdminLTE content-wrapper is often gray) */
@@ -417,160 +415,43 @@
     <div class="card card-outline card-secondary mb-3">
       <div class="card-header py-3"><i class="fas fa-user-edit mr-2 text-success"></i>Report Signatories</div>
       <div class="card-body">
-        <p class="text-muted small mb-3">Manage names and positions for the printed Physical Inventory Report. Choose who appears in each role below, then use <strong>Print Report</strong>.</p>
+        <p class="text-muted small mb-3">Signatories are managed from <strong>Replenish → Procurement Personnel</strong>. Choose who appears in each role below, then use <strong>Print Report</strong>.</p>
         <div class="row px-1 pb-2">
-          <div class="col-12 mb-3">
-            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-              <p class="mb-0 small font-weight-bold">Prepared by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-              <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#pirAddSignatoryModal" data-role="prepared">
-                <i class="fas fa-plus mr-1"></i>Add Signatory
-              </button>
-            </div>
-            {% if ppe_prepared_signatories %}
-            <div class="table-responsive mt-2">
-              <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                <thead class="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in ppe_prepared_signatories %}
-                  <tr>
-                    <td class="align-middle">{{ s.name }}</td>
-                    <td class="align-middle">{{ s.position }}</td>
-                    <td class="align-middle text-center text-nowrap">
-                      <button type="button" class="btn btn-sm btn-outline-primary pir-edit-signatory mr-1"
-                          data-role="prepared" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
-                        <i class="fas fa-edit"></i> Edit
-                      </button>
-                      <button type="button" class="btn btn-sm btn-outline-danger pir-delete-signatory" title="Delete"
-                          data-role="prepared" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
-                        <i class="fas fa-trash-alt"></i> Delete
-                      </button>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% else %}
-            <p class="text-muted small mb-0 mt-2">No signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
-            {% endif %}
-            <div class="col-md-5 col-lg-4 px-0 mt-3">
-              <label for="pir-prepared-by" class="mb-0 small font-weight-bold">Prepared by <span class="text-muted font-weight-normal">(on printed form)</span></label>
-              <select class="form-control form-control-sm mt-1" id="pir-prepared-by">
-                <option value="">-- Select name --</option>
-                {% for s in ppe_prepared_signatories %}
-                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
+          <div class="col-12">
+            <p class="mb-2 small font-weight-bold">Choose signatories for the printed form <span class="text-muted font-weight-normal">(single source: Procurement Personnel)</span></p>
           </div>
-
-          <div class="col-12 border-top mt-2 pt-3">
-            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-              <p class="mb-0 small font-weight-bold">Verified by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-              <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#pirAddSignatoryModal" data-role="verified">
-                <i class="fas fa-plus mr-1"></i>Add Signatory
-              </button>
-            </div>
-            {% if ppe_verified_signatories %}
-            <div class="table-responsive mt-2">
-              <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                <thead class="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in ppe_verified_signatories %}
-                  <tr>
-                    <td class="align-middle">{{ s.name }}</td>
-                    <td class="align-middle">{{ s.position }}</td>
-                    <td class="align-middle text-center text-nowrap">
-                      <button type="button" class="btn btn-sm btn-outline-primary pir-edit-signatory mr-1"
-                          data-role="verified" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
-                        <i class="fas fa-edit"></i> Edit
-                      </button>
-                      <button type="button" class="btn btn-sm btn-outline-danger pir-delete-signatory" title="Delete"
-                          data-role="verified" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
-                        <i class="fas fa-trash-alt"></i> Delete
-                      </button>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% else %}
-            <p class="text-muted small mb-0 mt-2">No verified-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
-            {% endif %}
-            <div class="col-md-5 col-lg-4 px-0 mt-3">
-              <label for="pir-verified-by" class="mb-0 small font-weight-bold">Verified by <span class="text-muted font-weight-normal">(on printed form)</span></label>
-              <select class="form-control form-control-sm mt-1" id="pir-verified-by">
-                <option value="">-- Select name --</option>
-                {% for s in ppe_verified_signatories %}
-                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
+          <div class="col-md-4 col-sm-6 mb-3">
+            <label for="pir-prepared-by" class="mb-0 small font-weight-bold">Prepared by</label>
+            <select class="form-control form-control-sm mt-1" id="pir-prepared-by">
+              <option value="">-- Select name --</option>
+              {% for s in ppe_prepared_signatories %}
+              <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
           </div>
-
-          <div class="col-12 border-top mt-2 pt-3">
-            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-              <p class="mb-0 small font-weight-bold">Noted by signatories <span class="text-muted font-weight-normal">(for the printed form)</span></p>
-              <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#pirAddSignatoryModal" data-role="noted">
-                <i class="fas fa-plus mr-1"></i>Add Signatory
-              </button>
-            </div>
-            {% if ppe_noted_signatories %}
-            <div class="table-responsive mt-2">
-              <table class="table table-sm table-bordered table-hover mb-0 bg-white">
-                <thead class="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th class="text-center text-nowrap" style="width:1%;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in ppe_noted_signatories %}
-                  <tr>
-                    <td class="align-middle">{{ s.name }}</td>
-                    <td class="align-middle">{{ s.position }}</td>
-                    <td class="align-middle text-center text-nowrap">
-                      <button type="button" class="btn btn-sm btn-outline-primary pir-edit-signatory mr-1"
-                          data-role="noted" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}" title="Edit">
-                        <i class="fas fa-edit"></i> Edit
-                      </button>
-                      <button type="button" class="btn btn-sm btn-outline-danger pir-delete-signatory" title="Delete"
-                          data-role="noted" data-pk="{{ s.pk }}" data-name="{{ s.name|escape }}">
-                        <i class="fas fa-trash-alt"></i> Delete
-                      </button>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% else %}
-            <p class="text-muted small mb-0 mt-2">No noted-by signatories yet. Use <strong>Add Signatory</strong> to add one for print.</p>
-            {% endif %}
-            <div class="col-md-5 col-lg-4 px-0 mt-3">
-              <label for="pir-noted-by" class="mb-0 small font-weight-bold">Noted by <span class="text-muted font-weight-normal">(on printed form)</span></label>
-              <select class="form-control form-control-sm mt-1" id="pir-noted-by">
-                <option value="">-- Select name --</option>
-                {% for s in ppe_noted_signatories %}
-                <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
+          <div class="col-md-4 col-sm-6 mb-3">
+            <label for="pir-verified-by" class="mb-0 small font-weight-bold">Verified by</label>
+            <select class="form-control form-control-sm mt-1" id="pir-verified-by">
+              <option value="">-- Select name --</option>
+              {% for s in ppe_verified_signatories %}
+              <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
           </div>
+          <div class="col-md-4 col-sm-6 mb-3">
+            <label for="pir-noted-by" class="mb-0 small font-weight-bold">Noted by</label>
+            <select class="form-control form-control-sm mt-1" id="pir-noted-by">
+              <option value="">-- Select name --</option>
+              {% for s in ppe_noted_signatories %}
+              <option value="{{ s.pk }}" data-name="{{ s.name|escape }}" data-position="{{ s.position|escape }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if not ppe_prepared_signatories and not ppe_verified_signatories and not ppe_noted_signatories %}
+          <div class="col-12">
+            <p class="text-muted small mb-0">No procurement personnel found. Add names in <strong>Replenish → Procurement Personnel</strong>.</p>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -591,104 +472,6 @@
         </div>
       </div>
     </div>
-
-    <div class="modal fade" id="pirAddSignatoryModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
-            <h5 class="modal-title" id="pirAddSignatoryModalTitle"><i class="fas fa-plus-circle mr-2"></i>Add signatory</h5>
-            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          </div>
-          <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add">
-            <input type="hidden" name="signatory_role" id="pir-add-signatory-role" value="prepared">
-            <div class="modal-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="name" maxlength="200" placeholder="Full name" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Position <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="position" maxlength="200" placeholder="Position or title" required>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Add</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="pirEditSignatoryModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="pirEditSignatoryModalTitle"><i class="fas fa-edit mr-2"></i>Edit signatory</h5>
-            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          </div>
-          <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="edit">
-            <input type="hidden" name="signatory_role" id="pir-edit-signatory-role" value="">
-            <input type="hidden" name="pk" id="pir-edit-signatory-pk" value="">
-            <div class="modal-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="name" id="pir-edit-signatory-name" maxlength="200" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Position <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="position" id="pir-edit-signatory-position" maxlength="200" required>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="pirDeleteSignatoryModal" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title"><i class="fas fa-trash-alt mr-2"></i>Delete signatory</h5>
-            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          </div>
-          <div class="modal-body">
-            <p class="mb-0">Are you sure you want to remove <strong id="pir-delete-signatory-display"></strong> from this list? This cannot be undone.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" id="pir-delete-signatory-confirm"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <form method="post" action="" id="pir-delete-signatory-form" class="d-none">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="delete">
-      <input type="hidden" name="signatory_role" id="pir-delete-signatory-role" value="">
-      <input type="hidden" name="pk" id="pir-delete-signatory-pk" value="">
-    </form>
 
     </div>{# end .pir-no-print #}
 
@@ -836,50 +619,4 @@
 
 {% block custom_js %}
 {% include 'admin/shared/django_messages_sweetalert_js.html' %}
-<script>
-jQuery(function () {
-  var roleLabels = { prepared: 'Prepared by', verified: 'Verified by', noted: 'Noted by' };
-  jQuery('#pirAddSignatoryModal').on('show.bs.modal', function (e) {
-    var btn = jQuery(e.relatedTarget);
-    var role = (btn.data('role') || 'prepared').toString();
-    jQuery('#pir-add-signatory-role').val(role);
-    jQuery('#pirAddSignatoryModalTitle').html('<i class="fas fa-plus-circle mr-2"></i>Add ' + (roleLabels[role] || role) + ' signatory');
-  });
-  jQuery('#pirAddSignatoryModal').on('hidden.bs.modal', function () {
-    var f = jQuery('#pirAddSignatoryModal form')[0];
-    if (f) f.reset();
-    jQuery('#pir-add-signatory-role').val('prepared');
-  });
-
-  jQuery(document).on('click', '.pir-edit-signatory', function () {
-    var btn = jQuery(this);
-    var role = (btn.attr('data-role') || '');
-    jQuery('#pir-edit-signatory-role').val(role);
-    jQuery('#pir-edit-signatory-pk').val(btn.attr('data-pk') || '');
-    jQuery('#pir-edit-signatory-name').val(btn.attr('data-name') || '');
-    jQuery('#pir-edit-signatory-position').val(btn.attr('data-position') || '');
-    jQuery('#pirEditSignatoryModalTitle').html('<i class="fas fa-edit mr-2"></i>Edit ' + (roleLabels[role] || role) + ' signatory');
-    jQuery('#pirEditSignatoryModal').modal('show');
-  });
-  jQuery('#pirEditSignatoryModal').on('hidden.bs.modal', function () {
-    jQuery('#pir-edit-signatory-pk').val('');
-  });
-
-  jQuery(document).on('click', '.pir-delete-signatory', function () {
-    var btn = jQuery(this);
-    jQuery('#pir-delete-signatory-role').val(btn.attr('data-role') || '');
-    jQuery('#pir-delete-signatory-pk').val(btn.attr('data-pk') || '');
-    jQuery('#pir-delete-signatory-display').text(btn.attr('data-name') || 'this signatory');
-    jQuery('#pirDeleteSignatoryModal').modal('show');
-  });
-  jQuery('#pir-delete-signatory-confirm').on('click', function () {
-    if (!jQuery('#pir-delete-signatory-pk').val()) return;
-    jQuery('#pir-delete-signatory-form').submit();
-  });
-  jQuery('#pirDeleteSignatoryModal').on('hidden.bs.modal', function () {
-    jQuery('#pir-delete-signatory-pk').val('');
-    jQuery('#pir-delete-signatory-role').val('');
-  });
-});
-</script>
 {% endblock custom_js %}

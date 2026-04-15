@@ -169,8 +169,8 @@
                                 <a class="nav-link active" id="all-assets-tab" data-toggle="tab"
                                     href="#all-assets" role="tab" aria-controls="all-assets" aria-selected="true">
                                     <i class="fas fa-list mr-1"></i>All Assets
-                                    {% if page_obj.paginator.count > 0 %}
-                                    <span class="badge badge-primary ml-1">{{ page_obj.paginator.count }}</span>
+                                    {% if total_records > 0 %}
+                                    <span class="badge badge-primary ml-1">{{ total_records }}</span>
                                     {% endif %}
                                 </a>
                             </li>
@@ -201,7 +201,7 @@
                                             </tr>
                                         </thead>
                                         <tbody id="all-assets-table">
-                                            {% for asset in page_obj %}
+                                            {% for asset in assets %}
                                             <tr data-asset-id="{{ asset.id }}"
                                                 data-ics-number="{{ asset.ics_number }}"
                                                 data-ics-date="{{ asset.ics_date|date:'Y-m-d'|default:'' }}"
@@ -222,7 +222,7 @@
                                                 data-iar-no="{{ asset.iar_no|default:'' }}"
                                                 data-remarks="{{ asset.remarks|default:'' }}"
                                                 data-pdf-url="{% if asset.pdf_file %}{{ asset.pdf_file.url }}{% endif %}">
-                                                <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                                <td>{{ forloop.counter }}</td>
                                                 <td>{{ asset.ics_number }}</td>
                                                 <td>{{ asset.property_number|default:"—" }}</td>
                                                 <td>{{ asset.asset_name }}</td>

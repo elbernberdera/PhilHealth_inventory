@@ -33,7 +33,7 @@ Then activate the venv for your shell:
 
 ```powershell
 cd .\PhilHealth_inventory
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3) Apply database migrations
