@@ -932,6 +932,139 @@ def request_supply_update_status(request, request_id):
             'error': str(e)
         }, status=500)
 
+
+@superuser_required
+@require_http_methods(["POST"])
+def request_supply_update(request, request_id):
+    """
+    Admin: update a RequestSupply's editable fields.
+
+    Notes:
+    - For safety, we do NOT allow changing quantity when status is already approved,
+      because the current stock-adjustment logic is keyed on status change.
+    """
+    from .models import RequestSupply
+    from django.db import transaction
+    from datetime import date as date_class
+
+    req = get_object_or_404(RequestSupply, id=request_id, is_active=True)
+    data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
+    # Allowed fields from UI
+    date_raw = (data.get('date') or '').strip()
+    requester_name = (data.get('requester_name') or '').strip()
+    item_code = (data.get('item_code') or '').strip()
+    description = (data.get('description') or '').strip()
+    unit = (data.get('unit') or '').strip()
+    conforme_by = (data.get('conforme_by') or '').strip()
+    status = (data.get('status') or '').strip()
+    qty_raw = (data.get('quantity') or '').strip()
+
+    # Validate
+    if not requester_name:
+        return JsonResponse({'success': False, 'error': 'Requester name is required.'}, status=400)
+    if not item_code:
+        return JsonResponse({'success': False, 'error': 'Item code is required.'}, status=400)
+    if not description:
+        return JsonResponse({'success': False, 'error': 'Description is required.'}, status=400)
+    if not unit:
+        return JsonResponse({'success': False, 'error': 'Unit is required.'}, status=400)
+
+    new_date = None
+    try:
+        new_date = date_class.fromisoformat(date_raw) if date_raw else req.date
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid date format.'}, status=400)
+
+    valid_statuses = ['pending', 'approved', 'rejected', 'Out of Stocks', '']
+    if status not in valid_statuses:
+        return JsonResponse({'success': False, 'error': 'Invalid status.'}, status=400)
+
+    qty = None
+    if qty_raw != '':
+        try:
+            qty = int(qty_raw)
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Quantity must be a whole number.'}, status=400)
+        if qty <= 0:
+            return JsonResponse({'success': False, 'error': 'Quantity must be at least 1.'}, status=400)
+
+    # If already approved, disallow quantity changes (can still edit metadata)
+    if req.status == 'approved' and qty is not None and qty != int(req.quantity or 0):
+        return JsonResponse(
+            {'success': False, 'error': 'Cannot change quantity for an already approved request.'},
+            status=400,
+        )
+
+    with transaction.atomic():
+        old_status = req.status
+        new_status = status or req.status
+
+        # If switching to approved, do the same balance validation as update-status endpoint
+        if new_status == 'approved' and old_status != 'approved':
+            if req.supply:
+                required_qty = int((qty if qty is not None else req.quantity) or 0)
+                available_balance = int(req.supply.real_time_balance or 0)
+                if required_qty > available_balance:
+                    return JsonResponse(
+                        {
+                            'success': False,
+                            'error': f'Insufficient balance. Available: {available_balance}, Required: {required_qty}',
+                            'insufficient_balance': True,
+                        },
+                        status=400,
+                    )
+            else:
+                return JsonResponse(
+                    {'success': False, 'error': 'No supply item linked. Cannot approve request.'},
+                    status=400,
+                )
+
+        req.date = new_date
+        req.requester_name = requester_name
+        req.item_code = item_code
+        req.description = description
+        req.unit = unit
+        if qty is not None:
+            req.quantity = qty
+        if conforme_by != '':
+            req.conforme_by = conforme_by
+        if status != '':
+            req.status = new_status
+
+        req.save()
+
+    return JsonResponse({'success': True})
+
+
+@superuser_required
+@require_http_methods(["POST"])
+def request_supply_delete(request, request_id):
+    """Admin: soft-delete a RequestSupply (set is_active=False)."""
+    from .models import RequestSupply
+    obj = get_object_or_404(RequestSupply, id=request_id, is_active=True)
+    obj.is_active = False
+    obj.save(update_fields=['is_active'])
+    return JsonResponse({'success': True})
+
+
+@superuser_required
+@require_http_methods(["POST"])
+def request_supply_bulk_delete(request):
+    """Admin: bulk soft-delete RequestSupply rows."""
+    from .models import RequestSupply
+    data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+    ids = data.get('ids') or []
+    if isinstance(ids, str):
+        try:
+            ids = json.loads(ids)
+        except Exception:
+            ids = []
+    if not isinstance(ids, list) or not ids:
+        return JsonResponse({'success': False, 'error': 'No rows selected.'}, status=400)
+    RequestSupply.objects.filter(id__in=ids, is_active=True).update(is_active=False)
+    return JsonResponse({'success': True})
+
 # Category API Views
 # Resource: /api/categories/          → GET (list), POST (create)
 # Resource: /api/categories/<id>/     → GET (detail), PUT (update), DELETE (hard delete)

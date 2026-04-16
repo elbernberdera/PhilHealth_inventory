@@ -57,6 +57,9 @@ urlpatterns = [
     path('api/request-supplies/', views.request_supply_list, name='request_supply_list'),
     path('api/request-supplies/create/', views.request_supply_create, name='request_supply_create'),
     path('api/request-supplies/<int:request_id>/update-status/', views.request_supply_update_status, name='request_supply_update_status'),
+    path('api/request-supplies/<int:request_id>/update/', views.request_supply_update, name='request_supply_update'),
+    path('api/request-supplies/<int:request_id>/delete/', views.request_supply_delete, name='request_supply_delete'),
+    path('api/request-supplies/bulk-delete/', views.request_supply_bulk_delete, name='request_supply_bulk_delete'),
 
 
 
