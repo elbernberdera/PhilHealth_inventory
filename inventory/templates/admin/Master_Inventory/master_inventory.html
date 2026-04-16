@@ -99,10 +99,21 @@
                 </div>
             </div>
             <div class="card-body p-0">
+                <div class="d-flex justify-content-between align-items-center px-3 pt-3 no-print">
+                    <div class="small text-muted">
+                        <span id="mi-selected-count">0</span> selected
+                    </div>
+                    <button class="btn btn-danger btn-sm" id="mi-bulk-delete-btn" type="button" disabled>
+                        <i class="fas fa-trash mr-1"></i>Delete selected
+                    </button>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped table-hover mb-0" id="master-inventory-table">
                         <thead>
                             <tr>
+                                <th class="no-print text-center align-middle" style="width: 40px;">
+                                    <input type="checkbox" id="mi-select-all" aria-label="Select all rows on this page">
+                                </th>
                                 <th style="width: 50px;">No.</th>
                                 <th>Item Code</th>
                                 <th>Description</th>
@@ -117,11 +128,12 @@
                                 <th class="text-right">Total Released</th>
                                 <th class="text-right">Real-Time Balance</th>
                                 <th class="text-right">Total Cost</th>
+                                <th class="no-print text-center" style="width: 90px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="master-inventory-tbody">
                             <tr>
-                                <td colspan="14" class="text-center text-muted py-5">
+                                <td colspan="16" class="text-center text-muted py-5">
                                     <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
                                     Loading inventory...
                                 </td>
@@ -377,6 +389,75 @@
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="pk" id="mi-delete-verified-pk" value="">
         </form>
+
+        <!-- Edit Supply Modal -->
+        <div class="modal fade" id="miEditSupplyModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-pen mr-2"></i>Edit inventory item</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="mi-edit-supply-id" value="">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="small font-weight-bold mb-1">Item Code</label>
+                                <input type="text" class="form-control form-control-sm" id="mi-edit-item-code">
+                            </div>
+                            <div class="form-group col-md-8">
+                                <label class="small font-weight-bold mb-1">Description</label>
+                                <input type="text" class="form-control form-control-sm" id="mi-edit-description">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="small font-weight-bold mb-1">Main Category</label>
+                                <select class="form-control form-control-sm" id="mi-edit-main-category">
+                                    <option value="">-- None --</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="small font-weight-bold mb-1">Sub Category</label>
+                                <input type="text" class="form-control form-control-sm" id="mi-edit-sub-category">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="small font-weight-bold mb-1">Unit</label>
+                                <input type="text" class="form-control form-control-sm" id="mi-edit-unit">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-3">
+                                <label class="small font-weight-bold mb-1">Opening Balance</label>
+                                <input type="number" step="1" min="0" class="form-control form-control-sm" id="mi-edit-opening-balance">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="small font-weight-bold mb-1">Cost / Item</label>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="mi-edit-cost-per-item">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="small font-weight-bold mb-1">Stock-In</label>
+                                <input type="number" step="1" min="0" class="form-control form-control-sm" id="mi-edit-stock-in">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="small font-weight-bold mb-1">Total Released</label>
+                                <input type="number" step="1" min="0" class="form-control form-control-sm" id="mi-edit-total-released">
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-0">Running Count / Real-Time Balance / Costs will refresh after saving.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-info btn-sm" id="mi-edit-save-btn">
+                            <i class="fas fa-save mr-1"></i>Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -703,12 +784,13 @@
     function renderRows(supplies, rowOffset) {
         rowOffset = rowOffset || 0;
         if (!supplies.length) {
-            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-5">No items found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="16" class="text-center text-muted py-5">No items found.</td></tr>';
             return;
         }
         tbody.innerHTML = supplies.map(function(s, i) {
             var d = computeMasterInventoryDerived(s);
             return '<tr>' +
+                '<td class="no-print text-center align-middle"><input type="checkbox" class="mi-row-checkbox" value="' + (s.id || '') + '" aria-label="Select row"></td>' +
                 '<td>' + (rowOffset + i + 1) + '</td>' +
                 '<td>' + (s.item_code || '') + '</td>' +
                 '<td>' + (s.description || '') + '</td>' +
@@ -723,6 +805,31 @@
                 '<td class="text-right">' + formatNum(d.total_released) + '</td>' +
                 '<td class="text-right">' + formatNum(d.real_time_balance) + '</td>' +
                 '<td class="text-right">' + formatNum(d.total_cost) + '</td>' +
+                '<td class="no-print text-center align-middle">' +
+                    '<div class="btn-group">' +
+                        '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+                            '<i class="fas fa-ellipsis-v"></i>' +
+                        '</button>' +
+                        '<div class="dropdown-menu dropdown-menu-right">' +
+                            '<a href="#" class="dropdown-item mi-edit-supply" ' +
+                                'data-id="' + (s.id || '') + '" ' +
+                                'data-item-code="' + escapeHtml(s.item_code || '') + '" ' +
+                                'data-description="' + escapeHtml(s.description || '') + '" ' +
+                                'data-main-category="' + (s.main_category || '') + '" ' +
+                                'data-sub-category="' + escapeHtml(s.sub_category || '') + '" ' +
+                                'data-unit="' + escapeHtml(s.unit || '') + '" ' +
+                                'data-opening-balance="' + (s.opening_balance || '0') + '" ' +
+                                'data-cost-per-item="' + (s.cost_per_item || '0') + '" ' +
+                                'data-stock-in="' + (s.stock_in || '0') + '" ' +
+                                'data-total-released="' + (s.total_released || '0') + '">' +
+                                '<i class="fas fa-pen mr-2 text-info"></i>Edit' +
+                            '</a>' +
+                            '<a href="#" class="dropdown-item mi-delete-supply text-danger" data-id="' + (s.id || '') + '" data-item-code="' + escapeHtml(s.item_code || '') + '">' +
+                                '<i class="fas fa-trash mr-2"></i>Delete' +
+                            '</a>' +
+                        '</div>' +
+                    '</div>' +
+                '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -773,12 +880,12 @@
                 });
                 filterSupplies();
             } else {
-                tbody.innerHTML = '<tr><td colspan="14" class="text-center text-danger py-5">Failed to load inventory.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="16" class="text-center text-danger py-5">Failed to load inventory.</td></tr>';
                 if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
             }
         })
         .catch(function() {
-            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-danger py-5">Error loading inventory.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="16" class="text-center text-danger py-5">Error loading inventory.</td></tr>';
             if (footerEl) { footerEl.innerHTML = ''; footerEl.style.display = 'none'; }
         });
     }
@@ -846,6 +953,182 @@
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
     loadSupplies();
+
+    function getCsrfToken() {
+        var el = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (el && el.value) return el.value;
+        // fallback cookie
+        var m = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function checkedSupplyIds() {
+        var ids = [];
+        document.querySelectorAll('#master-inventory-tbody input.mi-row-checkbox:checked').forEach(function(cb) {
+            var v = parseInt(cb.value, 10);
+            if (!isNaN(v)) ids.push(v);
+        });
+        return ids;
+    }
+
+    function updateSelectedCount() {
+        var n = checkedSupplyIds().length;
+        var el = document.getElementById('mi-selected-count');
+        if (el) el.textContent = String(n);
+        var btn = document.getElementById('mi-bulk-delete-btn');
+        if (btn) btn.disabled = n === 0;
+    }
+
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'mi-select-all') {
+            var on = e.target.checked;
+            document.querySelectorAll('#master-inventory-tbody input.mi-row-checkbox').forEach(function(cb) {
+                cb.checked = on;
+            });
+            updateSelectedCount();
+        }
+        if (e.target && e.target.classList && e.target.classList.contains('mi-row-checkbox')) {
+            updateSelectedCount();
+            // update select-all state
+            var all = document.getElementById('mi-select-all');
+            if (all) {
+                var boxes = Array.from(document.querySelectorAll('#master-inventory-tbody input.mi-row-checkbox'));
+                var total = boxes.length;
+                var checked = boxes.filter(function(cb){ return cb.checked; }).length;
+                all.checked = total > 0 && checked === total;
+                all.indeterminate = checked > 0 && checked < total;
+            }
+        }
+    });
+
+    // Open edit modal
+    document.addEventListener('click', function(e) {
+        var a = e.target.closest && e.target.closest('a.mi-edit-supply');
+        if (!a) return;
+        e.preventDefault();
+        document.getElementById('mi-edit-supply-id').value = a.getAttribute('data-id') || '';
+        document.getElementById('mi-edit-item-code').value = a.getAttribute('data-item-code') || '';
+        document.getElementById('mi-edit-description').value = a.getAttribute('data-description') || '';
+        document.getElementById('mi-edit-main-category').value = a.getAttribute('data-main-category') || '';
+        document.getElementById('mi-edit-sub-category').value = a.getAttribute('data-sub-category') || '';
+        document.getElementById('mi-edit-unit').value = a.getAttribute('data-unit') || '';
+        document.getElementById('mi-edit-opening-balance').value = a.getAttribute('data-opening-balance') || '0';
+        document.getElementById('mi-edit-cost-per-item').value = a.getAttribute('data-cost-per-item') || '0';
+        document.getElementById('mi-edit-stock-in').value = a.getAttribute('data-stock-in') || '0';
+        document.getElementById('mi-edit-total-released').value = a.getAttribute('data-total-released') || '0';
+        if (typeof window.jQuery !== 'undefined') {
+            window.jQuery('#miEditSupplyModal').modal('show');
+        }
+    });
+
+    // Save edit
+    var saveBtn = document.getElementById('mi-edit-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            var id = document.getElementById('mi-edit-supply-id').value;
+            if (!id) return;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+            var payload = {
+                item_code: document.getElementById('mi-edit-item-code').value,
+                description: document.getElementById('mi-edit-description').value,
+                main_category: document.getElementById('mi-edit-main-category').value || null,
+                sub_category: document.getElementById('mi-edit-sub-category').value,
+                unit: document.getElementById('mi-edit-unit').value,
+                opening_balance: document.getElementById('mi-edit-opening-balance').value,
+                cost_per_item: document.getElementById('mi-edit-cost-per-item').value,
+                stock_in: document.getElementById('mi-edit-stock-in').value,
+                total_released: document.getElementById('mi-edit-total-released').value
+            };
+            fetch('/api/supplies/' + id + '/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(resp){
+                if (resp && resp.success) {
+                    if (typeof window.jQuery !== 'undefined') window.jQuery('#miEditSupplyModal').modal('hide');
+                    loadSupplies();
+                } else {
+                    alert((resp && resp.error) ? resp.error : 'Failed to update.');
+                }
+            })
+            .catch(function(){ alert('Failed to update.'); })
+            .finally(function(){
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Save';
+            });
+        });
+    }
+
+    // Delete single
+    document.addEventListener('click', function(e) {
+        var a = e.target.closest && e.target.closest('a.mi-delete-supply');
+        if (!a) return;
+        e.preventDefault();
+        var id = a.getAttribute('data-id');
+        var code = a.getAttribute('data-item-code') || 'this item';
+        if (!confirm('Delete ' + code + '?')) return;
+        fetch('/api/supplies/' + id + '/delete/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(resp){
+            if (resp && resp.success) {
+                loadSupplies();
+            } else {
+                alert((resp && resp.error) ? resp.error : 'Failed to delete.');
+            }
+        })
+        .catch(function(){ alert('Failed to delete.'); });
+    });
+
+    // Bulk delete
+    var bulkBtn = document.getElementById('mi-bulk-delete-btn');
+    if (bulkBtn) {
+        bulkBtn.addEventListener('click', function() {
+            var ids = checkedSupplyIds();
+            if (!ids.length) return;
+            if (!confirm('Delete ' + ids.length + ' selected item(s)?')) return;
+            bulkBtn.disabled = true;
+            fetch('/api/supplies/bulk-delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(resp){
+                if (resp && resp.success) {
+                    var all = document.getElementById('mi-select-all');
+                    if (all) { all.checked = false; all.indeterminate = false; }
+                    updateSelectedCount();
+                    loadSupplies();
+                } else {
+                    alert((resp && resp.error) ? resp.error : 'Failed to delete selected rows.');
+                }
+            })
+            .catch(function(){ alert('Failed to delete selected rows.'); })
+            .finally(function(){
+                bulkBtn.disabled = checkedSupplyIds().length === 0;
+            });
+        });
+    }
 })();
 </script>
 {% endblock main_content %}

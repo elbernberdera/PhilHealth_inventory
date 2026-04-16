@@ -52,6 +52,7 @@ urlpatterns = [
     path('api/supplies/<int:supply_id>/delete/', views.supply_delete, name='supply_delete'),
     path('api/supplies/<int:supply_id>/restore/', views.supply_restore, name='supply_restore'),
     path('api/supplies/<int:supply_id>/delete-permanently/', views.supply_delete_permanently, name='supply_delete_permanently'),
+    path('api/supplies/bulk-delete/', views.supply_bulk_delete, name='supply_bulk_delete'),
 
     # Request Supply API (staff requests)
     path('api/request-supplies/', views.request_supply_list, name='request_supply_list'),

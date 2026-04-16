@@ -1651,6 +1651,27 @@ def supply_delete(request, supply_id):
 
 @superuser_required
 @require_http_methods(["POST"])
+def supply_bulk_delete(request):
+    """Bulk soft-delete supplies (set is_active=False)."""
+    try:
+        from .models import Supply
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+        ids = data.get('ids') or []
+        if isinstance(ids, str):
+            try:
+                ids = json.loads(ids)
+            except Exception:
+                ids = []
+        if not isinstance(ids, list) or not ids:
+            return JsonResponse({'success': False, 'error': 'No rows selected.'}, status=400)
+        Supply.objects.filter(id__in=ids, is_active=True).update(is_active=False)
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@superuser_required
+@require_http_methods(["POST"])
 def supply_restore(request, supply_id):
     """Restore a soft-deleted supply"""
     try:
