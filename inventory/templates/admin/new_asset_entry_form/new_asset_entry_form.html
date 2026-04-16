@@ -187,10 +187,16 @@
                                         id="asset-table" style="font-size: 0.875rem;">
                                         <thead>
                                             <tr>
-                                                <th>No.</th>
+                                                <th style="width:40px; text-align:center;">
+                                                    <input type="checkbox" id="select-all-assets"
+                                                        title="Select / deselect all"
+                                                        style="width:16px; height:16px; cursor:pointer;">
+                                                </th>
                                                 <th>ICS</th>
                                                 <th>Property No</th>
+                                                <th>Serial Number</th>
                                                 <th>Asset Name</th>
+                                                
                                                 <th>Category</th>
                                                 <th>Qty</th>
                                                 <th>Unit Value</th>
@@ -222,10 +228,16 @@
                                                 data-iar-no="{{ asset.iar_no|default:'' }}"
                                                 data-remarks="{{ asset.remarks|default:'' }}"
                                                 data-pdf-url="{% if asset.pdf_file %}{{ asset.pdf_file.url }}{% endif %}">
-                                                <td>{{ forloop.counter }}</td>
+                                                <td style="text-align:center; vertical-align:middle;">
+                                                    <input type="checkbox" class="asset-row-checkbox"
+                                                        value="{{ asset.id }}"
+                                                        style="width:16px; height:16px; cursor:pointer;">
+                                                </td>
                                                 <td>{{ asset.ics_number }}</td>
                                                 <td>{{ asset.property_number|default:"—" }}</td>
+                                                <td>{{ asset.serial_number|default:"—" }}</td>
                                                 <td>{{ asset.asset_name }}</td>
+                                                
                                                 <td>{{ asset.category }}</td>
                                                 <td>{{ asset.quantity }}</td>
                                                 <td>₱{{ asset.unit_value|floatformat:2 }}</td>
@@ -970,9 +982,8 @@
             const start = (pageNumber - 1) * pageConf.rowsPerPage;
             const end   = start + pageConf.rowsPerPage;
 
-            rows.slice(start, end).each(function (idx) {
+            rows.slice(start, end).each(function () {
                 $(this).show();
-                $(this).find('td:first').text(start + idx + 1);
             });
 
             const displayStart = pageConf.totalRows > 0 ? start + 1 : 0;
@@ -1014,8 +1025,6 @@
             pageConf.currentPage = 1;
             renderPagination();
 
-            // Re-number visible rows
-            visibleRows.each(function (idx) { $(this).find('td:first').text(idx + 1); });
             const displayEnd = Math.min(pageConf.rowsPerPage, pageConf.totalRows);
             $('#all-assets-start').text(pageConf.totalRows > 0 ? 1 : 0);
             $('#all-assets-end').text(displayEnd);
@@ -1273,6 +1282,19 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        });
+
+        /* ── Select-all checkbox ── */
+        $('#select-all-assets').on('change', function () {
+            $('.asset-row-checkbox').prop('checked', this.checked);
+        });
+
+        /* Keep the header checkbox in sync when individual rows are toggled */
+        $('#all-assets-table').on('change', '.asset-row-checkbox', function () {
+            const total   = $('.asset-row-checkbox').length;
+            const checked = $('.asset-row-checkbox:checked').length;
+            $('#select-all-assets').prop('checked', total === checked)
+                                   .prop('indeterminate', checked > 0 && checked < total);
         });
 
     });

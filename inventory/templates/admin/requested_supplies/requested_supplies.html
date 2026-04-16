@@ -116,7 +116,7 @@ Requested Supplies
         <div class="row mb-3">
             <div class="col-md-6 ml-auto">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="search-requests" placeholder="Search ......." value="{{ request.GET.q|default:'' }}" autocomplete="off">
+                    <input type="text" class="form-control" id="search-requests" placeholder="Search …" autocomplete="off">
                     <div class="input-group-append">
                         <span class="input-group-text">
                             <i class="fas fa-search"></i>
@@ -140,25 +140,25 @@ Requested Supplies
                             <li class="nav-item">
                                 <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="false">
                                     <i class="fas fa-check-circle mr-1"></i>Approved
-                                    <span class="badge badge-success ml-1">{{ approved_count }}</span>
+                                    <span class="badge badge-success ml-1" id="badge-approved">{{ approved_count }}</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="pending-tab" data-toggle="tab" href="#pending" role="tab" aria-controls="pending" aria-selected="false">
                                     <i class="fas fa-clock mr-1"></i>Pending
-                                    <span class="badge badge-warning ml-1">{{ pending_count }}</span>
+                                    <span class="badge badge-warning ml-1" id="badge-pending">{{ pending_count }}</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="rejected-tab" data-toggle="tab" href="#rejected" role="tab" aria-controls="rejected" aria-selected="false">
                                     <i class="fas fa-times-circle mr-1"></i>Rejected
-                                    <span class="badge badge-danger ml-1">{{ rejected_count }}</span>
+                                    <span class="badge badge-danger ml-1" id="badge-rejected">{{ rejected_count }}</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="outofstock-tab" data-toggle="tab" href="#outofstock" role="tab" aria-controls="outofstock" aria-selected="false">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>Out of Stock
-                                    <span class="badge badge-danger ml-1">{{ out_of_stock_count }}</span>
+                                    <span class="badge badge-danger ml-1" id="badge-oos">{{ out_of_stock_count }}</span>
                                 </a>
                             </li>
 
@@ -196,11 +196,10 @@ Requested Supplies
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {% if page_obj_all.paginator.count > 0 %}
-                                                {% for req in page_obj_all %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter0|add:page_obj_all.start_index }}</td>
+                                        <tbody id="tbody-all">
+                                            {% for req in all_requests_list %}
+                                                    <tr class="rs-data-row">
+                                                        <td>{{ forloop.counter }}</td>
                                                         <td>{{ req.date|date:"m/d/Y" }}</td>
                                                         <td>{{ req.transaction_no }}</td>
                                                         <td>{{ req.requester_name }}</td>
@@ -257,18 +256,25 @@ Requested Supplies
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        No requested supplies found.
-                                                    </td>
+                                            {% empty %}
+                                                <tr class="rs-no-match">
+                                                    <td colspan="13" class="text-center text-muted">No requested supplies found.</td>
                                                 </tr>
-                                            {% endif %}
+                                            {% endfor %}
+                                            <tr class="rs-no-match" style="display:none;">
+                                                <td colspan="13" class="text-center text-muted">No matching records found.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_all page_key='page_all' %}
+                                <!-- Client-side pagination -->
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1" id="pag-all" data-tab-id="all">
+                                    <div class="text-muted small">Showing <span class="rs-pag-start">0</span>–<span class="rs-pag-end">0</span> of <span class="rs-pag-total">0</span></div>
+                                    <nav><ul class="pagination pagination-sm mb-0">
+                                        <li class="paginate_button page-item rs-pag-prev"><a class="page-link" href="#">&laquo;</a></li>
+                                        <li class="paginate_button page-item rs-pag-next"><a class="page-link" href="#">&raquo;</a></li>
+                                    </ul></nav>
+                                </div>
                             </div>
 
                             <!-- Approved Tab -->
@@ -292,11 +298,10 @@ Requested Supplies
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {% if page_obj_approved.paginator.count > 0 %}
-                                                {% for req in page_obj_approved %}
-                                                        <tr>
-                                                            <td>{{ forloop.counter0|add:page_obj_approved.start_index }}</td>
+                                        <tbody id="tbody-approved">
+                                            {% for req in approved_list %}
+                                                    <tr class="rs-data-row">
+                                                        <td>{{ forloop.counter }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -345,18 +350,24 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        No approved requests found.
-                                                    </td>
+                                            {% empty %}
+                                                <tr class="rs-no-match">
+                                                    <td colspan="13" class="text-center text-muted">No approved requests found.</td>
                                                 </tr>
-                                            {% endif %}
+                                            {% endfor %}
+                                            <tr class="rs-no-match" style="display:none;">
+                                                <td colspan="13" class="text-center text-muted">No matching records found.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_approved page_key='page_approved' %}
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1" id="pag-approved" data-tab-id="approved">
+                                    <div class="text-muted small">Showing <span class="rs-pag-start">0</span>–<span class="rs-pag-end">0</span> of <span class="rs-pag-total">0</span></div>
+                                    <nav><ul class="pagination pagination-sm mb-0">
+                                        <li class="paginate_button page-item rs-pag-prev"><a class="page-link" href="#">&laquo;</a></li>
+                                        <li class="paginate_button page-item rs-pag-next"><a class="page-link" href="#">&raquo;</a></li>
+                                    </ul></nav>
+                                </div>
                             </div>
 
                             <!-- Pending Tab -->
@@ -380,11 +391,10 @@ Requested Supplies
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {% if page_obj_pending.paginator.count > 0 %}
-                                                {% for req in page_obj_pending %}
-                                                        <tr>
-                                                            <td>{{ forloop.counter0|add:page_obj_pending.start_index }}</td>
+                                        <tbody id="tbody-pending">
+                                            {% for req in pending_list %}
+                                                    <tr class="rs-data-row">
+                                                        <td>{{ forloop.counter }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -433,18 +443,24 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        No pending requests found.
-                                                    </td>
+                                            {% empty %}
+                                                <tr class="rs-no-match">
+                                                    <td colspan="13" class="text-center text-muted">No pending requests found.</td>
                                                 </tr>
-                                            {% endif %}
+                                            {% endfor %}
+                                            <tr class="rs-no-match" style="display:none;">
+                                                <td colspan="13" class="text-center text-muted">No matching records found.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_pending page_key='page_pending' %}
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1" id="pag-pending" data-tab-id="pending">
+                                    <div class="text-muted small">Showing <span class="rs-pag-start">0</span>–<span class="rs-pag-end">0</span> of <span class="rs-pag-total">0</span></div>
+                                    <nav><ul class="pagination pagination-sm mb-0">
+                                        <li class="paginate_button page-item rs-pag-prev"><a class="page-link" href="#">&laquo;</a></li>
+                                        <li class="paginate_button page-item rs-pag-next"><a class="page-link" href="#">&raquo;</a></li>
+                                    </ul></nav>
+                                </div>
                             </div>
 
                             <!-- Rejected Tab -->
@@ -468,11 +484,10 @@ Requested Supplies
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {% if page_obj_rejected.paginator.count > 0 %}
-                                                {% for req in page_obj_rejected %}
-                                                        <tr>
-                                                            <td>{{ forloop.counter0|add:page_obj_rejected.start_index }}</td>
+                                        <tbody id="tbody-rejected">
+                                            {% for req in rejected_list %}
+                                                    <tr class="rs-data-row">
+                                                        <td>{{ forloop.counter }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -521,18 +536,24 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        No rejected requests found.
-                                                    </td>
+                                            {% empty %}
+                                                <tr class="rs-no-match">
+                                                    <td colspan="13" class="text-center text-muted">No rejected requests found.</td>
                                                 </tr>
-                                            {% endif %}
+                                            {% endfor %}
+                                            <tr class="rs-no-match" style="display:none;">
+                                                <td colspan="13" class="text-center text-muted">No matching records found.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_rejected page_key='page_rejected' %}
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1" id="pag-rejected" data-tab-id="rejected">
+                                    <div class="text-muted small">Showing <span class="rs-pag-start">0</span>–<span class="rs-pag-end">0</span> of <span class="rs-pag-total">0</span></div>
+                                    <nav><ul class="pagination pagination-sm mb-0">
+                                        <li class="paginate_button page-item rs-pag-prev"><a class="page-link" href="#">&laquo;</a></li>
+                                        <li class="paginate_button page-item rs-pag-next"><a class="page-link" href="#">&raquo;</a></li>
+                                    </ul></nav>
+                                </div>
                             </div>
 
                             <!-- Out of Stock Tab -->
@@ -556,11 +577,10 @@ Requested Supplies
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {% if page_obj_oos.paginator.count > 0 %}
-                                                {% for req in page_obj_oos %}
-                                                        <tr>
-                                                            <td>{{ forloop.counter0|add:page_obj_oos.start_index }}</td>
+                                        <tbody id="tbody-oos">
+                                            {% for req in oos_list %}
+                                                    <tr class="rs-data-row">
+                                                        <td>{{ forloop.counter }}</td>
                                                             <td>{{ req.date|date:"m/d/Y" }}</td>
                                                             <td>{{ req.transaction_no }}</td>
                                                             <td>{{ req.requester_name }}</td>
@@ -609,18 +629,24 @@ Requested Supplies
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        No out of stock requests found.
-                                                    </td>
+                                            {% empty %}
+                                                <tr class="rs-no-match">
+                                                    <td colspan="13" class="text-center text-muted">No out of stock requests found.</td>
                                                 </tr>
-                                            {% endif %}
+                                            {% endfor %}
+                                            <tr class="rs-no-match" style="display:none;">
+                                                <td colspan="13" class="text-center text-muted">No matching records found.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {% include 'admin/shared/pagination_footer.html' with page_obj=page_obj_oos page_key='page_oos' %}
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1" id="pag-oos" data-tab-id="oos">
+                                    <div class="text-muted small">Showing <span class="rs-pag-start">0</span>–<span class="rs-pag-end">0</span> of <span class="rs-pag-total">0</span></div>
+                                    <nav><ul class="pagination pagination-sm mb-0">
+                                        <li class="paginate_button page-item rs-pag-prev"><a class="page-link" href="#">&laquo;</a></li>
+                                        <li class="paginate_button page-item rs-pag-next"><a class="page-link" href="#">&raquo;</a></li>
+                                    </ul></nav>
+                                </div>
                             </div>
 
                             <!-- Requested Supplies Tab: full list with history-style columns -->
@@ -874,26 +900,99 @@ Requested Supplies
         });
     });
 
-    // Search: server-side filter + pagination (reset all tab pages to 1); preserve active tab via ?tab=
-    var reqSearchTimer = null;
-    $('#search-requests').on('keyup', function() {
-        var el = $(this);
-        clearTimeout(reqSearchTimer);
-        reqSearchTimer = setTimeout(function() {
-            var u = new URL(window.location.href);
-            var v = (el.val() || '').trim();
-            if (v) {
-                u.searchParams.set('q', v);
-            } else {
-                u.searchParams.delete('q');
-            }
-            ['page_all', 'page_approved', 'page_pending', 'page_rejected', 'page_oos', 'page_rs'].forEach(function(k) {
-                u.searchParams.set(k, '1');
-            });
-            setTabParamOnUrl(u);
-            window.location.href = u.pathname + u.search;
-        }, 450);
+    // ===== CLIENT-SIDE INSTANT SEARCH + PER-TAB PAGINATION =====
+    var RS_ROWS_PER_PAGE = 10;
+    var RS_TABS = ['all', 'approved', 'pending', 'rejected', 'oos'];
+    var rsBadgeIds = { all: null, approved: 'badge-approved', pending: 'badge-pending', rejected: 'badge-rejected', oos: 'badge-oos' };
+    var rsPageState = { all: 1, approved: 1, pending: 1, rejected: 1, oos: 1 };
+
+    function rsDataRows(tabId) {
+        return $('#tbody-' + tabId + ' tr.rs-data-row');
+    }
+
+    function rsVisibleRows(tabId) {
+        return rsDataRows(tabId).not('.rs-search-hidden');
+    }
+
+    function rsApplySearch(tabId, term) {
+        rsDataRows(tabId).each(function () {
+            var match = !term || $(this).text().toLowerCase().indexOf(term) !== -1;
+            $(this).toggleClass('rs-search-hidden', !match);
+        });
+    }
+
+    function rsDisplayPage(tabId, page) {
+        var rows = rsVisibleRows(tabId);
+        var total = rows.length;
+        var totalPages = Math.max(1, Math.ceil(total / RS_ROWS_PER_PAGE));
+        page = Math.min(Math.max(1, page), totalPages);
+        rsPageState[tabId] = page;
+
+        // Hide all data rows, show only current page slice
+        rsDataRows(tabId).hide();
+        var start = (page - 1) * RS_ROWS_PER_PAGE;
+        rows.slice(start, start + RS_ROWS_PER_PAGE).show();
+
+        // "No matching" placeholder
+        var $noMatch = $('#tbody-' + tabId + ' tr.rs-no-match');
+        $noMatch.hide();
+        if (total === 0) $noMatch.last().show();
+
+        // Pagination footer
+        var $pag = $('#pag-' + tabId);
+        $pag.find('.rs-pag-start').text(total > 0 ? start + 1 : 0);
+        $pag.find('.rs-pag-end').text(Math.min(start + RS_ROWS_PER_PAGE, total));
+        $pag.find('.rs-pag-total').text(total);
+        $pag.find('.rs-pag-prev').toggleClass('disabled', page <= 1);
+        $pag.find('.rs-pag-next').toggleClass('disabled', page >= totalPages);
+
+        // Rebuild page number buttons
+        var $ul = $pag.find('ul.pagination');
+        $ul.find('.rs-page-btn').remove();
+        var $next = $ul.find('.rs-pag-next');
+        for (var i = 1; i <= totalPages; i++) {
+            var $li = $('<li>').addClass('paginate_button page-item rs-page-btn' + (i === page ? ' active' : '')).attr('data-page', i);
+            $('<a>').addClass('page-link').attr('href', '#').text(i).appendTo($li);
+            $li.insertBefore($next);
+        }
+
+        // Update tab badge
+        var badgeId = rsBadgeIds[tabId];
+        if (badgeId) $('#' + badgeId).text(total);
+    }
+
+    function rsRunSearch() {
+        var term = $('#search-requests').val().toLowerCase().trim();
+        RS_TABS.forEach(function (tabId) {
+            rsApplySearch(tabId, term);
+            rsDisplayPage(tabId, 1);
+        });
+    }
+
+    // Instant search on every keystroke
+    $('#search-requests').on('input keyup', rsRunSearch);
+
+    // Pagination: prev / next / page number
+    $(document).on('click', '.rs-pag-prev a', function (e) {
+        e.preventDefault();
+        var tabId = $(this).closest('[data-tab-id]').data('tab-id');
+        if (rsPageState[tabId] > 1) rsDisplayPage(tabId, rsPageState[tabId] - 1);
     });
+    $(document).on('click', '.rs-pag-next a', function (e) {
+        e.preventDefault();
+        var tabId = $(this).closest('[data-tab-id]').data('tab-id');
+        var total = rsVisibleRows(tabId).length;
+        var totalPages = Math.max(1, Math.ceil(total / RS_ROWS_PER_PAGE));
+        if (rsPageState[tabId] < totalPages) rsDisplayPage(tabId, rsPageState[tabId] + 1);
+    });
+    $(document).on('click', '.rs-page-btn a', function (e) {
+        e.preventDefault();
+        var tabId = $(this).closest('[data-tab-id]').data('tab-id');
+        rsDisplayPage(tabId, parseInt($(this).parent().data('page')));
+    });
+
+    // Initialise all tabs on page load
+    RS_TABS.forEach(function (tabId) { rsDisplayPage(tabId, 1); });
 
     // All Requested Supplies tab: status filter (server-side)
     $('#rs-list-status-filter').on('change', function() {

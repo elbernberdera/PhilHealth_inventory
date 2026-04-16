@@ -748,25 +748,27 @@ def requested_supplies(request):
 
     from .models import ProcurementPersonnel, RequestSupply
 
-    q = (request.GET.get('q') or '').strip()
-
+    # Search is now client-side; tabs 1-5 receive full record lists.
     requests_qs = (
         RequestSupply.objects.filter(is_active=True)
         .select_related('main_category')
-        .order_by('date', 'item_code', 'created_at')
+        .order_by('-created_at', '-date', 'item_code')
     )
 
-    if q:
-        requests_qs = requests_qs.filter(
-            Q(transaction_no__icontains=q)
-            | Q(requester_name__icontains=q)
-            | Q(item_code__icontains=q)
-            | Q(description__icontains=q)
-            | Q(sub_category__icontains=q)
-            | Q(conforme_by__icontains=q)
-            | Q(main_category__name__icontains=q)
-        )
+    # Full lists for client-side search & pagination (tabs 1-5)
+    all_requests_list = list(requests_qs)
+    approved_list     = [r for r in all_requests_list if r.status == 'approved']
+    pending_list      = [r for r in all_requests_list if r.status == 'pending']
+    rejected_list     = [r for r in all_requests_list if r.status == 'rejected']
+    oos_list          = [r for r in all_requests_list if r.status == 'Out of Stocks']
 
+    approved_count    = len(approved_list)
+    pending_count     = len(pending_list)
+    rejected_count    = len(rejected_list)
+    out_of_stock_count = len(oos_list)
+    requested_supplies_count = len(all_requests_list)
+
+    # "All Requested Supplies" tab: server-side with date-range / status filters
     def _pg(page_key, qs):
         try:
             p = int(request.GET.get(page_key) or 1)
@@ -774,9 +776,6 @@ def requested_supplies(request):
             p = 1
         return Paginator(qs, 10).get_page(p)
 
-    page_obj_all = _pg('page_all', requests_qs)
-
-    # "All Requested Supplies" tab: optional status filter (rs_filter), date range (rs_*), pager (page_rs)
     rs_filter = (request.GET.get("rs_filter") or "").strip().lower()
     rs_filter_map = {
         "approved": "approved",
@@ -785,19 +784,18 @@ def requested_supplies(request):
         "oos": "Out of Stocks",
     }
     rs_start_raw = (request.GET.get("rs_start_date") or "").strip()
-    rs_end_raw = (request.GET.get("rs_end_date") or "").strip()
-    rs_start_d = None
-    rs_end_d = None
+    rs_end_raw   = (request.GET.get("rs_end_date") or "").strip()
+    rs_start_d = rs_end_d = None
     try:
         if rs_start_raw:
             rs_start_d = date_class.fromisoformat(rs_start_raw)
     except ValueError:
-        rs_start_d = None
+        pass
     try:
         if rs_end_raw:
             rs_end_d = date_class.fromisoformat(rs_end_raw)
     except ValueError:
-        rs_end_d = None
+        pass
     if rs_start_d and rs_end_d and rs_start_d > rs_end_d:
         rs_start_d, rs_end_d = rs_end_d, rs_start_d
 
@@ -809,35 +807,28 @@ def requested_supplies(request):
     if rs_end_d:
         rs_list_qs = rs_list_qs.filter(date__lte=rs_end_d)
     page_obj_requested_supplies = _pg("page_rs", rs_list_qs)
-    page_obj_approved = _pg('page_approved', requests_qs.filter(status='approved'))
-    page_obj_pending = _pg('page_pending', requests_qs.filter(status='pending'))
-    page_obj_rejected = _pg('page_rejected', requests_qs.filter(status='rejected'))
-    page_obj_oos = _pg('page_oos', requests_qs.filter(status='Out of Stocks'))
 
-    approved_count = requests_qs.filter(status='approved').count()
-    pending_count = requests_qs.filter(status='pending').count()
-    rejected_count = requests_qs.filter(status='rejected').count()
-    out_of_stock_count = requests_qs.filter(status='Out of Stocks').count()
-
-    requested_supplies_count = requests_qs.count()
     procurement_personnel = list(ProcurementPersonnel.objects.all())
 
     context = {
         'page_title': 'Requested Supplies',
-        'page_obj_all': page_obj_all,
-        'page_obj_approved': page_obj_approved,
-        'page_obj_pending': page_obj_pending,
-        'page_obj_rejected': page_obj_rejected,
-        'page_obj_oos': page_obj_oos,
+        # Full lists → client-side search / pagination
+        'all_requests_list'  : all_requests_list,
+        'approved_list'      : approved_list,
+        'pending_list'       : pending_list,
+        'rejected_list'      : rejected_list,
+        'oos_list'           : oos_list,
+        # Tab 6 keeps server-side pagination
         'page_obj_requested_supplies': page_obj_requested_supplies,
-        'approved_count': approved_count,
-        'pending_count': pending_count,
-        'rejected_count': rejected_count,
-        'out_of_stock_count': out_of_stock_count,
+        # Badge counts (JS will update these live during search)
+        'approved_count'      : approved_count,
+        'pending_count'       : pending_count,
+        'rejected_count'      : rejected_count,
+        'out_of_stock_count'  : out_of_stock_count,
         'requested_supplies_count': requested_supplies_count,
-        'rs_list_filter': rs_filter if rs_filter in rs_filter_map else '',
-        'rs_start_date': rs_start_raw if rs_start_d else '',
-        'rs_end_date': rs_end_raw if rs_end_d else '',
+        'rs_list_filter' : rs_filter if rs_filter in rs_filter_map else '',
+        'rs_start_date'  : rs_start_raw if rs_start_d else '',
+        'rs_end_date'    : rs_end_raw   if rs_end_d   else '',
         'procurement_personnel': procurement_personnel,
     }
     return render(request, 'admin/requested_supplies/requested_supplies.html', context)
@@ -1910,7 +1901,7 @@ def ppe_asset_entry(request):
 
     # Client-side table pagination in the template expects the full row set.
     # Returning only one server-side page (10 rows) causes Next/Previous to appear broken.
-    assets = list(assets_qs.order_by('ics_number'))
+    assets = list(assets_qs.order_by('-created_at'))
 
     context = {
         'assets'        : assets,
