@@ -588,6 +588,20 @@
             return;
         }
 
+        // Print rule: exclude items with zero Real-Time Balance
+        // (use the same derived logic as the print table)
+        supplies = supplies.filter(function(s) {
+            var d = computeMasterInventoryPrintDerived(s);
+            return (d.real_time_balance || 0) > 0;
+        });
+        if (!supplies.length) {
+            const msg = subtitle.indexOf('Category:') === 0
+                ? 'No items with non-zero balance in this category.'
+                : 'No items with non-zero balance to print.';
+            alert(msg);
+            return;
+        }
+
         const prep = signatoryFromSelect(preparedSelect);
         const ver = signatoryFromSelect(verifiedSelect);
         const missing = [];
