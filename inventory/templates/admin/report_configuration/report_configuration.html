@@ -328,6 +328,9 @@
                     </button>
                     <a href="{% url 'ppe_report_config' %}" class="btn btn-outline-secondary btn-sm">Clear all</a>
                     <span class="text-muted small d-none d-md-inline ml-md-2">Person filters accountable, end user, and current user (same value per asset).</span>
+                    <span class="text-muted small ml-md-auto">
+                      <span id="pir-selected-count">0</span> selected
+                    </span>
                   </div>
                 </form>
               </div>
@@ -335,11 +338,14 @@
                 <table class="table table-bordered table-striped table-hover mb-0" id="pir-assets-table" style="font-size: 0.875rem;">
                   <thead>
                     <tr>
+                      <th rowspan="2" class="text-center" style="width:38px;">
+                        <input type="checkbox" id="pir-select-all" aria-label="Select all rows">
+                      </th>
                       <th rowspan="2" class="text-center pir-th-no">No</th>
                       <th colspan="5">Item Details</th>
                       <th colspan="3">Item Value</th>
                       <th colspan="3">Assignment</th>
-                      <th colspan="4">Status</th>
+                      <th colspan="5">Status</th>
                     </tr>
                     <tr>
                       <th>ARE/ICS No</th>
@@ -357,11 +363,15 @@
                       <th>Remarks</th>
                       <th>Date</th>
                       <th class="text-center" style="min-width: 88px;">PDF</th>
+                      <th class="text-center" style="min-width: 95px;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for asset in page_obj %}
                     <tr>
+                      <td class="text-center align-middle">
+                        <input type="checkbox" class="pir-row-checkbox" value="{{ asset.id }}" aria-label="Select row">
+                      </td>
                       <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
                       <td>{{ asset.ics_number }}</td>
                       <td>{% if asset.date_acquired %}{{ asset.date_acquired|date:"m/d/Y" }}{% else %}—{% endif %}</td>
@@ -386,10 +396,39 @@
                         <span class="text-muted">—</span>
                         {% endif %}
                       </td>
+                      <td class="text-center align-middle">
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                          </button>
+                          <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item pir-edit-asset" href="#"
+                               data-id="{{ asset.id }}"
+                               data-ics-number="{{ asset.ics_number|escape }}"
+                               data-date-acquired="{% if asset.date_acquired %}{{ asset.date_acquired|date:'Y-m-d' }}{% endif %}"
+                               data-asset-name="{{ asset.asset_name|escape }}"
+                               data-property-number="{{ asset.property_number|default:''|escape }}"
+                               data-serial-number="{{ asset.serial_number|default:''|escape }}"
+                               data-unit-value="{{ asset.unit_value }}"
+                               data-quantity="{{ asset.quantity }}"
+                               data-location="{{ asset.location|default:''|escape }}"
+                               data-end-user="{{ asset.end_user|default:''|escape }}"
+                               data-remarks="{{ asset.remarks|default:''|escape }}"
+                               data-ics-date="{% if asset.ics_date %}{{ asset.ics_date|date:'Y-m-d' }}{% endif %}">
+                              <i class="fas fa-pen mr-2 text-info"></i>Edit
+                            </a>
+                            <a class="dropdown-item text-danger pir-delete-asset" href="#"
+                               data-id="{{ asset.id }}"
+                               data-ics-number="{{ asset.ics_number|escape }}">
+                              <i class="fas fa-trash mr-2"></i>Delete
+                            </a>
+                          </div>
+                        </div>
+                      </td>
                     </tr>
                     {% empty %}
                     <tr>
-                      <td colspan="16" class="text-center text-muted py-4">
+                      <td colspan="18" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                         {% if category_filter or sub_filter or person_filter or location_filter or status_filter or search_query %}
                         No assets match the current filters.
@@ -468,6 +507,76 @@
           <div class="modal-body text-dark" id="pirSignatoryRequiredModalBody"></div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="pirEditAssetModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title"><i class="fas fa-pen mr-2"></i>Edit asset</h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="pir-edit-id" value="">
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label class="small font-weight-bold mb-1">ARE/ICS No</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-ics-number">
+              </div>
+              <div class="form-group col-md-4">
+                <label class="small font-weight-bold mb-1">Date Acquired</label>
+                <input type="date" class="form-control form-control-sm" id="pir-edit-date-acquired">
+              </div>
+              <div class="form-group col-md-4">
+                <label class="small font-weight-bold mb-1">Date</label>
+                <input type="date" class="form-control form-control-sm" id="pir-edit-ics-date">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label class="small font-weight-bold mb-1">Item Name</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-asset-name">
+              </div>
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">Property Number</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-property-number">
+              </div>
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">Serial Number</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-serial-number">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">Unit Value</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="pir-edit-unit-value">
+              </div>
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">Quantity</label>
+                <input type="number" step="1" min="1" class="form-control form-control-sm" id="pir-edit-quantity">
+              </div>
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">Location</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-location">
+              </div>
+              <div class="form-group col-md-3">
+                <label class="small font-weight-bold mb-1">End User</label>
+                <input type="text" class="form-control form-control-sm" id="pir-edit-end-user">
+              </div>
+            </div>
+            <div class="form-group mb-0">
+              <label class="small font-weight-bold mb-1">Remarks</label>
+              <textarea class="form-control form-control-sm" id="pir-edit-remarks" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-info btn-sm" id="pir-edit-save-btn">
+              <i class="fas fa-save mr-1"></i>Save
+            </button>
           </div>
         </div>
       </div>
@@ -565,6 +674,32 @@
 </section>
 <script>
 (function () {
+  function getCsrfToken() {
+    var m = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function refreshPage() {
+    window.location.reload();
+  }
+
+  function selectedIds() {
+    var ids = [];
+    document.querySelectorAll('.pir-row-checkbox:checked').forEach(function (cb) {
+      var v = parseInt(cb.value, 10);
+      if (!isNaN(v)) ids.push(v);
+    });
+    return ids;
+  }
+
+  function syncSelectionUi() {
+    var ids = selectedIds();
+    var countEl = document.getElementById('pir-selected-count');
+    var bulkBtn = document.getElementById('pir-bulk-delete-btn');
+    if (countEl) countEl.textContent = String(ids.length);
+    if (bulkBtn) bulkBtn.disabled = ids.length === 0;
+  }
+
   function sigFromSelect(selectId) {
     var sel = document.getElementById(selectId);
     if (!sel || sel.selectedIndex < 0) return { name: '', position: '' };
@@ -583,6 +718,152 @@
 
   var btn = document.getElementById('pir-print-btn');
   if (!btn) return;
+
+  var selectAll = document.getElementById('pir-select-all');
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      var on = !!selectAll.checked;
+      document.querySelectorAll('.pir-row-checkbox').forEach(function (cb) { cb.checked = on; });
+      syncSelectionUi();
+    });
+  }
+
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('pir-row-checkbox')) {
+      var boxes = Array.from(document.querySelectorAll('.pir-row-checkbox'));
+      var total = boxes.length;
+      var checked = boxes.filter(function (cb) { return cb.checked; }).length;
+      if (selectAll) {
+        selectAll.checked = total > 0 && checked === total;
+        selectAll.indeterminate = checked > 0 && checked < total;
+      }
+      syncSelectionUi();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    var editBtn = e.target.closest('.pir-edit-asset');
+    if (editBtn) {
+      e.preventDefault();
+      document.getElementById('pir-edit-id').value = editBtn.getAttribute('data-id') || '';
+      document.getElementById('pir-edit-ics-number').value = editBtn.getAttribute('data-ics-number') || '';
+      document.getElementById('pir-edit-date-acquired').value = editBtn.getAttribute('data-date-acquired') || '';
+      document.getElementById('pir-edit-ics-date').value = editBtn.getAttribute('data-ics-date') || '';
+      document.getElementById('pir-edit-asset-name').value = editBtn.getAttribute('data-asset-name') || '';
+      document.getElementById('pir-edit-property-number').value = editBtn.getAttribute('data-property-number') || '';
+      document.getElementById('pir-edit-serial-number').value = editBtn.getAttribute('data-serial-number') || '';
+      document.getElementById('pir-edit-unit-value').value = editBtn.getAttribute('data-unit-value') || '0';
+      document.getElementById('pir-edit-quantity').value = editBtn.getAttribute('data-quantity') || '1';
+      document.getElementById('pir-edit-location').value = editBtn.getAttribute('data-location') || '';
+      document.getElementById('pir-edit-end-user').value = editBtn.getAttribute('data-end-user') || '';
+      document.getElementById('pir-edit-remarks').value = editBtn.getAttribute('data-remarks') || '';
+      if (typeof window.jQuery !== 'undefined') {
+        window.jQuery('#pirEditAssetModal').modal('show');
+      }
+      return;
+    }
+
+    var delBtn = e.target.closest('.pir-delete-asset');
+    if (delBtn) {
+      e.preventDefault();
+      var assetId = delBtn.getAttribute('data-id');
+      var ics = delBtn.getAttribute('data-ics-number') || 'this asset';
+      if (!window.confirm('Delete ' + ics + '?')) return;
+      fetch('/admin/ppe/asset-delete/' + assetId + '/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (resp) {
+        if (resp && resp.success) refreshPage();
+        else window.alert((resp && resp.error) ? resp.error : 'Failed to delete asset.');
+      })
+      .catch(function () { window.alert('Failed to delete asset.'); });
+      return;
+    }
+  });
+
+  var saveBtn = document.getElementById('pir-edit-save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function () {
+      var assetId = document.getElementById('pir-edit-id').value;
+      if (!assetId) return;
+      var payload = {
+        ics_number: document.getElementById('pir-edit-ics-number').value,
+        date_acquired: document.getElementById('pir-edit-date-acquired').value,
+        ics_date: document.getElementById('pir-edit-ics-date').value,
+        asset_name: document.getElementById('pir-edit-asset-name').value,
+        property_number: document.getElementById('pir-edit-property-number').value,
+        serial_number: document.getElementById('pir-edit-serial-number').value,
+        unit_value: document.getElementById('pir-edit-unit-value').value,
+        quantity: document.getElementById('pir-edit-quantity').value,
+        location: document.getElementById('pir-edit-location').value,
+        end_user: document.getElementById('pir-edit-end-user').value,
+        remarks: document.getElementById('pir-edit-remarks').value
+      };
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+
+      fetch('/api/ppe-assets/' + assetId + '/update-inline/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (resp) {
+        if (resp && resp.success) {
+          if (typeof window.jQuery !== 'undefined') window.jQuery('#pirEditAssetModal').modal('hide');
+          refreshPage();
+        } else {
+          window.alert((resp && resp.error) ? resp.error : 'Failed to update asset.');
+        }
+      })
+      .catch(function () { window.alert('Failed to update asset.'); })
+      .finally(function () {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Save';
+      });
+    });
+  }
+
+  var bulkDeleteBtn = document.getElementById('pir-bulk-delete-btn');
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', function () {
+      var ids = selectedIds();
+      if (!ids.length) return;
+      if (!window.confirm('Delete ' + ids.length + ' selected asset(s)?')) return;
+      bulkDeleteBtn.disabled = true;
+      fetch('/api/ppe-assets/bulk-delete/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ ids: ids })
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (resp) {
+        if (resp && resp.success) refreshPage();
+        else window.alert((resp && resp.error) ? resp.error : 'Failed to delete selected assets.');
+      })
+      .catch(function () { window.alert('Failed to delete selected assets.'); })
+      .finally(function () {
+        bulkDeleteBtn.disabled = selectedIds().length === 0;
+      });
+    });
+  }
 
   btn.addEventListener('click', function () {
     var prep = sigFromSelect('pir-prepared-by');
@@ -613,6 +894,8 @@
 
     window.print();
   });
+
+  syncSelectionUi();
 })();
 </script>
 {% endblock main_content %}

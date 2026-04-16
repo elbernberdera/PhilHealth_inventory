@@ -2161,6 +2161,93 @@ def ppe_asset_delete(request, asset_id):
     return JsonResponse({'success': True, 'message': f'Asset {ics_number} deleted successfully.'})
 
 
+@superuser_required
+@require_http_methods(["POST"])
+def ppe_asset_update_inline(request, asset_id):
+    """Inline update endpoint for Report Configuration row edits."""
+    from .models import PPEAsset
+    import datetime
+
+    asset = get_object_or_404(PPEAsset, id=asset_id, is_active=True)
+    data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+
+    def parse_date(val):
+        try:
+            return datetime.date.fromisoformat(val) if val else None
+        except (ValueError, TypeError):
+            return None
+
+    if 'ics_number' in data:
+        ics_number = (data.get('ics_number') or '').strip()
+        if not ics_number:
+            return JsonResponse({'success': False, 'error': 'ARE/ICS No is required.'}, status=400)
+        if PPEAsset.objects.filter(ics_number=ics_number).exclude(pk=asset.pk).exists():
+            return JsonResponse({'success': False, 'error': f'ICS Number "{ics_number}" is already used by another asset.'}, status=400)
+        asset.ics_number = ics_number
+
+    if 'asset_name' in data:
+        asset_name = (data.get('asset_name') or '').strip()
+        if not asset_name:
+            return JsonResponse({'success': False, 'error': 'Item Name is required.'}, status=400)
+        asset.asset_name = asset_name
+
+    if 'property_number' in data:
+        asset.property_number = (data.get('property_number') or '').strip() or None
+    if 'serial_number' in data:
+        asset.serial_number = (data.get('serial_number') or '').strip() or None
+    if 'location' in data:
+        asset.location = (data.get('location') or '').strip() or None
+    if 'end_user' in data:
+        asset.end_user = (data.get('end_user') or '').strip() or None
+    if 'remarks' in data:
+        asset.remarks = (data.get('remarks') or '').strip() or None
+    if 'date_acquired' in data:
+        asset.date_acquired = parse_date(data.get('date_acquired'))
+    if 'ics_date' in data:
+        asset.ics_date = parse_date(data.get('ics_date'))
+    if 'unit_value' in data:
+        asset.unit_value = float(data.get('unit_value') or 0)
+    if 'quantity' in data:
+        qty = int(float(data.get('quantity') or 0))
+        if qty <= 0:
+            return JsonResponse({'success': False, 'error': 'Quantity must be at least 1.'}, status=400)
+        asset.quantity = qty
+
+    asset.save()
+    return JsonResponse({'success': True, 'message': 'Asset updated successfully.'})
+
+
+@superuser_required
+@require_http_methods(["POST"])
+def ppe_asset_bulk_delete(request):
+    """Bulk hard-delete PPE assets from Report Configuration."""
+    from .models import PPEAsset
+    import os
+
+    data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+    ids = data.get('ids') or []
+    if isinstance(ids, str):
+        try:
+            ids = json.loads(ids)
+        except Exception:
+            ids = []
+    if not isinstance(ids, list) or not ids:
+        return JsonResponse({'success': False, 'error': 'No rows selected.'}, status=400)
+
+    assets = PPEAsset.objects.filter(id__in=ids)
+    deleted = 0
+    for asset in assets:
+        if asset.pdf_file:
+            try:
+                if os.path.isfile(asset.pdf_file.path):
+                    os.remove(asset.pdf_file.path)
+            except Exception:
+                pass
+        asset.delete()
+        deleted += 1
+    return JsonResponse({'success': True, 'deleted_count': deleted})
+
+
 # sugod drea transfer /assignment na it lang ne kay nag chnage c maam og new ppe daw 
 
 @superuser_required
