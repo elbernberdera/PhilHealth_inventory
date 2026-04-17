@@ -104,13 +104,9 @@
                                         <span class="badge badge-info">Staff</span> - Staff user (Limited access)
                                     </label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="role" id="role_regular" value="regular" 
-                                           {% if current_role == 'regular' or form_data.role == 'regular' %}checked{% endif %}>
-                                    <label class="form-check-label" for="role_regular">
-                                        <span class="badge badge-secondary">Regular</span> - Regular user
-                                    </label>
-                                </div>
+                                {% if form_type == 'edit' and current_role == 'regular' %}
+                                <p class="form-text text-info mb-1"><i class="fas fa-info-circle"></i> This account is regular (not staff). Choose Admin or Staff above to grant access.</p>
+                                {% endif %}
                                 <small class="form-text text-muted">
                                     <strong>Note:</strong> Admin = Superuser (is_superuser=True), Staff = Staff user (is_staff=True, is_superuser=False)
                                 </small>

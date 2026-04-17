@@ -1705,7 +1705,8 @@ Requested Supplies
             confirmButtonText: 'Delete',
             confirmButtonColor: '#dc3545'
         }).then(function(r) {
-            if (!r.isConfirmed) return;
+            // SweetAlert2 v9 uses result.value; v10+ adds result.isConfirmed (see Replenish.html)
+            if (!(r && (r.value === true || r.isConfirmed === true))) return;
             $.ajax({
                 url: '/api/request-supplies/' + id + '/delete/',
                 method: 'POST',
@@ -1736,7 +1737,7 @@ Requested Supplies
             confirmButtonText: 'Delete',
             confirmButtonColor: '#dc3545'
         }).then(function(r) {
-            if (!r.isConfirmed) return;
+            if (!(r && (r.value === true || r.isConfirmed === true))) return;
             $.ajax({
                 url: '/api/request-supplies/bulk-delete/',
                 method: 'POST',

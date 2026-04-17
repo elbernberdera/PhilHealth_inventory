@@ -322,6 +322,14 @@ def user_create(request):
             }
             return render(request, 'admin/user_form.html', context)
         
+        if role not in ('admin', 'staff'):
+            messages.error(request, 'Please select either Admin or Staff.')
+            context = {
+                'form_type': 'create',
+                'form_data': request.POST,
+            }
+            return render(request, 'admin/user_form.html', context)
+        
         # Create user
         user = User.objects.create_user(
             username=username,
@@ -332,16 +340,13 @@ def user_create(request):
             is_active=is_active
         )
         
-        # Assign role based on selection
+        # Assign role based on selection (create flow only allows admin or staff)
         if role == 'admin':
             user.is_superuser = True
             user.is_staff = True
-        elif role == 'staff':
-            user.is_superuser = False
-            user.is_staff = True
         else:
             user.is_superuser = False
-            user.is_staff = False
+            user.is_staff = True
         
         user.save()
         messages.success(request, f'User "{username}" created successfully!')
