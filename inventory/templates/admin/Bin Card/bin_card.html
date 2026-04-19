@@ -364,6 +364,16 @@
         return new Date(yy, mm - 1, dd).getTime();
     }
 
+    /** Match server ledger: same calendar day → stock-in before stock-out. */
+    function compareBinCardRowsChronological(a, b) {
+        var t = parseBinCardMdyToTime(a.date) - parseBinCardMdyToTime(b.date);
+        if (t !== 0) return t;
+        var aIn = String(a.stock_in_out || '').toLowerCase() === 'stock-in' ? 0 : 1;
+        var bIn = String(b.stock_in_out || '').toLowerCase() === 'stock-in' ? 0 : 1;
+        if (aIn !== bIn) return aIn - bIn;
+        return String(a.transaction_no || '').localeCompare(String(b.transaction_no || ''));
+    }
+
     function toBinCardEntries(rows) {
         return rows.map(function(r) {
             const qty = Number(r.quantity || 0) || 0;
@@ -430,9 +440,7 @@
     }
 
     function renderBinCardSheet(card) {
-        const rawRows = (card.rows || []).slice().sort(function (a, b) {
-            return parseBinCardMdyToTime(a.date) - parseBinCardMdyToTime(b.date);
-        });
+        const rawRows = (card.rows || []).slice().sort(compareBinCardRowsChronological);
         var openingBal = 0;
         for (var oi = 0; oi < rawRows.length; oi++) {
             var rr = rawRows[oi];
@@ -513,9 +521,7 @@
             map[key].rows.push(r);
         });
         return Object.keys(map).map(function(k) {
-            map[k].rows.sort(function(a, b) {
-                return parseBinCardMdyToTime(a.date) - parseBinCardMdyToTime(b.date);
-            });
+            map[k].rows.sort(compareBinCardRowsChronological);
             return map[k];
         });
     }

@@ -752,6 +752,87 @@ def bin_card(request):
         except ValueError:
             return None
 
+    def _item_key_row(d):
+        return (d.get('item_code') or '', d.get('description') or '', d.get('unit') or '')
+
+    # Replenish updates Supply.stock_in but does not create RequestSupply stock-in rows;
+    # synthesize one received line per linked supply so "Received" matches the catalog.
+    supply_by_id = {}
+    for r in all_rows_qs:
+        if r.supply_id and r.supply_id not in supply_by_id and r.supply is not None:
+            supply_by_id[r.supply_id] = r.supply
+
+    synthetic_rows = []
+    for sid, supply in supply_by_id.items():
+        try:
+            stock_in_val = int(supply.stock_in or 0)
+        except (TypeError, ValueError):
+            stock_in_val = 0
+        if stock_in_val <= 0:
+            continue
+        key = (supply.item_code or '', supply.description or '', supply.unit or '')
+        if any(
+            (d.get('stock_in_out') or '').strip().lower() == 'stock-in' and _item_key_row(d) == key
+            for d in all_rows
+        ):
+            continue
+        row_dates = []
+        for d in all_rows:
+            if _item_key_row(d) != key:
+                continue
+            pd = _parse_mdy(d.get('date'))
+            if pd:
+                row_dates.append(pd)
+        min_rd = min(row_dates) if row_dates else None
+        eff_date = supply.date
+        if min_rd is not None and (eff_date is None or eff_date > min_rd):
+            eff_date = min_rd
+        if eff_date is None:
+            eff_date = min_rd or date.today()
+
+        cat_name = supply.main_category.name if supply.main_category else ''
+        base_txn = (supply.transaction or '').strip() or 'REPLENISH'
+        txn_label = (
+            f'{base_txn}-BIN{sid}'
+            if len(base_txn) + len(str(sid)) + 5 <= 100
+            else f'BIN-REPL-{sid}'
+        )[:100]
+
+        try:
+            ob = int(supply.opening_balance or 0)
+        except (TypeError, ValueError):
+            ob = 0
+
+        desc = supply.description or ''
+        blob_parts = [
+            supply.item_code or '',
+            desc,
+            supply.unit or '',
+            txn_label,
+            cat_name,
+        ]
+        search_blob = ' '.join(blob_parts).lower()
+
+        synthetic_rows.append({
+            'date': eff_date.strftime('%m/%d/%Y'),
+            'transaction_no': txn_label,
+            'requester_name': '',
+            'item_code': supply.item_code or '',
+            'description': desc,
+            'unit': supply.unit or '',
+            'quantity': stock_in_val,
+            'status': 'approved',
+            'stock_in_out': 'stock-in',
+            'conforme_by': '',
+            'main_category_id': supply.main_category_id,
+            'main_category_name': cat_name,
+            'search_blob': search_blob,
+            'has_supply': True,
+            'supply_opening_balance': ob,
+        })
+
+    all_rows.extend(synthetic_rows)
+
     def _enrich_on_hand_ledger(rows):
         """Per item (code + description + unit), chronological running on-hand after each line."""
         groups = defaultdict(list)
@@ -763,6 +844,7 @@ def bin_card(request):
                 lst,
                 key=lambda x: (
                     _parse_mdy(x.get('date')) or date.min,
+                    0 if (x.get('stock_in_out') or '').strip().lower() == 'stock-in' else 1,
                     x.get('transaction_no') or '',
                     x.get('requester_name') or '',
                 ),
