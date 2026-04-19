@@ -166,9 +166,9 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ r.date }}</td>
                                 <td>{{ r.transaction_no }}</td>
-                                <td class="text-center">{% if r.status|lower == 'stock-in' %}{{ r.quantity }}{% endif %}</td>
-                                <td class="text-center">{% if r.status|lower == 'approved' %}{{ r.quantity }}{% endif %}</td>
-                                <td></td>
+                                <td class="text-center">{% if r.stock_in_out == 'stock-in' %}{{ r.quantity }}{% endif %}</td>
+                                <td class="text-center">{% if r.stock_in_out == 'stock-out' and r.status|lower == 'approved' %}{{ r.quantity }}{% endif %}</td>
+                                <td class="text-center">{{ r.on_hand_after }}</td>
                             </tr>
                             {% empty %}
                             <tr class="bin-no-server-rows">
@@ -353,12 +353,24 @@
         return s;
     }
 
+    function parseBinCardMdyToTime(s) {
+        var parts = String(s || '').trim().split('/');
+        if (parts.length !== 3) return 0;
+        var mm = parseInt(parts[0], 10);
+        var dd = parseInt(parts[1], 10);
+        var yy = parseInt(parts[2], 10);
+        if (isNaN(mm) || isNaN(dd) || isNaN(yy)) return 0;
+        if (yy < 100) yy += 2000;
+        return new Date(yy, mm - 1, dd).getTime();
+    }
+
     function toBinCardEntries(rows) {
         return rows.map(function(r) {
             const qty = Number(r.quantity || 0) || 0;
+            const stIn = String(r.stock_in_out || '').toLowerCase();
             const st = String(r.status || '').toLowerCase();
-            const isIssued = st === 'approved';
-            const isReceived = st.indexOf('stock-in') !== -1;
+            const isReceived = stIn === 'stock-in';
+            const isIssued = stIn === 'stock-out' && st === 'approved';
             return {
                 date: formatDateDdMmYy(r.date || ''),
                 transaction_no: r.transaction_no || '',
@@ -368,32 +380,44 @@
         });
     }
 
-    function buildBinCardRows(entries) {
+    function buildBinCardRows(entries, openingBalance) {
         let totalReceived = 0;
         let totalIssued = 0;
         const rows = [];
+        let running = parseInt(String(openingBalance), 10);
+        if (isNaN(running)) running = 0;
 
-        // Opening balance row (format row under headers)
-        rows.push('<tr class="opening-row"><td></td><td></td><td class="open-label">OPENING BALANCE</td><td></td><td></td><td></td></tr>');
+        // Opening balance row: On Hand shows initial stock from linked Supply (catalog opening balance)
+        rows.push(
+            '<tr class="opening-row"><td></td><td></td><td class="open-label">OPENING BALANCE</td>' +
+            '<td></td><td></td><td class="num">' + running + '</td></tr>'
+        );
 
         for (let i = 0; i < entries.length; i++) {
             const e = entries[i];
             const received = e.received === '' ? '' : String(e.received);
             const issued = e.issued === '' ? '' : String(e.issued);
-            if (received !== '') totalReceived += Number(received) || 0;
-            if (issued !== '') totalIssued += Number(issued) || 0;
+            const recN = received === '' ? 0 : (Number(received) || 0);
+            const issN = issued === '' ? 0 : (Number(issued) || 0);
+            if (recN) totalReceived += recN;
+            if (issN) totalIssued += issN;
+            if (recN) running += recN;
+            if (issN) running -= issN;
             rows.push(
                 '<tr><td class="num">' + (i + 1) + '</td>' +
                 '<td><span class="bin-print-date">' + escapeHtml(e.date) + '</span></td>' +
                 '<td>' + escapeHtml(e.transaction_no) + '</td>' +
                 '<td class="num">' + escapeHtml(received) + '</td>' +
                 '<td class="num">' + escapeHtml(issued) + '</td>' +
-                '<td></td></tr>'
+                '<td class="num">' + running + '</td></tr>'
             );
         }
 
-        // Totals row
-        rows.push('<tr class="total-row"><td class="total-label">TOTAL</td><td></td><td></td><td class="num">' + totalReceived + '</td><td class="num">' + totalIssued + '</td><td></td></tr>');
+        // Totals row: final on-hand balance in last column
+        rows.push(
+            '<tr class="total-row"><td class="total-label">TOTAL</td><td></td><td></td><td class="num">' +
+            totalReceived + '</td><td class="num">' + totalIssued + '</td><td class="num">' + running + '</td></tr>'
+        );
 
         // Ruled lines for handwriting; fixed count only — does not pad to fill the 7in card
         const blankRowHtml = '<tr class="bin-blank-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
@@ -406,8 +430,19 @@
     }
 
     function renderBinCardSheet(card) {
-        const entries = toBinCardEntries(card.rows || []);
-        const bodyRows = buildBinCardRows(entries);
+        const rawRows = (card.rows || []).slice().sort(function (a, b) {
+            return parseBinCardMdyToTime(a.date) - parseBinCardMdyToTime(b.date);
+        });
+        var openingBal = 0;
+        for (var oi = 0; oi < rawRows.length; oi++) {
+            var rr = rawRows[oi];
+            if (rr.has_supply && rr.supply_opening_balance != null) {
+                openingBal = parseInt(String(rr.supply_opening_balance), 10) || 0;
+                break;
+            }
+        }
+        const entries = toBinCardEntries(rawRows);
+        const bodyRows = buildBinCardRows(entries, openingBal);
         return '' +
             '<div class="bin-table-wrap">' +
                 '<table class="bin-form">' +
@@ -477,7 +512,12 @@
             }
             map[key].rows.push(r);
         });
-        return Object.keys(map).map(function(k) { return map[k]; });
+        return Object.keys(map).map(function(k) {
+            map[k].rows.sort(function(a, b) {
+                return parseBinCardMdyToTime(a.date) - parseBinCardMdyToTime(b.date);
+            });
+            return map[k];
+        });
     }
 
     function openPrint(cards) {

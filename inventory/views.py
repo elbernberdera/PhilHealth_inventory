@@ -694,6 +694,9 @@ def master_inventory(request):
 @superuser_required
 def bin_card(request):
     """Bin Card history by item, with option to print selected or all."""
+    from collections import defaultdict
+    from datetime import date, datetime
+
     from .models import Category, ProcurementPersonnel, RequestSupply
 
     categories = Category.objects.filter(is_active=True).order_by('name')
@@ -714,6 +717,13 @@ def bin_card(request):
             cat_name,
         ]
         search_blob = ' '.join(blob_parts).lower()
+        ob = None
+        has_supply = bool(r.supply_id and r.supply is not None)
+        if has_supply:
+            try:
+                ob = int(r.supply.opening_balance or 0)
+            except (TypeError, ValueError):
+                ob = 0
         return {
             'date': r.date.strftime('%m/%d/%Y') if r.date else '',
             'transaction_no': r.transaction_no or '',
@@ -723,13 +733,58 @@ def bin_card(request):
             'unit': r.unit or '',
             'quantity': int(r.quantity or 0),
             'status': r.status or '',
+            'stock_in_out': getattr(r, 'stock_in_out', '') or '',
             'conforme_by': r.conforme_by or '',
             'main_category_id': r.main_category_id,
             'main_category_name': cat_name,
             'search_blob': search_blob,
+            'has_supply': has_supply,
+            'supply_opening_balance': ob,
         }
 
     all_rows = [_row(r) for r in all_rows_qs]
+
+    def _parse_mdy(s):
+        if not s:
+            return None
+        try:
+            return datetime.strptime(str(s).strip(), '%m/%d/%Y').date()
+        except ValueError:
+            return None
+
+    def _enrich_on_hand_ledger(rows):
+        """Per item (code + description + unit), chronological running on-hand after each line."""
+        groups = defaultdict(list)
+        for d in rows:
+            key = (d.get('item_code') or '', d.get('description') or '', d.get('unit') or '')
+            groups[key].append(d)
+        for _key, lst in groups.items():
+            lst_sorted = sorted(
+                lst,
+                key=lambda x: (
+                    _parse_mdy(x.get('date')) or date.min,
+                    x.get('transaction_no') or '',
+                    x.get('requester_name') or '',
+                ),
+            )
+            opening = 0
+            for d in lst_sorted:
+                if d.get('has_supply') and d.get('supply_opening_balance') is not None:
+                    opening = int(d['supply_opening_balance'])
+                    break
+            running = opening
+            for d in lst_sorted:
+                qty = int(d.get('quantity') or 0)
+                sto = (d.get('stock_in_out') or '').strip().lower()
+                st = (d.get('status') or '').strip().lower()
+                if sto == 'stock-in':
+                    running += qty
+                elif sto == 'stock-out' and st == 'approved':
+                    running -= qty
+                d['on_hand_after'] = running
+        return rows
+
+    _enrich_on_hand_ledger(all_rows)
 
     prepared_by_signatories = list(ProcurementPersonnel.objects.all())
 
