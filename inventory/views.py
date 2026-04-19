@@ -740,6 +740,7 @@ def bin_card(request):
             'search_blob': search_blob,
             'has_supply': has_supply,
             'supply_opening_balance': ob,
+            'received_carry_in': 0,
         }
 
     all_rows = [_row(r) for r in all_rows_qs]
@@ -755,15 +756,16 @@ def bin_card(request):
     def _item_key_row(d):
         return (d.get('item_code') or '', d.get('description') or '', d.get('unit') or '')
 
-    # Replenish updates Supply.stock_in but does not create RequestSupply stock-in rows;
-    # synthesize one received line per linked supply so "Received" matches the catalog.
+    # Replenish updates Supply.stock_in but does not create RequestSupply stock-in rows.
+    # Instead of adding a synthetic extra row, attach the received quantity to the earliest
+    # existing row of the same item so users see one continuous row list per item.
     supply_by_id = {}
     for r in all_rows_qs:
         if r.supply_id and r.supply_id not in supply_by_id and r.supply is not None:
             supply_by_id[r.supply_id] = r.supply
 
-    synthetic_rows = []
-    for sid, supply in supply_by_id.items():
+    by_key_supplies = defaultdict(list)
+    for _sid, supply in supply_by_id.items():
         try:
             stock_in_val = int(supply.stock_in or 0)
         except (TypeError, ValueError):
@@ -771,67 +773,44 @@ def bin_card(request):
         if stock_in_val <= 0:
             continue
         key = (supply.item_code or '', supply.description or '', supply.unit or '')
+        by_key_supplies[key].append(supply)
+
+    for key, supplies in by_key_supplies.items():
         if any(
             (d.get('stock_in_out') or '').strip().lower() == 'stock-in' and _item_key_row(d) == key
             for d in all_rows
         ):
             continue
-        row_dates = []
-        for d in all_rows:
-            if _item_key_row(d) != key:
-                continue
-            pd = _parse_mdy(d.get('date'))
-            if pd:
-                row_dates.append(pd)
-        min_rd = min(row_dates) if row_dates else None
-        eff_date = supply.date
-        if min_rd is not None and (eff_date is None or eff_date > min_rd):
-            eff_date = min_rd
-        if eff_date is None:
-            eff_date = min_rd or date.today()
+        key_rows = [d for d in all_rows if _item_key_row(d) == key]
+        if not key_rows:
+            continue
+        key_rows_sorted = sorted(
+            key_rows,
+            key=lambda x: (
+                _parse_mdy(x.get('date')) or date.min,
+                x.get('transaction_no') or '',
+                x.get('requester_name') or '',
+            ),
+        )
+        target = key_rows_sorted[0]
 
-        cat_name = supply.main_category.name if supply.main_category else ''
-        base_txn = (supply.transaction or '').strip() or 'REPLENISH'
-        txn_label = (
-            f'{base_txn}-BIN{sid}'
-            if len(base_txn) + len(str(sid)) + 5 <= 100
-            else f'BIN-REPL-{sid}'
-        )[:100]
+        stock_in_sum = 0
+        opening_sum = 0
+        for supply in supplies:
+            try:
+                stock_in_sum += int(supply.stock_in or 0)
+            except (TypeError, ValueError):
+                pass
+            try:
+                opening_sum += int(supply.opening_balance or 0)
+            except (TypeError, ValueError):
+                pass
 
-        try:
-            ob = int(supply.opening_balance or 0)
-        except (TypeError, ValueError):
-            ob = 0
-
-        desc = supply.description or ''
-        blob_parts = [
-            supply.item_code or '',
-            desc,
-            supply.unit or '',
-            txn_label,
-            cat_name,
-        ]
-        search_blob = ' '.join(blob_parts).lower()
-
-        synthetic_rows.append({
-            'date': eff_date.strftime('%m/%d/%Y'),
-            'transaction_no': txn_label,
-            'requester_name': '',
-            'item_code': supply.item_code or '',
-            'description': desc,
-            'unit': supply.unit or '',
-            'quantity': stock_in_val,
-            'status': 'approved',
-            'stock_in_out': 'stock-in',
-            'conforme_by': '',
-            'main_category_id': supply.main_category_id,
-            'main_category_name': cat_name,
-            'search_blob': search_blob,
-            'has_supply': True,
-            'supply_opening_balance': ob,
-        })
-
-    all_rows.extend(synthetic_rows)
+        if stock_in_sum > 0:
+            target['received_carry_in'] = stock_in_sum
+        if opening_sum > 0:
+            target['has_supply'] = True
+            target['supply_opening_balance'] = opening_sum
 
     def _enrich_on_hand_ledger(rows):
         """Per item (code + description + unit), chronological running on-hand after each line."""
@@ -856,9 +835,12 @@ def bin_card(request):
                     break
             running = opening
             for d in lst_sorted:
+                carry_in = int(d.get('received_carry_in') or 0)
                 qty = int(d.get('quantity') or 0)
                 sto = (d.get('stock_in_out') or '').strip().lower()
                 st = (d.get('status') or '').strip().lower()
+                if carry_in > 0:
+                    running += carry_in
                 if sto == 'stock-in':
                     running += qty
                 elif sto == 'stock-out' and st == 'approved':

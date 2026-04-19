@@ -166,7 +166,7 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ r.date }}</td>
                                 <td>{{ r.transaction_no }}</td>
-                                <td class="text-center">{% if r.stock_in_out == 'stock-in' %}{{ r.quantity }}{% endif %}</td>
+                                <td class="text-center">{% if r.stock_in_out == 'stock-in' %}{{ r.quantity }}{% elif r.received_carry_in %}{{ r.received_carry_in }}{% endif %}</td>
                                 <td class="text-center">{% if r.stock_in_out == 'stock-out' and r.status|lower == 'approved' %}{{ r.quantity }}{% endif %}</td>
                                 <td class="text-center">{{ r.on_hand_after }}</td>
                             </tr>
@@ -379,12 +379,12 @@
             const qty = Number(r.quantity || 0) || 0;
             const stIn = String(r.stock_in_out || '').toLowerCase();
             const st = String(r.status || '').toLowerCase();
-            const isReceived = stIn === 'stock-in';
+            const carryIn = Number(r.received_carry_in || 0) || 0;
             const isIssued = stIn === 'stock-out' && st === 'approved';
             return {
                 date: formatDateDdMmYy(r.date || ''),
                 transaction_no: r.transaction_no || '',
-                received: isReceived ? qty : '',
+                received: stIn === 'stock-in' ? qty : (carryIn > 0 ? carryIn : ''),
                 issued: isIssued ? qty : '',
             };
         });
@@ -491,19 +491,20 @@
         return '__________________________';
     }
 
-    function renderPrintPageSignatureFooter(preparedName, preparedPosition) {
+    function renderPrintPageSignatureFooter(preparedName, preparedPosition, dualSignatures) {
         var sigBlock = renderSigBlock(preparedName, preparedPosition);
-        return '<div class="print-page-sig">' +
-            '<div class="bin-sig-connected">' +
-                '<div class="bin-sig-box">' +
-                    '<div class="bin-sig-label-line">Prepared by:</div>' +
-                    '<div class="bin-sig-names">' + sigBlock + '</div>' +
-                '</div>' +
-                '<div class="bin-sig-box">' +
-                    '<div class="bin-sig-label-line">Prepared by:</div>' +
-                    '<div class="bin-sig-names">' + sigBlock + '</div>' +
-                '</div>' +
-            '</div>' +
+        var oneBox =
+            '<div class="bin-sig-box">' +
+                '<div class="bin-sig-label-line">Prepared by:</div>' +
+                '<div class="bin-sig-names">' + sigBlock + '</div>' +
+            '</div>';
+        if (dualSignatures) {
+            return '<div class="print-page-sig">' +
+                '<div class="bin-sig-connected">' + oneBox + oneBox + '</div>' +
+                '</div>';
+        }
+        return '<div class="print-page-sig print-page-sig-single">' +
+            '<div class="bin-sig-connected bin-sig-single">' + oneBox + '</div>' +
             '</div>';
     }
 
@@ -543,15 +544,17 @@
         }
         const pages = [];
         for (let i = 0; i < cards.length; i += 2) {
+            const hasSecondCard = Boolean(cards[i + 1]);
             const leftCard = '<div class="card-slot">' + renderBinCardSheet(cards[i]) + '</div>';
-            const rightCard = cards[i + 1]
-                ? '<div class="card-slot">' + renderBinCardSheet(cards[i + 1]) + '</div>'
-                : '<div class="card-slot empty-slot"></div>';
+            const cardsRow = hasSecondCard
+                ? leftCard + '<div class="card-slot">' + renderBinCardSheet(cards[i + 1]) + '</div>'
+                : leftCard;
+            const pageExtraClass = hasSecondCard ? '' : ' print-page-single-card';
             pages.push(
-                '<div class="print-page">' +
+                '<div class="print-page' + pageExtraClass + '">' +
                     '<div class="print-page-block">' +
-                        '<div class="print-page-cards">' + leftCard + rightCard + '</div>' +
-                        renderPrintPageSignatureFooter(preparedName, preparedPosition) +
+                        '<div class="print-page-cards">' + cardsRow + '</div>' +
+                        renderPrintPageSignatureFooter(preparedName, preparedPosition, hasSecondCard) +
                     '</div>' +
                 '</div>'
             );
@@ -568,9 +571,13 @@
             'body{font-family:' + fontReport + ';font-size:8pt;line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
             '.print-page{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;page-break-after:always;break-inside:avoid;page-break-inside:avoid;font-family:' + fontReport + ';}' +
             '.print-page:last-child{page-break-after:auto;}' +
+            '.print-page-single-card .print-page-block{max-width:3.4in;}' +
+            '.print-page-single-card .print-page-cards{justify-content:center;}' +
             '.print-page-block{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:calc(3.4in + 4mm + 3.4in);gap:0;box-sizing:border-box;}' +
             '.print-page-cards{display:flex;flex-direction:row;gap:4mm;align-items:stretch;justify-content:center;flex-shrink:0;}' +
             '.print-page-sig{width:100%;max-width:none;flex-shrink:0;margin:0;padding:0;font-family:' + fontReport + ';}' +
+            '.print-page-sig-single .bin-sig-connected{max-width:3.4in;margin:0 auto;}' +
+            '.bin-sig-single .bin-sig-box{flex:0 0 auto;width:100%;max-width:100%;}' +
             '.bin-sig-connected{display:flex;flex-direction:row;width:100%;box-sizing:border-box;border-width:2px;border-style:solid;border-color:#000;border-image:none;}' +
             '.bin-sig-box{flex:1 1 0;min-width:0;box-sizing:border-box;padding:6px 10px;text-align:left;}' +
             '.bin-sig-box+.bin-sig-box{border-left-width:2px;border-left-style:solid;border-left-color:#000;border-top:none;border-right:none;border-bottom:none;}' +
