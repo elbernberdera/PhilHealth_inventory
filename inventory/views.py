@@ -697,7 +697,7 @@ def bin_card(request):
     from collections import defaultdict
     from datetime import date, datetime
 
-    from .models import Category, ProcurementPersonnel, RequestSupply
+    from .models import Category, ProcurementPersonnel, RequestSupply, Supply
 
     categories = Category.objects.filter(is_active=True).order_by('name')
 
@@ -741,6 +741,7 @@ def bin_card(request):
             'has_supply': has_supply,
             'supply_opening_balance': ob,
             'received_carry_in': 0,
+            'no_transactions': False,
         }
 
     all_rows = [_row(r) for r in all_rows_qs]
@@ -755,6 +756,8 @@ def bin_card(request):
 
     def _item_key_row(d):
         return (d.get('item_code') or '', d.get('description') or '', d.get('unit') or '')
+
+    keys_with_request = {_item_key_row(d) for d in all_rows}
 
     # Replenish updates Supply.stock_in but does not create RequestSupply stock-in rows.
     # Instead of adding a synthetic extra row, attach the received quantity to the earliest
@@ -811,6 +814,58 @@ def bin_card(request):
         if opening_sum > 0:
             target['has_supply'] = True
             target['supply_opening_balance'] = opening_sum
+
+    # Catalog items with no RequestSupply rows: one display/print row each (merged by item key)
+    # so they can appear in the table and be included when printing.
+    no_tx_supply_groups = defaultdict(list)
+    for sup in Supply.objects.filter(is_active=True).select_related('main_category'):
+        key = (sup.item_code or '', sup.description or '', sup.unit or '')
+        if key not in keys_with_request:
+            no_tx_supply_groups[key].append(sup)
+
+    for _key, supplies in no_tx_supply_groups.items():
+        if not supplies:
+            continue
+        canonical = min(supplies, key=lambda s: s.pk)
+        cat_name = canonical.main_category.name if canonical.main_category else ''
+        stock_in_sum = 0
+        opening_sum = 0
+        for s in supplies:
+            try:
+                stock_in_sum += int(s.stock_in or 0)
+            except (TypeError, ValueError):
+                pass
+            try:
+                opening_sum += int(s.opening_balance or 0)
+            except (TypeError, ValueError):
+                pass
+        desc = canonical.description or ''
+        blob_parts = [
+            canonical.item_code or '',
+            desc,
+            canonical.unit or '',
+            'no transactions',
+            cat_name,
+        ]
+        all_rows.append({
+            'date': '',
+            'transaction_no': '',
+            'requester_name': '',
+            'item_code': canonical.item_code or '',
+            'description': desc,
+            'unit': canonical.unit or '',
+            'quantity': 0,
+            'status': '',
+            'stock_in_out': '',
+            'conforme_by': '',
+            'main_category_id': canonical.main_category_id,
+            'main_category_name': cat_name,
+            'search_blob': ' '.join(blob_parts).lower(),
+            'has_supply': True,
+            'supply_opening_balance': opening_sum,
+            'received_carry_in': stock_in_sum if stock_in_sum > 0 else 0,
+            'no_transactions': True,
+        })
 
     def _enrich_on_hand_ledger(rows):
         """Per item (code + description + unit), chronological running on-hand after each line."""

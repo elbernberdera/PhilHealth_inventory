@@ -164,8 +164,8 @@
                                            data-unit="{{ r.unit }}">
                                 </td>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ r.date }}</td>
-                                <td>{{ r.transaction_no }}</td>
+                                <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.date }}{% endif %}</td>
+                                <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.transaction_no }}{% endif %}</td>
                                 <td class="text-center">{% if r.stock_in_out == 'stock-in' %}{{ r.quantity }}{% elif r.received_carry_in %}{{ r.received_carry_in }}{% endif %}</td>
                                 <td class="text-center">{% if r.stock_in_out == 'stock-out' and r.status|lower == 'approved' %}{{ r.quantity }}{% endif %}</td>
                                 <td class="text-center">{{ r.on_hand_after }}</td>
