@@ -36,14 +36,14 @@ SECRET_KEY = 'django-insecure-71wobq_2w(^pcv2j&%o0ny=8khdvi__1z1wf0marpmd69pot4a
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-CSRF_TRUSTED_ORIGINS = [
-    "https://molly-unfloundering-roy.ngrok-free.dev",
+# CSRF_TRUSTED_ORIGINS = [
+#     "https://molly-unfloundering-roy.ngrok-free.dev",
    
-]
+# ]
 
-ALLOWED_HOSTS = ['*', 'molly-unfloundering-roy.ngrok-free.dev']
+ALLOWED_HOSTS = ['*']
 
-
+# , 'molly-unfloundering-roy.ngrok-free.dev'
 # Application definition
 
 INSTALLED_APPS = [
