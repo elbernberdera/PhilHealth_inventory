@@ -1999,14 +1999,19 @@ def staff_request_supplies(request):
     return render(request, 'staff/request_supplies/request_supplies.html', context)
 
 
-@staff_or_superuser_required
+@login_required
 @require_http_methods(["GET"])
 def request_supply_list(request):
-    """Get paginated request supplies - for admin: all requests, for staff: only their requests"""
+    """Get paginated request supplies.
+
+    Superusers can see all requests.
+    All other authenticated users can only see requests they created.
+    """
     try:
         from .models import RequestSupply
-        # For admin users, show all requests; for staff, show only their requests
-        if request.user.is_staff or request.user.is_superuser:
+
+        # Only superusers can see all requests; staff/non-staff see only their own.
+        if request.user.is_superuser:
             qs = RequestSupply.objects.filter(is_active=True).order_by('-created_at', '-date')
         else:
             qs = RequestSupply.objects.filter(
