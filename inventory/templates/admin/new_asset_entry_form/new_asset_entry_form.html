@@ -991,6 +991,7 @@
             $('#all-assets-start').text(displayStart);
             $('#all-assets-end').text(displayEnd);
             $('#all-assets-total').text(pageConf.totalRows);
+            $('#all-assets-page-indicator').text('Page ' + pageConf.currentPage + ' of ' + Math.max(1, pageConf.totalPages));
 
             updatePaginationButtons();
         }
@@ -998,13 +999,25 @@
         function renderPagination() {
             const list = $('#all-assets-pagination ul');
             const next = $('#all-assets-next');
+            if (!$('#all-assets-page-indicator').length) {
+                $('<div class="small text-muted text-right mb-1" id="all-assets-page-indicator">Page 1 of 1</div>')
+                    .insertBefore(list);
+            }
             list.find('.page-number').remove();
 
-            for (let i = 1; i <= pageConf.totalPages; i++) {
+            const maxNumericButtons = 5;
+            let windowStart = Math.max(1, pageConf.currentPage - Math.floor(maxNumericButtons / 2));
+            let windowEnd = windowStart + maxNumericButtons - 1;
+            if (windowEnd > pageConf.totalPages) {
+                windowEnd = pageConf.totalPages;
+                windowStart = Math.max(1, windowEnd - maxNumericButtons + 1);
+            }
+            for (let i = windowStart; i <= windowEnd; i++) {
                 const li = $('<li>').addClass('paginate_button page-item page-number').attr('data-page', i);
                 const a  = $('<a>').addClass('page-link').attr('href', '#').text(i);
                 li.append(a).insertBefore(next);
             }
+            $('#all-assets-page-indicator').text('Page ' + pageConf.currentPage + ' of ' + Math.max(1, pageConf.totalPages));
             updatePaginationButtons();
         }
 
@@ -1029,6 +1042,7 @@
             $('#all-assets-start').text(pageConf.totalRows > 0 ? 1 : 0);
             $('#all-assets-end').text(displayEnd);
             $('#all-assets-total').text(pageConf.totalRows);
+            $('#all-assets-page-indicator').text('Page ' + pageConf.currentPage + ' of ' + Math.max(1, pageConf.totalPages));
             updatePaginationButtons();
         }
 

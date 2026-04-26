@@ -1147,12 +1147,25 @@ Requested Supplies
         $pag.find('.rs-pag-total').text(total);
         $pag.find('.rs-pag-prev').toggleClass('disabled', page <= 1);
         $pag.find('.rs-pag-next').toggleClass('disabled', page >= totalPages);
+        var $indicator = $pag.find('.rs-page-indicator');
+        if (!$indicator.length) {
+            $indicator = $('<div class="small text-muted text-right mb-1 rs-page-indicator"></div>');
+            $pag.find('.dataTables_paginate').prepend($indicator);
+        }
+        $indicator.text('Page ' + page + ' of ' + totalPages);
 
         // Rebuild page number buttons
         var $ul = $pag.find('ul.pagination');
         $ul.find('.rs-page-btn').remove();
         var $next = $ul.find('.rs-pag-next');
-        for (var i = 1; i <= totalPages; i++) {
+        var maxNumericButtons = 5;
+        var windowStart = Math.max(1, page - Math.floor(maxNumericButtons / 2));
+        var windowEnd = windowStart + maxNumericButtons - 1;
+        if (windowEnd > totalPages) {
+            windowEnd = totalPages;
+            windowStart = Math.max(1, windowEnd - maxNumericButtons + 1);
+        }
+        for (var i = windowStart; i <= windowEnd; i++) {
             var $li = $('<li>').addClass('paginate_button page-item rs-page-btn' + (i === page ? ' active' : '')).attr('data-page', i);
             $('<a>').addClass('page-link').attr('href', '#').text(i).appendTo($li);
             $li.insertBefore($next);

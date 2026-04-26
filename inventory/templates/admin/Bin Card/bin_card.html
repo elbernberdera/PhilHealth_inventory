@@ -135,6 +135,7 @@
                         <thead>
                             <tr>
                                 <th style="width:40px;" class="text-center"><input type="checkbox" id="check-all-items"></th>
+                                <th style="width:220px;">Item Name</th>
                                 <th style="width:60px;">No.</th>
                                 <th style="width:160px;">Date Received/Issued</th>
                                 <th style="width:240px;">R.I.S / Transaction No.</th>
@@ -145,6 +146,7 @@
                         </thead>
                         <tbody>
                             <tr class="bin-opening-balance-row">
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -163,6 +165,7 @@
                                            data-description="{{ r.description }}"
                                            data-unit="{{ r.unit }}">
                                 </td>
+                                <td>{{ r.description }}</td>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.date }}{% endif %}</td>
                                 <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.transaction_no }}{% endif %}</td>
@@ -172,7 +175,7 @@
                             </tr>
                             {% empty %}
                             <tr class="bin-no-server-rows">
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="8" class="text-center text-muted py-5">
                                     <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                     No items found.
                                 </td>
@@ -180,7 +183,7 @@
                             {% endfor %}
                             {% if rows %}
                             <tr id="bin-card-filter-empty-row" style="display: none;">
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="8" class="text-center text-muted py-4">
                                     <i class="fas fa-filter fa-lg mb-2 d-block"></i>
                                     No matching items for this category or search.
                                 </td>
@@ -188,6 +191,7 @@
                             {% endif %}
                             <tr class="font-weight-bold total-row-main">
                                 <td class="text-center">TOTAL</td>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -206,6 +210,7 @@
                     </div>
                     <div class="col-sm-12 col-md-7">
                         <div class="dataTables_paginate paging_simple_numbers float-right" id="bin-card-pagination">
+                            <div class="small text-muted text-right mb-1" id="bin-card-page-indicator">Page 1 of 1</div>
                             <ul class="pagination">
                                 <li class="paginate_button page-item previous disabled" id="bin-card-prev">
                                     <a href="#" class="page-link">Previous</a>
@@ -320,7 +325,7 @@
         const currentRows = tbody.querySelectorAll('tr').length;
         for (let i = currentRows; i < minRows; i++) {
             const tr = document.createElement('tr');
-            tr.innerHTML = '<td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td>';
+            tr.innerHTML = '<td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>';
             tbody.appendChild(tr);
         }
     }
@@ -649,7 +654,8 @@
         const prevBtn = document.getElementById('bin-card-prev');
         const nextBtn = document.getElementById('bin-card-next');
         const paginationList = document.querySelector('#bin-card-pagination ul');
-        if (!infoStart || !infoEnd || !infoTotal || !prevBtn || !nextBtn || !paginationList) return;
+        const pageIndicator = document.getElementById('bin-card-page-indicator');
+        if (!infoStart || !infoEnd || !infoTotal || !prevBtn || !nextBtn || !paginationList || !pageIndicator) return;
 
         function getFilteredDataRows() {
             return allDataRows.filter(rowMatchesFilters);
@@ -661,12 +667,25 @@
             const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage) || 1);
             const existing = paginationList.querySelectorAll('.page-number');
             existing.forEach(function(el) { el.remove(); });
-            for (let i = 1; i <= totalPages; i++) {
+
+            function addPageBtn(pageNum) {
                 const pageItem = document.createElement('li');
                 pageItem.className = 'paginate_button page-item page-number';
-                pageItem.setAttribute('data-page', String(i));
-                pageItem.innerHTML = '<a href="#" class="page-link">' + i + '</a>';
+                pageItem.setAttribute('data-page', String(pageNum));
+                pageItem.innerHTML = '<a href="#" class="page-link">' + pageNum + '</a>';
                 paginationList.insertBefore(pageItem, nextBtn);
+            }
+
+            // Fixed-size numeric pagination: at most 5 page numbers shown.
+            const maxNumericButtons = 5;
+            let windowStart = Math.max(1, currentPage - Math.floor(maxNumericButtons / 2));
+            let windowEnd = windowStart + maxNumericButtons - 1;
+            if (windowEnd > totalPages) {
+                windowEnd = totalPages;
+                windowStart = Math.max(1, windowEnd - maxNumericButtons + 1);
+            }
+            for (let i = windowStart; i <= windowEnd; i++) {
+                addPageBtn(i);
             }
         }
 
@@ -697,13 +716,14 @@
 
             for (let i = start; i < end; i++) {
                 filtered[i].style.display = '';
-                const noCell = filtered[i].querySelector('td:nth-child(2)');
+                const noCell = filtered[i].querySelector('td:nth-child(3)');
                 if (noCell) noCell.textContent = String(i + 1);
             }
 
             infoStart.textContent = totalRows ? String(start + 1) : '0';
             infoEnd.textContent = totalRows ? String(end) : '0';
             infoTotal.textContent = String(totalRows);
+            pageIndicator.textContent = 'Page ' + currentPage + ' of ' + totalPages;
             updateButtons(totalRows, totalPages);
             binCardCurrentPage = currentPage;
         }

@@ -765,6 +765,7 @@
         var html = '<div class="row dt-pagination-footer px-2 pb-2">' +
             '<div class="col-sm-12 col-md-5"><div class="dataTables_info" role="status">Showing ' + start + ' to ' + end + ' of ' + total + ' entries</div></div>' +
             '<div class="col-sm-12 col-md-7"><div class="dataTables_paginate paging_simple_numbers float-md-right text-md-right mt-2 mt-md-0">' +
+            '<div class="small text-muted text-right mb-1">Page ' + currentPage + ' of ' + totalPages + '</div>' +
             '<ul class="pagination justify-content-md-end mb-0">';
         html += '<li class="page-item' + (currentPage <= 1 ? ' disabled' : '') + '">';
         if (currentPage > 1) {
@@ -773,7 +774,14 @@
             html += '<span class="page-link">Previous</span>';
         }
         html += '</li>';
-        for (var p = 1; p <= totalPages; p++) {
+        var maxNumericButtons = 5;
+        var windowStart = Math.max(1, currentPage - Math.floor(maxNumericButtons / 2));
+        var windowEnd = windowStart + maxNumericButtons - 1;
+        if (windowEnd > totalPages) {
+            windowEnd = totalPages;
+            windowStart = Math.max(1, windowEnd - maxNumericButtons + 1);
+        }
+        for (var p = windowStart; p <= windowEnd; p++) {
             html += '<li class="page-item' + (currentPage === p ? ' active' : '') + '">';
             if (currentPage === p) {
                 html += '<span class="page-link">' + p + '</span>';

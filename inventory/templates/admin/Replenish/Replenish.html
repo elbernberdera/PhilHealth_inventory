@@ -164,10 +164,10 @@ Replenish/Add New Item
         <div class="row mb-3 align-items-center">
             <div class="col-md-6">
                 <button type="button" class="btn btn-success btn-sm mr-2" id="add-new-supplies-btn">
-                    <i class="fas fa-plus mr-1"></i>Add new supplies
+                    <i class="fas fa-plus mr-1"></i>Add New Supplies
                 </button>
                 <button type="button" class="btn btn-success btn-sm" id="add-new-main-category-btn">
-                    <i class="fas fa-plus mr-1"></i>add Main category
+                    <i class="fas fa-plus mr-1"></i>Add Main Category
                 </button>
             </div>
             <div class="col-md-6">
@@ -4036,6 +4036,7 @@ Replenish/Add New Item
             $('#all-items-start').text(displayStart);
             $('#all-items-end').text(displayEnd);
             $('#all-items-total').text(paginationConfig.totalRows);
+            $('#all-items-page-indicator').text('Page ' + paginationConfig.currentPage + ' of ' + Math.max(1, paginationConfig.totalPages));
 
             // Update pagination buttons
             updatePaginationButtons();
@@ -4046,12 +4047,23 @@ Replenish/Add New Item
             const paginationList = $('#all-items-pagination ul');
             const prevButton = $('#all-items-prev');
             const nextButton = $('#all-items-next');
+            if (!$('#all-items-page-indicator').length) {
+                $('<div class="small text-muted text-right mb-1" id="all-items-page-indicator">Page 1 of 1</div>')
+                    .insertBefore(paginationList);
+            }
 
             // Remove existing page number buttons
             paginationList.find('.page-number').remove();
 
-            // Add page number buttons
-            for (let i = 1; i <= paginationConfig.totalPages; i++) {
+            // Add fixed-window page number buttons
+            const maxNumericButtons = 5;
+            let windowStart = Math.max(1, paginationConfig.currentPage - Math.floor(maxNumericButtons / 2));
+            let windowEnd = windowStart + maxNumericButtons - 1;
+            if (windowEnd > paginationConfig.totalPages) {
+                windowEnd = paginationConfig.totalPages;
+                windowStart = Math.max(1, windowEnd - maxNumericButtons + 1);
+            }
+            for (let i = windowStart; i <= windowEnd; i++) {
                 const pageItem = $('<li>')
                     .addClass('paginate_button page-item page-number')
                     .attr('data-page', i);
@@ -4064,6 +4076,7 @@ Replenish/Add New Item
                 pageItem.append(pageLink);
                 pageItem.insertBefore(nextButton);
             }
+            $('#all-items-page-indicator').text('Page ' + paginationConfig.currentPage + ' of ' + Math.max(1, paginationConfig.totalPages));
 
             updatePaginationButtons();
         }

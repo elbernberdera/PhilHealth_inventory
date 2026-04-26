@@ -9,6 +9,7 @@
   </div>
   <div class="col-sm-12 col-md-7">
     <div class="dataTables_paginate paging_simple_numbers float-md-right text-md-right mt-2 mt-md-0">
+      <div class="small text-muted text-right mb-1">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
       <ul class="pagination justify-content-md-end mb-0">
         <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
           {% if page_obj.has_previous %}
@@ -18,13 +19,19 @@
           {% endif %}
         </li>
         {% for num in page_obj.paginator.page_range %}
-        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-          {% if page_obj.number == num %}
-          <span class="page-link">{{ num }}</span>
-          {% else %}
-          <a class="page-link" href="?{% page_query page_key num %}">{{ num }}</a>
+          {% if num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            {% if page_obj.number == num %}
+            <span class="page-link">{{ num }}</span>
+            {% else %}
+            <a class="page-link" href="?{% page_query page_key num %}">{{ num }}</a>
+            {% endif %}
+          </li>
+          {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
           {% endif %}
-        </li>
         {% endfor %}
         <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
           {% if page_obj.has_next %}
