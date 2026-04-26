@@ -135,8 +135,8 @@
                         <thead>
                             <tr>
                                 <th style="width:40px;" class="text-center"><input type="checkbox" id="check-all-items"></th>
-                                <th style="width:220px;">Item Name</th>
                                 <th style="width:60px;">No.</th>
+                                <th style="width:220px;">Item Name</th>
                                 <th style="width:160px;">Date Received/Issued</th>
                                 <th style="width:240px;">R.I.S / Transaction No.</th>
                                 <th style="width:110px;" class="text-center">Received</th>
@@ -165,8 +165,8 @@
                                            data-description="{{ r.description }}"
                                            data-unit="{{ r.unit }}">
                                 </td>
-                                <td>{{ r.description }}</td>
                                 <td>{{ forloop.counter }}</td>
+                                <td>{{ r.description }}</td>
                                 <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.date }}{% endif %}</td>
                                 <td>{% if r.no_transactions %}<span class="text-muted">—</span>{% else %}{{ r.transaction_no }}{% endif %}</td>
                                 <td class="text-center">{% if r.stock_in_out == 'stock-in' %}{{ r.quantity }}{% elif r.received_carry_in %}{{ r.received_carry_in }}{% endif %}</td>
@@ -716,7 +716,7 @@
 
             for (let i = start; i < end; i++) {
                 filtered[i].style.display = '';
-                const noCell = filtered[i].querySelector('td:nth-child(3)');
+                const noCell = filtered[i].querySelector('td:nth-child(2)');
                 if (noCell) noCell.textContent = String(i + 1);
             }
 
